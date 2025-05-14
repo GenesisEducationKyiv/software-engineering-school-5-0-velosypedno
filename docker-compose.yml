@@ -1,0 +1,28 @@
+services:
+  postgres-weather:
+    image: postgres:latest
+    container_name: postgres-weather
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}`
+    volumes:
+      - postgres-data:/var/lib/postgresql/data       
+  api-weather:
+    build: .
+    container_name: api-weather
+    ports:
+      - "8080:8080"
+    environment:
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+    depends_on:
+      - postgres-weather
+  
+volumes:
+  postgres-data:
