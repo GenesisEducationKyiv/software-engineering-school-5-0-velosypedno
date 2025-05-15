@@ -1,4 +1,4 @@
-module github.com/velosypedno/genesis-weather-api.git
+module github.com/velosypedno/genesis-weather-api
 
 go 1.23.5
 

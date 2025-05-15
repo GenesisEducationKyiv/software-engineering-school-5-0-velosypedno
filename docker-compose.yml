@@ -27,6 +27,7 @@ services:
       DB_HOST: ${DB_HOST}
       DB_PORT: ${DB_PORT}
       DB_DRIVER: ${DB_DRIVER}
+      WEATHER_API_KEY: ${WEATHER_API_KEY}
     depends_on:
       postgres-weather:
         condition: service_healthy

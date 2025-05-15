@@ -4,28 +4,14 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
+
+	"github.com/velosypedno/genesis-weather-api/internal/handlers"
+	"github.com/velosypedno/genesis-weather-api/internal/repos"
 )
-
-func PingHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{"message": "pong"})
-
-}
-
-func NewHealthCheckHandler(db *sql.DB) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		err := db.Ping()
-		if err != nil {
-			c.JSON(http.StatusServiceUnavailable, gin.H{"error": err.Error()})
-		} else {
-			c.JSON(http.StatusOK, gin.H{"message": "alive)"})
-		}
-	}
-}
 
 func main() {
 	dsn := fmt.Sprintf(
@@ -43,8 +29,8 @@ func main() {
 	defer db.Close()
 
 	router := gin.Default()
-	router.GET("/ping", PingHandler)
-	router.GET("/health-check", NewHealthCheckHandler(db))
+	weatherHandler := handlers.NewWeatherHandler(repos.NewWeatherAPIRepo(os.Getenv("WEATHER_API_KEY")))
+	router.GET("/api/weather", weatherHandler)
 
 	API_PORT := os.Getenv("API_PORT")
 	if API_PORT == "" {
