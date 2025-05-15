@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS Subscriptions;
+DROP TYPE IF EXISTS Frequency;

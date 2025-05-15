@@ -36,7 +36,7 @@ func main() {
 		os.Getenv("DB_PASSWORD"),
 		os.Getenv("DB_NAME"),
 	)
-	db, err := sql.Open("postgres", dsn)
+	db, err := sql.Open(os.Getenv("DB_DRIVER"), dsn)
 	if err != nil {
 		log.Fatal(err)
 	}
