@@ -8,9 +8,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
-
 	"github.com/velosypedno/genesis-weather-api/internal/handlers"
 	"github.com/velosypedno/genesis-weather-api/internal/repos"
+	"github.com/velosypedno/genesis-weather-api/internal/services"
 )
 
 func main() {
@@ -29,8 +29,21 @@ func main() {
 	defer db.Close()
 
 	router := gin.Default()
-	weatherHandler := handlers.NewWeatherHandler(repos.NewWeatherAPIRepo(os.Getenv("WEATHER_API_KEY")))
+
+	weatherHandler := handlers.NewWeatherHandler(
+		repos.NewWeatherAPIRepo(
+			os.Getenv("WEATHER_API_KEY"),
+		),
+	)
+	subscribeHandler := handlers.NewSubscriptionHandler(
+		services.NewSubscriptionService(
+			repos.NewSubscriptionDBRepo(db),
+			services.NewDebugEmailService(),
+		),
+	)
+
 	router.GET("/api/weather", weatherHandler)
+	router.POST("/api/subscribe", subscribeHandler)
 
 	API_PORT := os.Getenv("API_PORT")
 	if API_PORT == "" {
