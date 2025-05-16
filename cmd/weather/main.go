@@ -31,8 +31,10 @@ func main() {
 	router := gin.Default()
 
 	weatherHandler := handlers.NewWeatherHandler(
-		repos.NewWeatherAPIRepo(
-			os.Getenv("WEATHER_API_KEY"),
+		services.NewWeatherService(
+			repos.NewWeatherAPIRepo(
+				os.Getenv("WEATHER_API_KEY"),
+			),
 		),
 	)
 	subscribeHandler := handlers.NewSubscriptionHandler(
