@@ -1,61 +1,19 @@
 package main
 
 import (
-	"database/sql"
-	"fmt"
 	"log"
-	"os"
 
-	"github.com/gin-gonic/gin"
-	_ "github.com/lib/pq"
-	"github.com/velosypedno/genesis-weather-api/internal/handlers"
-	"github.com/velosypedno/genesis-weather-api/internal/repos"
-	"github.com/velosypedno/genesis-weather-api/internal/services"
+	"github.com/velosypedno/genesis-weather-api/internal/config"
+	"github.com/velosypedno/genesis-weather-api/internal/container"
+	"github.com/velosypedno/genesis-weather-api/internal/server"
 )
 
 func main() {
-	dsn := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_PORT"),
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"),
-	)
-	db, err := sql.Open(os.Getenv("DB_DRIVER"), dsn)
+	cfg := config.Load()
+	handlerContainer := container.BuildHandlerContainer(cfg)
+	router := server.SetupRoutes(handlerContainer)
+	err := router.Run(":" + cfg.PORT)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Server error:", err)
 	}
-	defer db.Close()
-
-	router := gin.Default()
-
-	weatherService := services.NewWeatherService(
-		repos.NewWeatherAPIRepo(
-			os.Getenv("WEATHER_API_KEY"),
-		),
-	)
-	subscriptionService := services.NewSubscriptionService(
-		repos.NewSubscriptionDBRepo(db),
-		services.NewDebugEmailService(),
-	)
-
-	weatherGETHandler := handlers.NewWeatherGETHandler(weatherService)
-	subscribePOSTHandler := handlers.NewSubscribePOSTHandler(subscriptionService)
-	confirmGETHandler := handlers.NewConfirmGETHandler(subscriptionService)
-	unsubscribeGETHandler := handlers.NewUnsubscribeGETHandler(subscriptionService)
-
-	api := router.Group("/api")
-	{
-		api.GET("/weather", weatherGETHandler)
-		api.POST("/subscribe", subscribePOSTHandler)
-		api.GET("/confirm/:token", confirmGETHandler)
-		api.GET("/unsubscribe/:token", unsubscribeGETHandler)
-
-	}
-	API_PORT := os.Getenv("API_PORT")
-	if API_PORT == "" {
-		API_PORT = "8080"
-	}
-	router.Run(":" + API_PORT)
 }
