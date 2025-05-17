@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/velosypedno/genesis-weather-api/internal/models"
 )
@@ -48,8 +49,23 @@ func (r *SubscriptionDBRepo) CreateSubscription(subscription models.Subscription
 	return nil
 }
 
-func (r *SubscriptionDBRepo) ActivateSubscription(token string) error {
+func (r *SubscriptionDBRepo) ActivateSubscription(token uuid.UUID) error {
 	res, err := r.db.Exec("UPDATE subscriptions SET activated = true WHERE token = $1", token)
+	if err != nil {
+		return err
+	}
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected == 0 {
+		return ErrTokenNotFound
+	}
+	return nil
+}
+
+func (r *SubscriptionDBRepo) DeleteSubscriptionByToken(token uuid.UUID) error {
+	res, err := r.db.Exec("DELETE FROM subscriptions WHERE token = $1", token)
 	if err != nil {
 		return err
 	}

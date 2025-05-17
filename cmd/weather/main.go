@@ -43,11 +43,16 @@ func main() {
 	weatherGETHandler := handlers.NewWeatherGETHandler(weatherService)
 	subscribePOSTHandler := handlers.NewSubscribePOSTHandler(subscriptionService)
 	confirmGETHandler := handlers.NewConfirmGETHandler(subscriptionService)
+	unsubscribeGETHandler := handlers.NewUnsubscribeGETHandler(subscriptionService)
 
-	router.GET("/api/weather", weatherGETHandler)
-	router.POST("/api/subscribe", subscribePOSTHandler)
-	router.GET("/api/confirm/:token", confirmGETHandler)
+	api := router.Group("/api")
+	{
+		api.GET("/weather", weatherGETHandler)
+		api.POST("/subscribe", subscribePOSTHandler)
+		api.GET("/confirm/:token", confirmGETHandler)
+		api.GET("/unsubscribe/:token", unsubscribeGETHandler)
 
+	}
 	API_PORT := os.Getenv("API_PORT")
 	if API_PORT == "" {
 		API_PORT = "8080"
