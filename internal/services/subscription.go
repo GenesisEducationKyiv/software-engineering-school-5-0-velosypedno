@@ -7,6 +7,7 @@ import (
 
 type SubscriptionRepo interface {
 	CreateSubscription(subscription models.Subscription) error
+	ActivateSubscription(token string) error
 }
 type EmailService interface {
 	SendConfirmationEmail(subscription models.Subscription) error
@@ -45,4 +46,8 @@ func (s *SubscriptionService) Subscribe(subInput SubscriptionInput) error {
 		return err
 	}
 	return nil
+}
+
+func (s *SubscriptionService) ActivateSubscription(token string) error {
+	return s.repo.ActivateSubscription(token)
 }

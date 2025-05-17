@@ -13,6 +13,7 @@ const (
 )
 
 var ErrEmailAlreadyExists = errors.New("subscription with this email already exists")
+var ErrTokenNotFound = errors.New("subscription with this token not found")
 
 type SubscriptionDBRepo struct {
 	db *sql.DB
@@ -48,14 +49,16 @@ func (r *SubscriptionDBRepo) CreateSubscription(subscription models.Subscription
 }
 
 func (r *SubscriptionDBRepo) ActivateSubscription(token string) error {
-	stmt, err := r.db.Prepare("UPDATE subscriptions SET activated = true WHERE token = $1")
+	res, err := r.db.Exec("UPDATE subscriptions SET activated = true WHERE token = $1", token)
 	if err != nil {
 		return err
 	}
-	defer stmt.Close()
-	_, err = stmt.Exec(token)
+	rowsAffected, err := res.RowsAffected()
 	if err != nil {
 		return err
+	}
+	if rowsAffected == 0 {
+		return ErrTokenNotFound
 	}
 	return nil
 }

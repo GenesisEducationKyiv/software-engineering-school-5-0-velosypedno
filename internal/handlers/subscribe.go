@@ -15,11 +15,11 @@ type subReqBody struct {
 	City      string `json:"city" binding:"required"`
 }
 
-type SubscriptionService interface {
+type subscriber interface {
 	Subscribe(subscription services.SubscriptionInput) error
 }
 
-func NewSubscriptionHandler(service SubscriptionService) gin.HandlerFunc {
+func NewSubscribePOSTHandler(service subscriber) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var body subReqBody
 		if err := c.ShouldBindJSON(&body); err != nil {

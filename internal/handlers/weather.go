@@ -12,7 +12,7 @@ type WeatherRepo interface {
 	GetCurrentWeather(ctx context.Context, city string) (models.Weather, error)
 }
 
-func NewWeatherHandler(repo WeatherRepo) gin.HandlerFunc {
+func NewWeatherGETHandler(repo WeatherRepo) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		city := c.Query("city")
 		if city == "" {

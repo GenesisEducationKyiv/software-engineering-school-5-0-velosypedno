@@ -30,22 +30,23 @@ func main() {
 
 	router := gin.Default()
 
-	weatherHandler := handlers.NewWeatherHandler(
-		services.NewWeatherService(
-			repos.NewWeatherAPIRepo(
-				os.Getenv("WEATHER_API_KEY"),
-			),
+	weatherService := services.NewWeatherService(
+		repos.NewWeatherAPIRepo(
+			os.Getenv("WEATHER_API_KEY"),
 		),
 	)
-	subscribeHandler := handlers.NewSubscriptionHandler(
-		services.NewSubscriptionService(
-			repos.NewSubscriptionDBRepo(db),
-			services.NewDebugEmailService(),
-		),
+	subscriptionService := services.NewSubscriptionService(
+		repos.NewSubscriptionDBRepo(db),
+		services.NewDebugEmailService(),
 	)
 
-	router.GET("/api/weather", weatherHandler)
-	router.POST("/api/subscribe", subscribeHandler)
+	weatherGETHandler := handlers.NewWeatherGETHandler(weatherService)
+	subscribePOSTHandler := handlers.NewSubscribePOSTHandler(subscriptionService)
+	confirmGETHandler := handlers.NewConfirmGETHandler(subscriptionService)
+
+	router.GET("/api/weather", weatherGETHandler)
+	router.POST("/api/subscribe", subscribePOSTHandler)
+	router.GET("/api/confirm/:token", confirmGETHandler)
 
 	API_PORT := os.Getenv("API_PORT")
 	if API_PORT == "" {
