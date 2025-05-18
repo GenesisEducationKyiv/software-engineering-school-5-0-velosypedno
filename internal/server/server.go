@@ -2,10 +2,10 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/velosypedno/genesis-weather-api/internal/containers"
+	"github.com/velosypedno/genesis-weather-api/internal/ioc"
 )
 
-func SetupRoutes(c *containers.HandlerContainer) *gin.Engine {
+func SetupRoutes(c *ioc.HandlerContainer) *gin.Engine {
 	router := gin.Default()
 	api := router.Group("/api")
 	{
