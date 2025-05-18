@@ -3,6 +3,7 @@ package containers
 import (
 	"database/sql"
 	"log"
+	"net/http"
 
 	_ "github.com/lib/pq"
 	"github.com/velosypedno/genesis-weather-api/internal/config"
@@ -23,7 +24,7 @@ func BuildTaskContainer(c *config.Config) *TaskContainer {
 	if err != nil {
 		log.Fatal(err)
 	}
-	weatherRepo := repos.NewWeatherAPIRepo(c.WEATHER_API_KEY)
+	weatherRepo := repos.NewWeatherAPIRepo(c.WEATHER_API_KEY, &http.Client{})
 	subRepo := repos.NewSubscriptionDBRepo(db)
 	emailService := services.NewDebugEmailService()
 

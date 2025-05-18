@@ -10,15 +10,19 @@ import (
 	"github.com/velosypedno/genesis-weather-api/internal/models"
 )
 
-type WeatherAPIRepo struct {
-	apiKey string
-	client *http.Client
+type HTTPClient interface {
+	Do(req *http.Request) (*http.Response, error)
 }
 
-func NewWeatherAPIRepo(apiKey string) *WeatherAPIRepo {
+type WeatherAPIRepo struct {
+	apiKey string
+	client HTTPClient
+}
+
+func NewWeatherAPIRepo(apiKey string, client HTTPClient) *WeatherAPIRepo {
 	return &WeatherAPIRepo{
 		apiKey: apiKey,
-		client: &http.Client{},
+		client: client,
 	}
 }
 
