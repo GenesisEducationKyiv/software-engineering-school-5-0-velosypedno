@@ -14,27 +14,22 @@ type SmtpEmailService struct {
 	User      string
 	Pass      string
 	EmailFrom string
+	Auth      smtp.Auth
 }
 
 func NewSmtpEmailService(host, port, user, pass, emailFrom string) *SmtpEmailService {
+	auth := smtp.PlainAuth("", user, pass, host)
 	return &SmtpEmailService{
 		Host:      host,
 		Port:      port,
 		User:      user,
 		Pass:      pass,
 		EmailFrom: emailFrom,
+		Auth:      auth,
 	}
 }
 
-func (s *SmtpEmailService) SendConfirmationEmail(subscription models.Subscription) error {
-	recipient := subscription.Email
-
-	auth := smtp.PlainAuth("", s.User, s.Pass, s.Host)
-	to := []string{recipient}
-
-	subject := "Subscription Confirmation"
-	body := fmt.Sprintf("Hello!\n\nPlease click the following link to confirm your subscription:\nhttp://localhost:8080/api/confirm/%s\n\nThank you!", subscription.Token)
-
+func (s *SmtpEmailService) sendEmail(recipient, subject, body string) error {
 	msg := strings.Builder{}
 	msg.WriteString(fmt.Sprintf("From: %s\r\n", s.EmailFrom))
 	msg.WriteString(fmt.Sprintf("To: %s\r\n", recipient))
@@ -43,8 +38,18 @@ func (s *SmtpEmailService) SendConfirmationEmail(subscription models.Subscriptio
 	msg.WriteString(body)
 
 	addr := s.Host + ":" + s.Port
+	if err := smtp.SendMail(addr, s.Auth, s.EmailFrom, []string{recipient}, []byte(msg.String())); err != nil {
+		return err
+	}
+	return nil
+}
 
-	if err := smtp.SendMail(addr, auth, s.EmailFrom, to, []byte(msg.String())); err != nil {
+func (s *SmtpEmailService) SendConfirmationEmail(subscription models.Subscription) error {
+	recipient := subscription.Email
+	subject := "Subscription Confirmation"
+	body := fmt.Sprintf("Hello!\n\nPlease click the following link to confirm your subscription:\nhttp://localhost:8080/api/confirm/%s\n\nThank you!", subscription.Token)
+
+	if err := s.sendEmail(recipient, subject, body); err != nil {
 		return fmt.Errorf("smtp email service: failed to send confirmation email to %s: %w", recipient, err)
 	}
 	return nil
@@ -52,10 +57,6 @@ func (s *SmtpEmailService) SendConfirmationEmail(subscription models.Subscriptio
 
 func (s *SmtpEmailService) SendWeatherEmail(subscription models.Subscription, weather models.Weather) error {
 	recipient := subscription.Email
-
-	auth := smtp.PlainAuth("", s.User, s.Pass, s.Host)
-	to := []string{recipient}
-
 	subject := "Weather Update"
 	body := fmt.Sprintf(
 		"Hello!\n\nCurrent weather update:\nTemperature: %.1f°C\nHumidity: %.1f%%\nCondition: %s\n\nBest regards!",
@@ -64,16 +65,7 @@ func (s *SmtpEmailService) SendWeatherEmail(subscription models.Subscription, we
 		weather.Description,
 	)
 
-	msg := strings.Builder{}
-	msg.WriteString(fmt.Sprintf("From: %s\r\n", s.EmailFrom))
-	msg.WriteString(fmt.Sprintf("To: %s\r\n", recipient))
-	msg.WriteString(fmt.Sprintf("Subject: %s\r\n", subject))
-	msg.WriteString("MIME-version: 1.0;\r\nContent-Type: text/plain; charset=\"UTF-8\";\r\n\r\n")
-	msg.WriteString(body)
-
-	addr := s.Host + ":" + s.Port
-
-	if err := smtp.SendMail(addr, auth, s.EmailFrom, to, []byte(msg.String())); err != nil {
+	if err := s.sendEmail(recipient, subject, body); err != nil {
 		return fmt.Errorf("smtp email service: failed to send weather email to %s: %w", recipient, err)
 	}
 	return nil
