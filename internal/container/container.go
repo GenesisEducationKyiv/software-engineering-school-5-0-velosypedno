@@ -28,7 +28,7 @@ func BuildHandlerContainer(c *config.Config) *HandlerContainer {
 	weatherService := services.NewWeatherService(weatherRepo)
 
 	subRepo := repos.NewSubscriptionDBRepo(db)
-	emailService := services.NewDebugEmailService()
+	emailService := services.NewSmtpEmailService(c.SMTP_HOST, c.SMTP_PORT, c.SMTP_USER, c.SMTP_PASS, c.EMAIL_FROM)
 	subService := services.NewSubscriptionService(subRepo, emailService)
 
 	return &HandlerContainer{
