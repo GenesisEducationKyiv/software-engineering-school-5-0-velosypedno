@@ -2,6 +2,8 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -18,6 +20,8 @@ func NewUnsubscribeGETHandler(service subscriptionDeactivator) gin.HandlerFunc {
 		token := c.Param("token")
 		parsedToken, err := uuid.Parse(token)
 		if err != nil {
+			err = fmt.Errorf("unsubscribe subscription handler: failed to parse token: %v", err)
+			log.Println(err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid token"})
 			return
 		}
@@ -27,6 +31,7 @@ func NewUnsubscribeGETHandler(service subscriptionDeactivator) gin.HandlerFunc {
 				c.JSON(http.StatusNotFound, gin.H{"error": "token not found"})
 				return
 			}
+			log.Println(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to unsubscribe"})
 			return
 		}

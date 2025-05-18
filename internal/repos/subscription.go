@@ -3,6 +3,7 @@ package repos
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -43,6 +44,7 @@ func (r *SubscriptionDBRepo) CreateSubscription(subscription models.Subscription
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == PGUniqueViolationCode {
 			return ErrEmailAlreadyExists
 		}
+		err = fmt.Errorf("subscription repo: failed to create subscription, err:%v ", err)
 		return err
 	}
 
@@ -52,10 +54,12 @@ func (r *SubscriptionDBRepo) CreateSubscription(subscription models.Subscription
 func (r *SubscriptionDBRepo) ActivateSubscription(token uuid.UUID) error {
 	res, err := r.db.Exec("UPDATE subscriptions SET activated = true WHERE token = $1", token)
 	if err != nil {
+		err = fmt.Errorf("subscription repo: failed to activate subscription, err:%v ", err)
 		return err
 	}
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
+		err := fmt.Errorf("subscription repo: failed to activate subscription, err:%v ", err)
 		return err
 	}
 	if rowsAffected == 0 {
@@ -67,10 +71,12 @@ func (r *SubscriptionDBRepo) ActivateSubscription(token uuid.UUID) error {
 func (r *SubscriptionDBRepo) DeleteSubscriptionByToken(token uuid.UUID) error {
 	res, err := r.db.Exec("DELETE FROM subscriptions WHERE token = $1", token)
 	if err != nil {
+		err = fmt.Errorf("subscription repo: failed to delete subscription, err:%v ", err)
 		return err
 	}
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
+		err := fmt.Errorf("subscription repo: failed to delete subscription, err:%v ", err)
 		return err
 	}
 	if rowsAffected == 0 {
@@ -82,6 +88,7 @@ func (r *SubscriptionDBRepo) DeleteSubscriptionByToken(token uuid.UUID) error {
 func (r *SubscriptionDBRepo) GetActivatedSubscriptionsByFreq(freq models.Frequency) ([]models.Subscription, error) {
 	rows, err := r.db.Query("SELECT * FROM subscriptions WHERE activated = true AND frequency = $1", freq)
 	if err != nil {
+		err = fmt.Errorf("subscription repo: failed to get subscriptions, err:%v ", err)
 		return nil, err
 	}
 	defer rows.Close()

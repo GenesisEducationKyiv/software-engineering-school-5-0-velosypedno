@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -17,6 +19,8 @@ func NewConfirmGETHandler(service subscriptionActivator) gin.HandlerFunc {
 		token := c.Param("token")
 		parsedToken, err := uuid.Parse(token)
 		if err != nil {
+			err = fmt.Errorf("confirm subscription handler: failed to parse token: %v", err)
+			log.Println(err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid token"})
 			return
 		}
@@ -27,6 +31,7 @@ func NewConfirmGETHandler(service subscriptionActivator) gin.HandlerFunc {
 			return
 		}
 		if err != nil {
+			log.Println(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to activate subscription"})
 			return
 		}

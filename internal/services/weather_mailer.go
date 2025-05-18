@@ -41,17 +41,17 @@ func NewWeatherMailerService(
 func (s *WeatherMailerService) SendWeatherEmailsByFrequency(freq models.Frequency) {
 	subscriptions, err := s.subRepo.GetActivatedSubscriptionsByFreq(freq)
 	if err != nil {
-		log.Println(fmt.Errorf("weather_mailer_service: failed to get subscriptions, err:%v ", err))
+		log.Println(fmt.Errorf("weather mailer service: failed to get subscriptions, err:%v ", err))
 		return
 	}
 	for _, sub := range subscriptions {
 		weather, err := s.weatherRepo.GetCurrentWeather(context.Background(), sub.City)
 		if err != nil {
-			log.Println(fmt.Errorf("weather_mailer_service: failed to get weather for %s, err:%v ", sub.City, err))
+			log.Println(fmt.Errorf("weather mailer service: failed to get weather for %s, err:%v ", sub.City, err))
 			continue
 		}
 		if err := s.emailSrv.SendWeatherEmail(sub, weather); err != nil {
-			log.Println(fmt.Errorf("weather_mailer_service: failed to send email to %s, err:%v ", sub.Email, err))
+			log.Println(fmt.Errorf("weather mailer service: failed to send email to %s, err:%v ", sub.Email, err))
 			continue
 		}
 	}

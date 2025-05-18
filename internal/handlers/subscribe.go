@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -37,6 +38,7 @@ func NewSubscribePOSTHandler(service subscriber) gin.HandlerFunc {
 				c.JSON(http.StatusConflict, gin.H{"error": "Email already subscribed"})
 				return
 			}
+			log.Println(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create subscription"})
 			return
 		}

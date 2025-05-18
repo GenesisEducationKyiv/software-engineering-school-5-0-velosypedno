@@ -36,6 +36,7 @@ func (s *SmtpEmailService) SendConfirmationEmail(subscription models.Subscriptio
 	addr := s.Host + ":" + s.Port
 	err := smtp.SendMail(addr, auth, s.EmailFrom, to, msg)
 	if err != nil {
+		err = fmt.Errorf("smtp email service: failed to send email to %s, err:%v ", recipient, err)
 		return err
 	}
 	return nil
