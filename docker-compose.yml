@@ -50,9 +50,32 @@ services:
       SMTP_USER: ${SMTP_USER}
       SMTP_PASS: ${SMTP_PASS}
       EMAIL_FROM: ${EMAIL_FROM}
+      APP_MODE: api
     depends_on:
       migrator:
         condition: service_completed_successfully
+    entrypoint: ["./run.sh"]
+
+  cron-weather:
+    build: .
+    container_name: cron-weather
+    environment:
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_DRIVER: ${DB_DRIVER}
+      WEATHER_API_KEY: ${WEATHER_API_KEY}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      EMAIL_FROM: ${EMAIL_FROM}
+      APP_MODE: cron
+    depends_on:
+      postgres-weather:
+        condition: service_healthy
     entrypoint: ["./run.sh"]
   
 volumes:

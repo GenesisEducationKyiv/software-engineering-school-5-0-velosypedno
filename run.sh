@@ -1,4 +1,4 @@
 #!/bin/bash
 
-echo "Running app"
-/app/bin/main
+echo "Starting $APP_MODE service..."
+/app/bin/$APP_MODE
