@@ -7,7 +7,7 @@ RUN go mod download
 
 COPY . . 
 
-RUN go build -o ./bin/main cmd/weather/main.go
+RUN go build -o ./bin/main cmd/api/main.go
 
 RUN chmod +x ./run.sh
-ENTRYPOINT [ "./run.sh" ]
+RUN chmod +x ./migrate.sh

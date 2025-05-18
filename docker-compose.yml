@@ -15,6 +15,22 @@ services:
       interval: 2s
       timeout: 2s
       retries: 4
+
+  migrator:
+    build: .
+    container_name: migrator
+    environment:
+      PORT: ${PORT}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT}
+      DB_DRIVER: ${DB_DRIVER}
+    depends_on:
+      postgres-weather:
+        condition: service_healthy
+    entrypoint: ["./migrate.sh"]
   api-weather:
     build: .
     container_name: api-weather
@@ -35,8 +51,8 @@ services:
       SMTP_PASS: ${SMTP_PASS}
       EMAIL_FROM: ${EMAIL_FROM}
     depends_on:
-      postgres-weather:
-        condition: service_healthy
+      migrator:
+        condition: service_completed_successfully
     entrypoint: ["./run.sh"]
   
 volumes:
