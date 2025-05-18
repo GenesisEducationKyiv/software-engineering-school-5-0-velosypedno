@@ -78,3 +78,30 @@ func (r *SubscriptionDBRepo) DeleteSubscriptionByToken(token uuid.UUID) error {
 	}
 	return nil
 }
+
+func (r *SubscriptionDBRepo) GetActivatedSubscriptionsByFreq(freq models.Frequency) ([]models.Subscription, error) {
+	rows, err := r.db.Query("SELECT * FROM subscriptions WHERE activated = true AND frequency = $1", freq)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var result []models.Subscription
+	for rows.Next() {
+		var subscription models.Subscription
+		if err := rows.Scan(
+			&subscription.ID,
+			&subscription.Email,
+			&subscription.Frequency,
+			&subscription.City,
+			&subscription.Activated,
+			&subscription.Token,
+		); err != nil {
+			return nil, err
+		}
+		result = append(result, subscription)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return result, nil
+}

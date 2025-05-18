@@ -1,13 +1,15 @@
 package main
 
 import (
-	"fmt"
-	"time"
+	"github.com/velosypedno/genesis-weather-api/internal/config"
+	"github.com/velosypedno/genesis-weather-api/internal/containers"
+	"github.com/velosypedno/genesis-weather-api/internal/scheduler"
 )
 
 func main() {
-	for {
-		time.Sleep(time.Second * 5)
-		fmt.Println("Hello world")
-	}
+	cfg := config.Load()
+	taskContainer := containers.BuildTaskContainer(cfg)
+	cron := scheduler.SetupScheduler(taskContainer)
+	cron.Start()
+	select {}
 }

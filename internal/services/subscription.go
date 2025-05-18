@@ -10,7 +10,7 @@ type SubscriptionRepo interface {
 	ActivateSubscription(token uuid.UUID) error
 	DeleteSubscriptionByToken(token uuid.UUID) error
 }
-type EmailService interface {
+type confirmationEmailService interface {
 	SendConfirmationEmail(subscription models.Subscription) error
 }
 type SubscriptionInput struct {
@@ -21,10 +21,10 @@ type SubscriptionInput struct {
 
 type SubscriptionService struct {
 	repo   SubscriptionRepo
-	mailer EmailService
+	mailer confirmationEmailService
 }
 
-func NewSubscriptionService(repo SubscriptionRepo, mailer EmailService) *SubscriptionService {
+func NewSubscriptionService(repo SubscriptionRepo, mailer confirmationEmailService) *SubscriptionService {
 	return &SubscriptionService{repo: repo, mailer: mailer}
 }
 

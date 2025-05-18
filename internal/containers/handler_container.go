@@ -1,4 +1,4 @@
-package container
+package containers
 
 import (
 	"database/sql"
@@ -28,7 +28,8 @@ func BuildHandlerContainer(c *config.Config) *HandlerContainer {
 	weatherService := services.NewWeatherService(weatherRepo)
 
 	subRepo := repos.NewSubscriptionDBRepo(db)
-	emailService := services.NewSmtpEmailService(c.SMTP_HOST, c.SMTP_PORT, c.SMTP_USER, c.SMTP_PASS, c.EMAIL_FROM)
+	// emailService := services.NewSmtpEmailService(c.SMTP_HOST, c.SMTP_PORT, c.SMTP_USER, c.SMTP_PASS, c.EMAIL_FROM)
+	emailService := services.NewDebugEmailService()
 	subService := services.NewSubscriptionService(subRepo, emailService)
 
 	return &HandlerContainer{
