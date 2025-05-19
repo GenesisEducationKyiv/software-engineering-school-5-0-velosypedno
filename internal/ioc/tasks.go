@@ -26,7 +26,7 @@ func BuildTaskContainer(c *config.Config) *TaskContainer {
 	}
 	weatherRepo := repos.NewWeatherAPIRepo(c.WEATHER_API_KEY, &http.Client{})
 	subRepo := repos.NewSubscriptionDBRepo(db)
-	emailService := services.NewDebugEmailService()
+	emailService := services.NewSmtpEmailService(c.SMTP_HOST, c.SMTP_PORT, c.SMTP_USER, c.SMTP_PASS, c.EMAIL_FROM)
 
 	weatherMailerSrv := services.NewWeatherMailerService(subRepo, emailService, weatherRepo)
 	return &TaskContainer{
