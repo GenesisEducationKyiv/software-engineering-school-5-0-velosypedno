@@ -65,6 +65,8 @@ Ensure you have the following installed:
 
 ## API
 
+[Swagger scheme](./swagger.yaml)
+
 All routes are prefixed with `/api`.
 
 | Method | Endpoint              | Description                                                                |
