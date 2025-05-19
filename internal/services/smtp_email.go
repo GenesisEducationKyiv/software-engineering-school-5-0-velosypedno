@@ -58,11 +58,23 @@ func (s *SmtpEmailService) SendConfirmationEmail(subscription models.Subscriptio
 func (s *SmtpEmailService) SendWeatherEmail(subscription models.Subscription, weather models.Weather) error {
 	recipient := subscription.Email
 	subject := "Weather Update"
+
+	unsubscribeURL := fmt.Sprintf("http://localhost:8080/api/unsubscribe/%s", subscription.Token)
+
 	body := fmt.Sprintf(
-		"Hello!\n\nCurrent weather update:\nTemperature: %.1f°C\nHumidity: %.1f%%\nCondition: %s\n\nBest regards!",
+		`Hello!
+		Current weather update:
+		Temperature: %.1f°C
+		Humidity: %.1f%%
+		Condition: %s
+
+		To unsubscribe from weather updates, click here: %s
+
+		Best regards!`,
 		weather.Temperature,
 		weather.Humidity,
 		weather.Description,
+		unsubscribeURL,
 	)
 
 	if err := s.sendEmail(recipient, subject, body); err != nil {
