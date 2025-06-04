@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"log"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
@@ -85,13 +86,17 @@ func (r *SubscriptionDBRepo) DeleteSubscriptionByToken(token uuid.UUID) error {
 	return nil
 }
 
-func (r *SubscriptionDBRepo) GetActivatedSubscriptionsByFreq(freq models.Frequency) ([]models.Subscription, error) {
+func (r *SubscriptionDBRepo) GetActivatedSubsByFreq(freq models.Frequency) ([]models.Subscription, error) {
 	rows, err := r.db.Query("SELECT * FROM subscriptions WHERE activated = true AND frequency = $1", freq)
 	if err != nil {
 		err = fmt.Errorf("subscription repo: failed to get subscriptions, err:%v ", err)
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() {
+		if err := rows.Close(); err != nil {
+			log.Printf("failed to close rows: %v", err)
+		}
+	}()
 	var result []models.Subscription
 	for rows.Next() {
 		var subscription models.Subscription

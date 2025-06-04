@@ -8,7 +8,7 @@ import (
 	"github.com/velosypedno/genesis-weather-api/internal/models"
 )
 
-type SmtpEmailService struct {
+type SMTPEmailService struct {
 	Host      string
 	Port      string
 	User      string
@@ -17,9 +17,9 @@ type SmtpEmailService struct {
 	Auth      smtp.Auth
 }
 
-func NewSmtpEmailService(host, port, user, pass, emailFrom string) *SmtpEmailService {
+func NewSMTPEmailService(host, port, user, pass, emailFrom string) *SMTPEmailService {
 	auth := smtp.PlainAuth("", user, pass, host)
-	return &SmtpEmailService{
+	return &SMTPEmailService{
 		Host:      host,
 		Port:      port,
 		User:      user,
@@ -29,7 +29,7 @@ func NewSmtpEmailService(host, port, user, pass, emailFrom string) *SmtpEmailSer
 	}
 }
 
-func (s *SmtpEmailService) sendEmail(recipient, subject, body string) error {
+func (s *SMTPEmailService) sendEmail(recipient, subject, body string) error {
 	msg := strings.Builder{}
 	msg.WriteString(fmt.Sprintf("From: %s\r\n", s.EmailFrom))
 	msg.WriteString(fmt.Sprintf("To: %s\r\n", recipient))
@@ -38,16 +38,23 @@ func (s *SmtpEmailService) sendEmail(recipient, subject, body string) error {
 	msg.WriteString(body)
 
 	addr := s.Host + ":" + s.Port
-	if err := smtp.SendMail(addr, s.Auth, s.EmailFrom, []string{recipient}, []byte(msg.String())); err != nil {
+	err := smtp.SendMail(addr, s.Auth, s.EmailFrom, []string{recipient}, []byte(msg.String()))
+	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *SmtpEmailService) SendConfirmationEmail(subscription models.Subscription) error {
+func (s *SMTPEmailService) SendConfirmationEmail(subscription models.Subscription) error {
 	recipient := subscription.Email
 	subject := "Subscription Confirmation"
-	body := fmt.Sprintf("Hello!\n\nPlease click the following link to confirm your subscription:\nhttp://localhost:8080/api/confirm/%s\n\nThank you!", subscription.Token)
+	body := fmt.Sprintf(
+		"Hello!\n\n"+
+			"Please click the following link to confirm your subscription:\n"+
+			"http://localhost:8080/api/confirm/%s\n\n"+
+			"Thank you!",
+		subscription.Token,
+	)
 
 	if err := s.sendEmail(recipient, subject, body); err != nil {
 		return fmt.Errorf("smtp email service: failed to send confirmation email to %s: %w", recipient, err)
@@ -55,7 +62,7 @@ func (s *SmtpEmailService) SendConfirmationEmail(subscription models.Subscriptio
 	return nil
 }
 
-func (s *SmtpEmailService) SendWeatherEmail(subscription models.Subscription, weather models.Weather) error {
+func (s *SMTPEmailService) SendWeatherEmail(subscription models.Subscription, weather models.Weather) error {
 	recipient := subscription.Email
 	subject := "Weather Update"
 

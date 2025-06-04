@@ -9,7 +9,7 @@ import (
 )
 
 type activatedSubscriptionsRepo interface {
-	GetActivatedSubscriptionsByFreq(freq models.Frequency) ([]models.Subscription, error)
+	GetActivatedSubsByFreq(freq models.Frequency) ([]models.Subscription, error)
 }
 
 type currentWeatherEmailService interface {
@@ -38,8 +38,8 @@ func NewWeatherMailerService(
 	}
 }
 
-func (s *WeatherMailerService) SendWeatherEmailsByFrequency(freq models.Frequency) {
-	subscriptions, err := s.subRepo.GetActivatedSubscriptionsByFreq(freq)
+func (s *WeatherMailerService) SendWeatherEmailsByFreq(freq models.Frequency) {
+	subscriptions, err := s.subRepo.GetActivatedSubsByFreq(freq)
 	if err != nil {
 		log.Println(fmt.Errorf("weather mailer service: failed to get subscriptions, err:%v ", err))
 		return
@@ -47,11 +47,13 @@ func (s *WeatherMailerService) SendWeatherEmailsByFrequency(freq models.Frequenc
 	for _, sub := range subscriptions {
 		weather, err := s.weatherRepo.GetCurrentWeather(context.Background(), sub.City)
 		if err != nil {
-			log.Println(fmt.Errorf("weather mailer service: failed to get weather for %s, err:%v ", sub.City, err))
+			err = fmt.Errorf("weather mailer service: failed to get weather for %s, err:%v ", sub.City, err)
+			log.Println(err)
 			continue
 		}
 		if err := s.emailSrv.SendWeatherEmail(sub, weather); err != nil {
-			log.Println(fmt.Errorf("weather mailer service: failed to send email to %s, err:%v ", sub.Email, err))
+			err = fmt.Errorf("weather mailer service: failed to send email to %s, err:%v ", sub.Email, err)
+			log.Println(err)
 			continue
 		}
 	}
