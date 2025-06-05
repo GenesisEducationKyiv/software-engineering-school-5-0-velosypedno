@@ -1,0 +1,35 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  GREETING: Hello, World!
+
+dotenv: ['.env']
+
+tasks:
+  default:
+    cmds:
+      - task: copy-env
+      - task: up
+
+  copy-env:
+    cmds:
+      - cp .env.sample .env
+    silent: false
+
+  up:
+    cmds:
+      - docker compose up 
+  
+  lint:
+    cmds:
+      - golangci-lint run 
+  lint:remote:
+    cmds:
+      - golangci-lint run --config <(curl -sSfL https://raw.githubusercontent.com/fabl3ss/genesis-se-school-linter/refs/heads/main/.golangci.yaml)
+    silence: true
+
+  test:
+    cmds:
+      - go test ./...
