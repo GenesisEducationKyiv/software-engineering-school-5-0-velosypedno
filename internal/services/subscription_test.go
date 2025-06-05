@@ -1,4 +1,4 @@
-package services
+package services_test
 
 import (
 	"errors"
@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/velosypedno/genesis-weather-api/internal/models"
+	"github.com/velosypedno/genesis-weather-api/internal/services"
 )
 
 type mockSubscriptionRepo struct {
@@ -48,9 +49,9 @@ func TestSubscriptionService_Subscribe(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := &mockSubscriptionRepo{createErr: tt.repoErr}
 			mailer := &mockMailer{sendErr: tt.mailerErr}
-			service := NewSubscriptionService(repo, mailer)
+			service := services.NewSubscriptionService(repo, mailer)
 
-			err := service.Subscribe(SubscriptionInput{
+			err := service.Subscribe(services.SubscriptionInput{
 				Email:     "test@example.com",
 				Frequency: "daily",
 				City:      "Kyiv",

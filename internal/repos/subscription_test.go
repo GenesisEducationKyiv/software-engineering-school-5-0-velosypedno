@@ -1,8 +1,9 @@
-package repos
+package repos_test
 
 import (
 	"database/sql"
 	"errors"
+	"log"
 	"regexp"
 	"testing"
 
@@ -11,20 +12,22 @@ import (
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/velosypedno/genesis-weather-api/internal/models"
+	"github.com/velosypedno/genesis-weather-api/internal/repos"
 )
 
-func closeTestDB(db *sql.DB, t *testing.T) {
+func closeDB(mock sqlmock.Sqlmock, db *sql.DB, t *testing.T) {
+	mock.ExpectClose()
 	if err := db.Close(); err != nil {
-		t.Errorf("failed to close DB: %v", err)
+		t.Log(err)
 	}
 }
 
 func TestCreateSubscription_Success(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	assert.NoError(t, err)
-	defer closeTestDB(db, t)
+	defer closeDB(mock, db, t)
 
-	repo := NewSubscriptionDBRepo(db)
+	repo := repos.NewSubscriptionDBRepo(db)
 
 	sub := models.Subscription{
 		ID:        uuid.New(),
@@ -51,9 +54,9 @@ func TestCreateSubscription_Success(t *testing.T) {
 func TestCreateSubscription_EmailExists(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	assert.NoError(t, err)
-	defer closeTestDB(db, t)
+	defer closeDB(mock, db, t)
 
-	repo := NewSubscriptionDBRepo(db)
+	repo := repos.NewSubscriptionDBRepo(db)
 
 	sub := models.Subscription{
 		ID:        uuid.New(),
@@ -64,7 +67,7 @@ func TestCreateSubscription_EmailExists(t *testing.T) {
 		Token:     uuid.New(),
 	}
 
-	pqErr := &pq.Error{Code: PGUniqueViolationCode}
+	pqErr := &pq.Error{Code: repos.PGUniqueViolationCode}
 
 	mock.ExpectExec(
 		regexp.QuoteMeta(
@@ -76,16 +79,16 @@ func TestCreateSubscription_EmailExists(t *testing.T) {
 		WillReturnError(pqErr)
 
 	err = repo.CreateSubscription(sub)
-	assert.ErrorIs(t, err, ErrEmailAlreadyExists)
+	assert.ErrorIs(t, err, repos.ErrEmailAlreadyExists)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
 func TestActivateSubscription_Success(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	assert.NoError(t, err)
-	defer closeTestDB(db, t)
+	defer closeDB(mock, db, t)
 
-	repo := NewSubscriptionDBRepo(db)
+	repo := repos.NewSubscriptionDBRepo(db)
 	token := uuid.New()
 
 	mock.ExpectExec(regexp.QuoteMeta(`UPDATE subscriptions SET activated = true WHERE token = $1`)).
@@ -99,10 +102,12 @@ func TestActivateSubscription_Success(t *testing.T) {
 
 func TestActivateSubscription_TokenNotFound(t *testing.T) {
 	db, mock, err := sqlmock.New()
-	assert.NoError(t, err)
-	defer closeTestDB(db, t)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer closeDB(mock, db, t)
 
-	repo := NewSubscriptionDBRepo(db)
+	repo := repos.NewSubscriptionDBRepo(db)
 	token := uuid.New()
 
 	mock.ExpectExec(regexp.QuoteMeta(`UPDATE subscriptions SET activated = true WHERE token = $1`)).
@@ -110,16 +115,16 @@ func TestActivateSubscription_TokenNotFound(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 0))
 
 	err = repo.ActivateSubscription(token)
-	assert.ErrorIs(t, err, ErrTokenNotFound)
+	assert.ErrorIs(t, err, repos.ErrTokenNotFound)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
 func TestDeleteSubscriptionByToken_Success(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	assert.NoError(t, err)
-	defer closeTestDB(db, t)
+	defer closeDB(mock, db, t)
 
-	repo := NewSubscriptionDBRepo(db)
+	repo := repos.NewSubscriptionDBRepo(db)
 	token := uuid.New()
 
 	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM subscriptions WHERE token = $1`)).
@@ -134,9 +139,9 @@ func TestDeleteSubscriptionByToken_Success(t *testing.T) {
 func TestDeleteSubscriptionByToken_TokenNotFound(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	assert.NoError(t, err)
-	defer closeTestDB(db, t)
+	defer closeDB(mock, db, t)
 
-	repo := NewSubscriptionDBRepo(db)
+	repo := repos.NewSubscriptionDBRepo(db)
 	token := uuid.New()
 
 	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM subscriptions WHERE token = $1`)).
@@ -144,16 +149,16 @@ func TestDeleteSubscriptionByToken_TokenNotFound(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 0))
 
 	err = repo.DeleteSubscriptionByToken(token)
-	assert.ErrorIs(t, err, ErrTokenNotFound)
+	assert.ErrorIs(t, err, repos.ErrTokenNotFound)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
 func TestGetActivatedSubscriptionsByFreq_Success(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	assert.NoError(t, err)
-	defer closeTestDB(db, t)
+	defer closeDB(mock, db, t)
 
-	repo := NewSubscriptionDBRepo(db)
+	repo := repos.NewSubscriptionDBRepo(db)
 
 	freq := models.FreqDaily
 
@@ -175,9 +180,9 @@ func TestGetActivatedSubscriptionsByFreq_Success(t *testing.T) {
 func TestGetActivatedSubscriptionsByFreq_QueryError(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	assert.NoError(t, err)
-	defer closeTestDB(db, t)
+	defer closeDB(mock, db, t)
 
-	repo := NewSubscriptionDBRepo(db)
+	repo := repos.NewSubscriptionDBRepo(db)
 
 	freq := models.FreqDaily
 

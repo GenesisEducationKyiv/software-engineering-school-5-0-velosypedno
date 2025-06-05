@@ -1,9 +1,10 @@
-package handlers
+package handlers_test
 
 import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -11,13 +12,17 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/velosypedno/genesis-weather-api/internal/handlers"
 	"github.com/velosypedno/genesis-weather-api/internal/repos"
 	"github.com/velosypedno/genesis-weather-api/internal/services"
 )
 
 func extractField(jsonStr, field string) string {
 	var m map[string]string
-	_ = json.Unmarshal([]byte(jsonStr), &m)
+	err := json.Unmarshal([]byte(jsonStr), &m)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return m[field]
 }
 
@@ -85,7 +90,7 @@ func TestSubscribePOSTHandler(t *testing.T) {
 			}
 
 			route := gin.New()
-			route.POST("/subscribe", NewSubscribePOSTHandler(mockService))
+			route.POST("/subscribe", handlers.NewSubscribePOSTHandler(mockService))
 			req := httptest.NewRequest(http.MethodPost, "/subscribe", bytes.NewBuffer([]byte(tt.body)))
 			req.Header.Set("Content-Type", "application/json")
 			resp := httptest.NewRecorder()
