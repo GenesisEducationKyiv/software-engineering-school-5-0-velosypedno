@@ -1,0 +1,163 @@
+swagger: "2.0"
+info:
+  description: "Weather API application that allows users to subscribe to weather updates for their city."
+  version: "1.0.0"
+  title: "Weather Forecast API"
+host: "weatherapi.app"
+basePath: "/api"
+tags:
+  - name: "weather"
+    description: "Weather forecast operations"
+  - name: "subscription"
+    description: "Subscription management operations"
+schemes:
+  - "http"
+  - "https"
+paths:
+  /weather:
+    get:
+      tags:
+        - "weather"
+      summary: "Get current weather for a city"
+      description: "Returns the current weather forecast for the specified city using WeatherAPI.com."
+      operationId: "getWeather"
+      parameters:
+        - name: "city"
+          in: "query"
+          description: "City name for weather forecast"
+          required: true
+          type: "string"
+      produces:
+        - "application/json"
+      responses:
+        "200":
+          description: "Successful operation - current weather forecast returned"
+          schema:
+            type: "object"
+            properties:
+              temperature:
+                type: "number"
+                description: "Current temperature"
+              humidity:
+                type: "number"
+                description: "Current humidity percentage"
+              description:
+                type: "string"
+                description: "Weather description"
+        "400":
+          description: "Invalid request"
+        "404":
+          description: "City not found"
+  /subscribe:
+    post:
+      tags:
+        - "subscription"
+      summary: "Subscribe to weather updates"
+      description: "Subscribe an email to receive weather updates for a specific city with chosen frequency."
+      operationId: "subscribe"
+      consumes:
+        - "application/json"
+        - "application/x-www-form-urlencoded"
+      produces:
+        - "application/json"
+      parameters:
+        - name: "email"
+          in: "formData"
+          description: "Email address to subscribe"
+          required: true
+          type: "string"
+        - name: "city"
+          in: "formData"
+          description: "City for weather updates"
+          required: true
+          type: "string"
+        - name: "frequency"
+          in: "formData"
+          description: "Frequency of updates (hourly or daily)"
+          required: true
+          type: "string"
+          enum: ["hourly", "daily"]
+      responses:
+        "200":
+          description: "Subscription successful. Confirmation email sent."
+        "400":
+          description: "Invalid input"
+        "409":
+          description: "Email already subscribed"
+  /confirm/{token}:
+    get:
+      tags:
+        - "subscription"
+      summary: "Confirm email subscription"
+      description: "Confirms a subscription using the token sent in the confirmation email."
+      operationId: "confirmSubscription"
+      parameters:
+        - name: "token"
+          in: "path"
+          description: "Confirmation token"
+          required: true
+          type: "string"
+      produces:
+        - "application/json"
+      responses:
+        "200":
+          description: "Subscription confirmed successfully"
+        "400":
+          description: "Invalid token"
+        "404":
+          description: "Token not found"
+  /unsubscribe/{token}:
+    get:
+      tags:
+        - "subscription"
+      summary: "Unsubscribe from weather updates"
+      description: "Unsubscribes an email from weather updates using the token sent in emails."
+      operationId: "unsubscribe"
+      parameters:
+        - name: "token"
+          in: "path"
+          description: "Unsubscribe token"
+          required: true
+          type: "string"
+      produces:
+        - "application/json"
+      responses:
+        "200":
+          description: "Unsubscribed successfully"
+        "400":
+          description: "Invalid token"
+        "404":
+          description: "Token not found"
+definitions:
+  Weather:
+    type: "object"
+    properties:
+      temperature:
+        type: "number"
+        description: "Current temperature"
+      humidity:
+        type: "number"
+        description: "Current humidity percentage"
+      description:
+        type: "string"
+        description: "Weather description"
+  Subscription:
+    type: "object"
+    required:
+      - "email"
+      - "city"
+      - "frequency"
+    properties:
+      email:
+        type: "string"
+        description: "Email address"
+      city:
+        type: "string"
+        description: "City for weather updates"
+      frequency:
+        type: "string"
+        description: "Frequency of updates"
+        enum: ["hourly", "daily"]
+      confirmed:
+        type: "boolean"
+        description: "Whether the subscription is confirmed"
