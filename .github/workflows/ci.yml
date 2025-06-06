@@ -81,7 +81,13 @@ jobs:
     - name: Install migrator
       run: task install:migrator
 
+    - name: Wait for postgres
+      run: |
+          until pg_isready -h localhost -p 5432 -U postgres; do
+            sleep 1
+          done
+
     - name: Run migrations
-      run: migrate -database "postgres://postgres:postgres_pass@postgres:5432/weather?sslmode=disable" -path db/migrations up
+      run: migrate -database "postgres://postgres:postgres_pass@localhost:5432/weather?sslmode=disable" -path db/migrations up
 
           
