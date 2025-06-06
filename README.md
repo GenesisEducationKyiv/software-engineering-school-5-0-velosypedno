@@ -16,6 +16,7 @@ Weather API application that allows users to subscribe to weather updates for th
 
 Ensure you have the following installed:
 
+- [Go-task](https://taskfile.dev/installation/)
 - [Go](https://golang.org/doc/install) (>= 1.23.5)
 - [Docker](https://docs.docker.com/get-docker/)
 
@@ -38,7 +39,7 @@ Ensure you have the following installed:
     Copy `.env.sample`
 
     ```bash
-    cp .env.sample .env
+    go-task copy-env
     ```
 
     **NOTE**: `.env` must be edited manually. You need to set smtp credentials, API key, etc.
@@ -46,7 +47,7 @@ Ensure you have the following installed:
 4. **Build and up services by Docker Compose**:
 
     ```bash
-    docker compose up
+    go-task up
     ```
 
     This will start the following services:
@@ -60,7 +61,7 @@ Ensure you have the following installed:
 - **To run all tests**:
 
     ```bash
-    go test -v ./...
+    go-task test
     ```
 
 ## API

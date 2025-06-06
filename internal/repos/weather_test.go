@@ -1,4 +1,4 @@
-package repos
+package repos_test
 
 import (
 	"bytes"
@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/velosypedno/genesis-weather-api/internal/repos"
 )
 
 type mockHTTPClient struct {
@@ -38,7 +39,7 @@ func TestGetCurrentWeather_Success(t *testing.T) {
 		},
 	}
 
-	repo := NewWeatherAPIRepo("dummy-api-key", client)
+	repo := repos.NewWeatherAPIRepo("dummy-api-key", client)
 	weather, err := repo.GetCurrentWeather(context.Background(), "Kyiv")
 
 	assert.NoError(t, err)
@@ -64,10 +65,10 @@ func TestGetCurrentWeather_CityNotFound(t *testing.T) {
 		},
 	}
 
-	repo := NewWeatherAPIRepo("dummy-api-key", client)
+	repo := repos.NewWeatherAPIRepo("dummy-api-key", client)
 	_, err := repo.GetCurrentWeather(context.Background(), "InvalidCity")
 
-	assert.ErrorIs(t, err, ErrCityNotFound)
+	assert.ErrorIs(t, err, repos.ErrCityNotFound)
 }
 
 func TestGetCurrentWeather_APIKeyInvalid(t *testing.T) {
@@ -80,7 +81,7 @@ func TestGetCurrentWeather_APIKeyInvalid(t *testing.T) {
 		},
 	}
 
-	repo := NewWeatherAPIRepo("invalid-api-key", client)
+	repo := repos.NewWeatherAPIRepo("invalid-api-key", client)
 	_, err := repo.GetCurrentWeather(context.Background(), "Kyiv")
 
 	assert.Error(t, err)
@@ -94,7 +95,7 @@ func TestGetCurrentWeather_HTTPError(t *testing.T) {
 		},
 	}
 
-	repo := NewWeatherAPIRepo("dummy-api-key", client)
+	repo := repos.NewWeatherAPIRepo("dummy-api-key", client)
 	_, err := repo.GetCurrentWeather(context.Background(), "Kyiv")
 
 	assert.Error(t, err)
@@ -111,7 +112,7 @@ func TestGetCurrentWeather_BadJSON(t *testing.T) {
 		},
 	}
 
-	repo := NewWeatherAPIRepo("dummy-api-key", client)
+	repo := repos.NewWeatherAPIRepo("dummy-api-key", client)
 	_, err := repo.GetCurrentWeather(context.Background(), "Kyiv")
 
 	assert.Error(t, err)

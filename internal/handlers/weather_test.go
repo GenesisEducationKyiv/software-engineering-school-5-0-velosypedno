@@ -1,8 +1,9 @@
-package handlers
+package handlers_test
 
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -10,7 +11,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-
+	"github.com/velosypedno/genesis-weather-api/internal/handlers"
 	"github.com/velosypedno/genesis-weather-api/internal/models"
 	"github.com/velosypedno/genesis-weather-api/internal/repos"
 )
@@ -21,7 +22,11 @@ type mockWeatherRepo struct {
 
 func (m *mockWeatherRepo) GetCurrentWeather(ctx context.Context, city string) (models.Weather, error) {
 	args := m.Called(ctx, city)
-	return args.Get(0).(models.Weather), args.Error(1)
+	weather, ok := args.Get(0).(models.Weather)
+	if !ok {
+		return models.Weather{}, fmt.Errorf("mock: expected models.Weather, got %T", weather)
+	}
+	return weather, args.Error(1)
 }
 
 func TestNewWeatherGETHandler(t *testing.T) {
@@ -81,7 +86,7 @@ func TestNewWeatherGETHandler(t *testing.T) {
 			}
 
 			router := gin.New()
-			router.GET("/weather", NewWeatherGETHandler(mockRepo))
+			router.GET("/weather", handlers.NewWeatherGETHandler(mockRepo))
 			req := httptest.NewRequest(http.MethodGet, "/weather?city="+tt.city, nil)
 			resp := httptest.NewRecorder()
 			router.ServeHTTP(resp, req)

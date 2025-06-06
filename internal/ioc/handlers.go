@@ -21,15 +21,15 @@ type HandlerContainer struct {
 }
 
 func BuildHandlerContainer(c *config.Config) *HandlerContainer {
-	db, err := sql.Open(c.DB_DRIVER, c.DB_DSN)
+	db, err := sql.Open(c.DbDriver, c.DbDSN)
 	if err != nil {
 		log.Fatal(err)
 	}
-	weatherRepo := repos.NewWeatherAPIRepo(c.WEATHER_API_KEY, &http.Client{})
+	weatherRepo := repos.NewWeatherAPIRepo(c.WeatherAPIKey, &http.Client{})
 	weatherService := services.NewWeatherService(weatherRepo)
 
 	subRepo := repos.NewSubscriptionDBRepo(db)
-	emailService := services.NewSmtpEmailService(c.SMTP_HOST, c.SMTP_PORT, c.SMTP_USER, c.SMTP_PASS, c.EMAIL_FROM)
+	emailService := services.NewSMTPEmailService(c.SMTPHost, c.SMTPPort, c.SMTPUser, c.SMTPPass, c.EmailFrom)
 	subService := services.NewSubscriptionService(subRepo, emailService)
 
 	return &HandlerContainer{

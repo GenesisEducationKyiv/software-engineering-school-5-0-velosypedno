@@ -3,14 +3,16 @@ package repos
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 
 	"github.com/velosypedno/genesis-weather-api/internal/models"
 )
 
-var ErrCityNotFound = fmt.Errorf("weather repo: city not found")
+var ErrCityNotFound = errors.New("weather repo: city not found")
 
 type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
@@ -61,9 +63,13 @@ func (r *WeatherAPIRepo) GetCurrentWeather(ctx context.Context, city string) (mo
 		err = fmt.Errorf("weather repo: failed to get weather for %s, err:%v ", city, err)
 		return models.Weather{}, err
 	}
-	defer resp.Body.Close()
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
+			log.Printf("failed to close resp body: %v", err)
+		}
+	}()
 	if resp.StatusCode == http.StatusForbidden {
-		err = fmt.Errorf("weather repo: api key is invalid")
+		err = errors.New("weather repo: api key is invalid")
 		return models.Weather{}, err
 	}
 	if resp.StatusCode != http.StatusOK {

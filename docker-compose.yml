@@ -30,7 +30,7 @@ services:
     depends_on:
       postgres-weather:
         condition: service_healthy
-    entrypoint: ["./migrate.sh"]
+    entrypoint: ["task", "migrate-up"]
   api-weather:
     build: .
     container_name: api-weather

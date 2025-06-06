@@ -1,4 +1,4 @@
-package handlers
+package handlers_test
 
 import (
 	"errors"
@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/velosypedno/genesis-weather-api/internal/handlers"
 	"github.com/velosypedno/genesis-weather-api/internal/repos"
 )
 
@@ -71,7 +72,7 @@ func TestUnsubscribeGETHandler(t *testing.T) {
 			}
 
 			route := gin.New()
-			route.GET("/unsubscribe/:token", NewUnsubscribeGETHandler(mockService))
+			route.GET("/unsubscribe/:token", handlers.NewUnsubscribeGETHandler(mockService))
 			req := httptest.NewRequest(http.MethodGet, "/unsubscribe/"+tt.token, nil)
 			resp := httptest.NewRecorder()
 			route.ServeHTTP(resp, req)

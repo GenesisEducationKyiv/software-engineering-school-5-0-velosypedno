@@ -12,7 +12,7 @@ func main() {
 	cfg := config.Load()
 	handlerContainer := ioc.BuildHandlerContainer(cfg)
 	router := server.SetupRoutes(handlerContainer)
-	err := router.Run(":" + cfg.PORT)
+	err := router.Run(":" + cfg.Port)
 	if err != nil {
 		log.Fatal("Server error:", err)
 	}

@@ -1,13 +1,22 @@
 package scheduler
 
 import (
+	"log"
+
 	"github.com/robfig/cron/v3"
 	"github.com/velosypedno/genesis-weather-api/internal/ioc"
 )
 
 func SetupScheduler(c *ioc.TaskContainer) *cron.Cron {
 	cron := cron.New()
-	cron.AddFunc("0 0 * * * *", c.HourlyWeatherNotificationTask)
-	cron.AddFunc("0 0 7 * * *", c.DailyWeatherNotificationTask)
+	var err error
+	_, err = cron.AddFunc("0 * * * *", c.HourlyWeatherNotificationTask)
+	if err != nil {
+		log.Fatal(err)
+	}
+	_, err = cron.AddFunc("0 7 * * *", c.DailyWeatherNotificationTask)
+	if err != nil {
+		log.Fatal(err)
+	}
 	return cron
 }
