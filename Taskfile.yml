@@ -31,11 +31,17 @@ tasks:
     desc: Install dependencies
     cmds:
       - task: install:linter
+      - task: install:migrator
 
   install:linter:
     desc: Install linter
     cmds:
       - go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
+
+  install:migrator:
+    desc: Install migrator
+    cmds:
+      - go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
   test:
     desc: Run tests
