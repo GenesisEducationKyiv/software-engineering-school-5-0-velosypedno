@@ -10,11 +10,11 @@ import (
 func SetupScheduler(c *ioc.TaskContainer) *cron.Cron {
 	cron := cron.New()
 	var err error
-	_, err = cron.AddFunc("0 0 * * * *", c.HourlyWeatherNotificationTask)
+	_, err = cron.AddFunc("0 * * * *", c.HourlyWeatherNotificationTask)
 	if err != nil {
 		log.Fatal(err)
 	}
-	_, err = cron.AddFunc("0 0 7 * * *", c.DailyWeatherNotificationTask)
+	_, err = cron.AddFunc("0 7 * * *", c.DailyWeatherNotificationTask)
 	if err != nil {
 		log.Fatal(err)
 	}
