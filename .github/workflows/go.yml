@@ -1,8 +1,6 @@
 name: GO
 
-on:
-  push:
-    branches: [ "*" ]
+on: push
 
 jobs:
   lint:
@@ -10,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Ceckout
-    - uses: actions/checkout@v4
+      uses: actions/checkout@v4
 
     - name: Set up Go
       uses: actions/setup-go@v5
