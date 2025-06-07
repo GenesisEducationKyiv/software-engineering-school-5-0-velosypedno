@@ -49,10 +49,12 @@ func (s *SMTPEmailService) SendConfirmationEmail(subscription models.Subscriptio
 	recipient := subscription.Email
 	subject := "Subscription Confirmation"
 	body := fmt.Sprintf(
-		"Hello!\n\n"+
-			"Please click the following link to confirm your subscription:\n"+
-			"http://localhost:8080/api/confirm/%s\n\n"+
-			"Thank you!",
+		`Hello!
+
+Please click the following link to confirm your subscription:
+http://localhost:8080/api/confirm/%s			
+	
+Thank you!`,
 		subscription.Token,
 	)
 
