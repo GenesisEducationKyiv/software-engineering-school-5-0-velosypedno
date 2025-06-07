@@ -10,15 +10,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Set up Go
-      uses: actions/setup-go@v5
+    - name: Install go and go-task
+      uses: ./.github/actions/setup
       with:
         go-version-file: './go.mod'
-
-    - name: Install go-task
-      uses: arduino/setup-task@v2
-      with:
-        version: 3.43.x
+        go-task-version: 3.43.x
 
     - name: Install Linter
       run: task install
@@ -33,15 +29,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Set up Go
-      uses: actions/setup-go@v5
+    - name: Install go and go-task
+      uses: ./.github/actions/setup
       with:
         go-version-file: './go.mod'
-
-    - name: Install go-task
-      uses: arduino/setup-task@v2
-      with:
-        version: 3.43.x
+        go-task-version: 3.43.x
     
     - name: Run tests
       run: task test
@@ -68,15 +60,11 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    - name: Set up Go
-      uses: actions/setup-go@v5
+    - name: Install go and go-task
+      uses: ./.github/actions/setup
       with:
         go-version-file: './go.mod'
-
-    - name: Install go-task
-      uses: arduino/setup-task@v2
-      with:
-        version: 3.43.x
+        go-task-version: 3.43.x
 
     - name: Install migrator
       run: task install:migrator
