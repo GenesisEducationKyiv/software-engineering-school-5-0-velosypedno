@@ -20,7 +20,7 @@ jobs:
       run: task install
 
     - name: Run linter
-      run: task lint:remote -v
+      run: task lint -v
   
   test:
     name: Test
