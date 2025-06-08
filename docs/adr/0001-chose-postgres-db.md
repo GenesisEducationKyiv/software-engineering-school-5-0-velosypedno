@@ -1,4 +1,4 @@
-# ADR-0001: Use postgres database
+# ADR-0001: Chose postgres database
 
 ## Status
 
@@ -22,4 +22,4 @@ We chose `PostgreSQL` over `SQLite` for the following reasons:
 ## Consequences
 
 We run PostgreSQL in docker container (`postgres-weather`).  
-See [`docker-compose.yml`](/docker-compose.yml), where service is defined.
+See [`docker-compose.yml`](/docker-compose.yml), where the service is defined.

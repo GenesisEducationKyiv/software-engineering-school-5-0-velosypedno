@@ -1,4 +1,4 @@
-# Use separate migrator service
+# ADR-0003: Use separate migrator service
 
 ## Status
 
@@ -18,7 +18,7 @@ There were two options:
 ## Decision
 
 We created a standalone service `migrator` that runs database migrations using the `golang-migrate` CLI tool.  
-See [`docker-compose.yml`](/docker-compose.yml), where service is defined.
+See [`docker-compose.yml`](/docker-compose.yml), where the service is defined.
 
 ## Consequences
 
