@@ -50,14 +50,14 @@ func (s *SMTPEmailService) sendEmail(recipient, subject, body string) error {
 func (s *SMTPEmailService) SendConfirmationEmail(subscription models.Subscription) error {
 	recipient := subscription.Email
 	subject := "Subscription Confirmation"
-	confirmSubUrl := fmt.Sprintf("http://localhost:8080/api/confirm/%s", subscription.Token)
+	confirmSubURL := fmt.Sprintf("http://localhost:8080/api/confirm/%s", subscription.Token)
 	tmpl, err := template.ParseFiles("internal/templates/confirm_sub.html")
 	if err != nil {
 		return err
 	}
 
 	var body bytes.Buffer
-	if err := tmpl.Execute(&body, map[string]string{"Link": confirmSubUrl}); err != nil {
+	if err := tmpl.Execute(&body, map[string]string{"Link": confirmSubURL}); err != nil {
 		return err
 	}
 
