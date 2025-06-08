@@ -1,5 +1,8 @@
 version: '3'
 
+includes:
+  docker: ./Taskfile.docker.yml
+
 tasks:
   default:
     desc: List available tasks
@@ -12,11 +15,6 @@ tasks:
       - cp .env.sample .env
     silent: false
 
-  up:
-    desc: Run docker compose
-    cmds:
-      - docker compose up 
-  
   lint:
     desc: Run local linter config 
     cmds:

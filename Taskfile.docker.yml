@@ -1,0 +1,76 @@
+version: '3'
+
+tasks:
+  up:
+    desc: Run docker compose
+    cmds:
+      - docker compose up 
+
+  up:api:
+    desc: Run api-weather service
+    cmds:
+      - docker compose up api-weather
+
+  up:api:build:
+    desc: Build api-weather service
+    cmds:
+      - docker compose up --build api-weather
+
+  up:cron:
+    desc: Run cron-weather service
+    cmds:
+      - docker compose up cron-weather
+
+  up:cron:build:
+    desc: Build cron-weather service
+    cmds:
+      - docker compose up --build cron-weather
+
+  up:migrator:
+    desc: Run migrator service
+    cmds:
+      - docker compose up migrator
+
+  up:migrator:build:
+    desc: Build migrator service
+    cmds:
+      - docker compose up --build migrator
+
+  up:db:
+    desc: Run postgres-weather service
+    cmds:
+      - docker compose up postgres-weather
+
+  up:db:build:
+    desc: Build postgres-weather service
+    cmds:
+      - docker compose up --build postgres-weather
+
+  down:
+    desc: Stop docker compose
+    cmds:
+      - docker compose down
+
+  down:api:
+    desc: Stop api-weather service
+    cmds:
+      - docker compose stop api-weather
+      - docker compose rm -f api-weather
+
+  down:cron:
+    desc: Stop cron-weather service
+    cmds:
+      - docker compose stop cron-weather
+      - docker compose rm -f cron-weather
+
+  down:migrator:
+    desc: Stop migrator service
+    cmds:
+      - docker compose stop migrator
+      - docker compose rm -f migrator
+
+  down:db:
+    desc: Stop postgres-weather service
+    cmds:
+      - docker compose stop postgres-weather
+      - docker compose rm -f postgres-weather
