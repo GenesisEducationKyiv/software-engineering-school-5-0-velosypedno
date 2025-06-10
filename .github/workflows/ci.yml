@@ -14,13 +14,10 @@ jobs:
       uses: ./.github/actions/setup
       with:
         go-version-file: './go.mod'
-        go-task-version: 3.43.x
-
-    - name: Install Linter
-      run: task install
+        install-linter: 'true'
 
     - name: Run linter
-      run: task lint -v
+      run: task lint
   
   test:
     name: Test
@@ -33,7 +30,6 @@ jobs:
       uses: ./.github/actions/setup
       with:
         go-version-file: './go.mod'
-        go-task-version: 3.43.x
     
     - name: Run tests
       run: task test
@@ -64,10 +60,7 @@ jobs:
       uses: ./.github/actions/setup
       with:
         go-version-file: './go.mod'
-        go-task-version: 3.43.x
-
-    - name: Install migrator
-      run: task install:migrator
+        install-migrator: 'true'
 
     - name: Wait for postgres
       run: |

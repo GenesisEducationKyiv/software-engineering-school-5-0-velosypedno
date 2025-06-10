@@ -4,9 +4,14 @@ inputs:
   go-version-file:
     description: "Path to go.mod"
     required: true
-  go-task-version:
-    description: "Version of go-task"
-    required: true
+  install-migrator:
+    description: "Install migrator"
+    required: false
+    default: "false"
+  install-linter:
+    description: "Install linter"
+    required: false
+    default: "false"
 runs:
   using: "composite"
   steps:
@@ -17,4 +22,12 @@ runs:
     - name: "Install go-task"
       uses: arduino/setup-task@v2
       with:
-        version: ${{ inputs.go-task-version }}
+        version: 3.x
+    - name: "Install migrator"
+      if: ${{ inputs.install-migrator == 'true' }}
+      shell: bash
+      run: task install:migrator
+    - name: "Install linter"
+      if: ${{ inputs.install-linter == 'true' }}
+      shell: bash
+      run: task install:linter
