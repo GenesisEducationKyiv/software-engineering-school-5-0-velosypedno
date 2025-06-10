@@ -20,17 +20,21 @@ type TaskContainer struct {
 }
 
 func BuildTaskContainer(c *config.Config) *TaskContainer {
-	db, err := sql.Open(c.DB_DRIVER, c.DB_DSN)
+	db, err := sql.Open(c.DbDriver, c.DbDSN)
 	if err != nil {
 		log.Fatal(err)
 	}
-	weatherRepo := repos.NewWeatherAPIRepo(c.WEATHER_API_KEY, &http.Client{})
+	weatherRepo := repos.NewWeatherAPIRepo(c.WeatherAPIKey, &http.Client{})
 	subRepo := repos.NewSubscriptionDBRepo(db)
-	emailService := services.NewSmtpEmailService(c.SMTP_HOST, c.SMTP_PORT, c.SMTP_USER, c.SMTP_PASS, c.EMAIL_FROM)
+	emailService := services.NewSMTPEmailService(c.SMTPHost, c.SMTPPort, c.SMTPUser, c.SMTPPass, c.EmailFrom)
 
 	weatherMailerSrv := services.NewWeatherMailerService(subRepo, emailService, weatherRepo)
 	return &TaskContainer{
-		HourlyWeatherNotificationTask: func() { weatherMailerSrv.SendWeatherEmailsByFrequency(models.FreqHourly) },
-		DailyWeatherNotificationTask:  func() { weatherMailerSrv.SendWeatherEmailsByFrequency(models.FreqDaily) },
+		HourlyWeatherNotificationTask: func() {
+			weatherMailerSrv.SendWeatherEmailsByFreq(models.FreqHourly)
+		},
+		DailyWeatherNotificationTask: func() {
+			weatherMailerSrv.SendWeatherEmailsByFreq(models.FreqDaily)
+		},
 	}
 }

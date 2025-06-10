@@ -1,4 +1,4 @@
-package handlers
+package handlers_test
 
 import (
 	"errors"
@@ -10,6 +10,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/velosypedno/genesis-weather-api/internal/handlers"
 	"github.com/velosypedno/genesis-weather-api/internal/repos"
 )
 
@@ -71,7 +72,7 @@ func TestConfirmGETHandler(t *testing.T) {
 			}
 
 			route := gin.New()
-			route.GET("/confirm/:token", NewConfirmGETHandler(mockService))
+			route.GET("/confirm/:token", handlers.NewConfirmGETHandler(mockService))
 			req := httptest.NewRequest(http.MethodGet, "/confirm/"+tt.token, nil)
 			resp := httptest.NewRecorder()
 			route.ServeHTTP(resp, req)

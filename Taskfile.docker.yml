@@ -1,0 +1,38 @@
+version: '3'
+
+tasks:
+  up:
+    desc: Run all docker compose services
+    cmds:
+      - docker compose up -d
+
+  up:*:
+    desc: Run a particular docker compose service 
+    vars:
+      SERVICE: "{{ index .MATCH 0 }}"
+    cmds:
+      - docker compose up {{ .SERVICE }} -d
+
+  down:
+    desc: Stop all docker compose services
+    cmds:
+      - docker compose down
+
+  down:*:
+    desc: Stop a particular docker compose service 
+    vars:
+      SERVICE: "{{ index .MATCH 0 }}"
+    cmds:
+      - docker compose stop {{ .SERVICE }}
+  
+  build:
+    desc: Build all docker compose services
+    cmds:
+      - docker compose up --build -d
+
+  build:*:
+    desc: Build a particular docker compose service 
+    vars:
+      SERVICE: "{{ index .MATCH 0 }}"
+    cmds:
+      - docker compose up --build -d {{ .SERVICE }}
