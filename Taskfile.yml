@@ -34,7 +34,7 @@ tasks:
   install:migrator:
     desc: Install migrator
     cmds:
-      - go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+      - go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.16.2
 
   test:
     desc: Run tests
