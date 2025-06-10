@@ -37,6 +37,14 @@ jobs:
   migrations:
     name: Migrations
     runs-on: ubuntu-latest
+
+    env:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres_pass
+      POSTGRES_DB: weather
+      POSTGRES_PORT: 5432
+      POSTGRES_HOST: localhost
+
     services:
       postgres:
         image: postgres:latest
@@ -69,6 +77,6 @@ jobs:
           done
 
     - name: Run migrations
-      run: migrate -database "postgres://postgres:postgres_pass@localhost:5432/weather?sslmode=disable" -path db/migrations up
+      run: task migrate:up
 
           

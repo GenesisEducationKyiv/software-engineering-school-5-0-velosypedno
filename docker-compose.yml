@@ -38,7 +38,7 @@ services:
     depends_on:
       postgres-weather:
         condition: service_healthy
-    entrypoint: ["task", "migrate-up"]
+    entrypoint: ["task", "migrate:up"]
     restart: "no"
   api-weather:
     build: .

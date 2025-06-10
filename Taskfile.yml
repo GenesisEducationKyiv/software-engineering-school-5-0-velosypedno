@@ -41,7 +41,7 @@ tasks:
     cmds:
       - go test ./... -v
 
-  migrate-up:
+  migrate:up:
     desc: Run migrations
     cmds:
       - migrate -database "${DB_DRIVER}://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable" -path db/migrations up
