@@ -32,17 +32,19 @@
 
 ![img.png](./high-level-architecture-diagram.png)
 
-**The system is composed of three main internal services and one external dependency:**
+**The system is composed of three internal services and two external dependencies:**
 
-- `User` interacts with the system via an exposed API and receives periodic weather updates via email.
+- `User` interacts with the system via the public API to manage subscriptions and receives weather updates by email.
 
-- `API service` handles all user interactions and communicates with an external weather API to fetch live weather data.
+- `API service` handles subscription creation, confirmation, and unsubscription. It stores data in the database, validates city names via the Weather API, and sends confirmation links through the SMTP server.
 
-- `Cron service` is responsible for periodically sending weather updates to subscribed users.
+- `Cron service` runs continuously and periodically executes scheduled tasks. It loads active subscriptions from the database, fetches weather data from the Weather API, and sends weather updates to users via the SMTP server.
 
-- `DB` is the central storage unit for user data, subscription configurations, and possibly historical logs.
+- `DB` stores subscription data: email, city, delivery frequency (daily/hourly), activation status, and token.
 
-- `External Weather API` provides up-to-date weather information, which the system uses to compose notifications.
+- `External Weather API` provides current weather data used for city validation and notifications.
+
+- `External SMTP server` delivers confirmation and weather update emails to users.
 
 ## 4. DB schema
 
