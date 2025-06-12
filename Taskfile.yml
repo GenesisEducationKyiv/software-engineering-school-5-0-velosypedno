@@ -1,0 +1,47 @@
+version: '3'
+
+includes:
+  docker: ./Taskfile.docker.yml
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - go-task --list-all
+
+  copy-env:
+    desc: Copy default env vars
+    cmds:
+      - cp .env.sample .env
+    silent: false
+
+  lint:
+    desc: Run local linter config 
+    cmds:
+      - golangci-lint run --config <(curl -sSfL https://raw.githubusercontent.com/fabl3ss/genesis-se-school-linter/refs/heads/main/.golangci.yaml)
+
+  install:
+    desc: Install dependencies
+    cmds:
+      - task: install:linter
+      - task: install:migrator
+
+  install:linter:
+    desc: Install linter
+    cmds:
+      - go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.1.6
+
+  install:migrator:
+    desc: Install migrator
+    cmds:
+      - go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.16.2
+
+  test:
+    desc: Run tests
+    cmds:
+      - go test ./... -v
+
+  migrate:up:
+    desc: Run migrations
+    cmds:
+      - migrate -database "${DB_DRIVER}://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable" -path db/migrations up
