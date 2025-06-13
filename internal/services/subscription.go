@@ -6,9 +6,9 @@ import (
 )
 
 type SubscriptionRepo interface {
-	CreateSubscription(subscription models.Subscription) error
-	ActivateSubscription(token uuid.UUID) error
-	DeleteSubscriptionByToken(token uuid.UUID) error
+	Create(subscription models.Subscription) error
+	Activate(token uuid.UUID) error
+	DeleteByToken(token uuid.UUID) error
 }
 type confirmationEmailService interface {
 	SendConfirmationEmail(subscription models.Subscription) error
@@ -37,7 +37,7 @@ func (s *SubscriptionService) Subscribe(subInput SubscriptionInput) error {
 		Activated: false,
 		Token:     uuid.New(),
 	}
-	if err := s.repo.CreateSubscription(subscription); err != nil {
+	if err := s.repo.Create(subscription); err != nil {
 		return err
 	}
 	if err := s.mailer.SendConfirmationEmail(subscription); err != nil {
@@ -47,9 +47,9 @@ func (s *SubscriptionService) Subscribe(subInput SubscriptionInput) error {
 }
 
 func (s *SubscriptionService) ActivateSubscription(token uuid.UUID) error {
-	return s.repo.ActivateSubscription(token)
+	return s.repo.Activate(token)
 }
 
 func (s *SubscriptionService) Unsubscribe(token uuid.UUID) error {
-	return s.repo.DeleteSubscriptionByToken(token)
+	return s.repo.DeleteByToken(token)
 }

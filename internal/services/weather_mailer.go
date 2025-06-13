@@ -9,7 +9,7 @@ import (
 )
 
 type activatedSubscriptionsRepo interface {
-	GetActivatedSubsByFreq(freq models.Frequency) ([]models.Subscription, error)
+	GetActivatedByFreq(freq models.Frequency) ([]models.Subscription, error)
 }
 
 type currentWeatherEmailService interface {
@@ -39,7 +39,7 @@ func NewWeatherMailerService(
 }
 
 func (s *WeatherMailerService) SendWeatherEmailsByFreq(freq models.Frequency) {
-	subscriptions, err := s.subRepo.GetActivatedSubsByFreq(freq)
+	subscriptions, err := s.subRepo.GetActivatedByFreq(freq)
 	if err != nil {
 		log.Println(fmt.Errorf("weather mailer service: failed to get subscriptions, err:%v ", err))
 		return

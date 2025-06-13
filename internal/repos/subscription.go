@@ -28,7 +28,7 @@ func NewSubscriptionDBRepo(db *sql.DB) *SubscriptionDBRepo {
 	}
 }
 
-func (r *SubscriptionDBRepo) CreateSubscription(subscription models.Subscription) error {
+func (r *SubscriptionDBRepo) Create(subscription models.Subscription) error {
 	_, err := r.db.Exec(`
 		INSERT INTO subscriptions (id, email, frequency, city, activated, token)
 		VALUES ($1, $2, $3, $4, $5, $6)
@@ -52,7 +52,7 @@ func (r *SubscriptionDBRepo) CreateSubscription(subscription models.Subscription
 	return nil
 }
 
-func (r *SubscriptionDBRepo) ActivateSubscription(token uuid.UUID) error {
+func (r *SubscriptionDBRepo) Activate(token uuid.UUID) error {
 	res, err := r.db.Exec("UPDATE subscriptions SET activated = true WHERE token = $1", token)
 	if err != nil {
 		err = fmt.Errorf("subscription repo: failed to activate subscription, err:%v ", err)
@@ -69,7 +69,7 @@ func (r *SubscriptionDBRepo) ActivateSubscription(token uuid.UUID) error {
 	return nil
 }
 
-func (r *SubscriptionDBRepo) DeleteSubscriptionByToken(token uuid.UUID) error {
+func (r *SubscriptionDBRepo) DeleteByToken(token uuid.UUID) error {
 	res, err := r.db.Exec("DELETE FROM subscriptions WHERE token = $1", token)
 	if err != nil {
 		err = fmt.Errorf("subscription repo: failed to delete subscription, err:%v ", err)
@@ -86,7 +86,7 @@ func (r *SubscriptionDBRepo) DeleteSubscriptionByToken(token uuid.UUID) error {
 	return nil
 }
 
-func (r *SubscriptionDBRepo) GetActivatedSubsByFreq(freq models.Frequency) ([]models.Subscription, error) {
+func (r *SubscriptionDBRepo) GetActivatedByFreq(freq models.Frequency) ([]models.Subscription, error) {
 	rows, err := r.db.Query("SELECT * FROM subscriptions WHERE activated = true AND frequency = $1", freq)
 	if err != nil {
 		err = fmt.Errorf("subscription repo: failed to get subscriptions, err:%v ", err)
