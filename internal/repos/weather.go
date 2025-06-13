@@ -49,7 +49,7 @@ type weatherAPIErrorResponse struct {
 	} `json:"error"`
 }
 
-func (r *WeatherAPIRepo) GetCurrentWeather(ctx context.Context, city string) (models.Weather, error) {
+func (r *WeatherAPIRepo) GetCurrent(ctx context.Context, city string) (models.Weather, error) {
 	q := url.QueryEscape(city)
 	url := fmt.Sprintf("http://api.weatherapi.com/v1/current.json?key=%s&q=%s", r.apiKey, q)
 

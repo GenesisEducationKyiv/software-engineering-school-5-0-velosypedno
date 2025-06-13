@@ -40,7 +40,7 @@ func TestGetCurrentWeather_Success(t *testing.T) {
 	}
 
 	repo := repos.NewWeatherAPIRepo("dummy-api-key", client)
-	weather, err := repo.GetCurrentWeather(context.Background(), "Kyiv")
+	weather, err := repo.GetCurrent(context.Background(), "Kyiv")
 
 	assert.NoError(t, err)
 	assert.Equal(t, 10000.0, weather.Temperature)
@@ -66,7 +66,7 @@ func TestGetCurrentWeather_CityNotFound(t *testing.T) {
 	}
 
 	repo := repos.NewWeatherAPIRepo("dummy-api-key", client)
-	_, err := repo.GetCurrentWeather(context.Background(), "InvalidCity")
+	_, err := repo.GetCurrent(context.Background(), "InvalidCity")
 
 	assert.ErrorIs(t, err, repos.ErrCityNotFound)
 }
@@ -82,7 +82,7 @@ func TestGetCurrentWeather_APIKeyInvalid(t *testing.T) {
 	}
 
 	repo := repos.NewWeatherAPIRepo("invalid-api-key", client)
-	_, err := repo.GetCurrentWeather(context.Background(), "Kyiv")
+	_, err := repo.GetCurrent(context.Background(), "Kyiv")
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "api key is invalid")
@@ -96,7 +96,7 @@ func TestGetCurrentWeather_HTTPError(t *testing.T) {
 	}
 
 	repo := repos.NewWeatherAPIRepo("dummy-api-key", client)
-	_, err := repo.GetCurrentWeather(context.Background(), "Kyiv")
+	_, err := repo.GetCurrent(context.Background(), "Kyiv")
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to get weather")
@@ -113,7 +113,7 @@ func TestGetCurrentWeather_BadJSON(t *testing.T) {
 	}
 
 	repo := repos.NewWeatherAPIRepo("dummy-api-key", client)
-	_, err := repo.GetCurrentWeather(context.Background(), "Kyiv")
+	_, err := repo.GetCurrent(context.Background(), "Kyiv")
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to decode")

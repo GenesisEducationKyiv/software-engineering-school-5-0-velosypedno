@@ -17,7 +17,7 @@ type currentWeatherEmailService interface {
 }
 
 type weatherRepo interface {
-	GetCurrentWeather(ctx context.Context, city string) (models.Weather, error)
+	GetCurrent(ctx context.Context, city string) (models.Weather, error)
 }
 
 type WeatherMailerService struct {
@@ -45,7 +45,7 @@ func (s *WeatherMailerService) SendWeatherEmailsByFreq(freq models.Frequency) {
 		return
 	}
 	for _, sub := range subscriptions {
-		weather, err := s.weatherRepo.GetCurrentWeather(context.Background(), sub.City)
+		weather, err := s.weatherRepo.GetCurrent(context.Background(), sub.City)
 		if err != nil {
 			err = fmt.Errorf("weather mailer service: failed to get weather for %s, err:%v ", sub.City, err)
 			log.Println(err)

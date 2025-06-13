@@ -7,7 +7,7 @@ import (
 )
 
 type WeatherRepo interface {
-	GetCurrentWeather(ctx context.Context, city string) (models.Weather, error)
+	GetCurrent(ctx context.Context, city string) (models.Weather, error)
 }
 
 type WeatherService struct {
@@ -19,5 +19,5 @@ func NewWeatherService(repo WeatherRepo) *WeatherService {
 }
 
 func (s *WeatherService) GetCurrentWeather(ctx context.Context, city string) (models.Weather, error) {
-	return s.repo.GetCurrentWeather(ctx, city)
+	return s.repo.GetCurrent(ctx, city)
 }
