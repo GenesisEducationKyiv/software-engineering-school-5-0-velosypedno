@@ -6,6 +6,7 @@ Weather API application that allows users to subscribe to weather updates for th
 
 - [Installation](#install)
 - [Testing](#testing)
+- [Setup Git hook](#setup-git-hook)
 - [API](#api)
 - [Architecture](#architecture)
 - [License](#license)
@@ -39,7 +40,7 @@ Ensure you have the following installed:
     Copy `.env.sample`
 
     ```bash
-    go-task copy-env
+    go-task copy:env
     ```
 
     **NOTE**: `.env` must be edited manually. You need to set smtp credentials, API key, etc.
@@ -62,6 +63,20 @@ Ensure you have the following installed:
 
     ```bash
     go-task test
+    ```
+
+## Setup Git hook
+
+- **To install the pre-commit Git hook that runs linter automatically before each commit:**
+
+    ```bash
+    go-task copy:hook:pre-commit
+    ```
+
+- **To remove the pre-commit Git hook:**
+
+    ```bash
+    go-task rm:hook:pre-commit
     ```
 
 ## API
