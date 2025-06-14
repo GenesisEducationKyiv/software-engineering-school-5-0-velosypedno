@@ -15,14 +15,14 @@ import (
 	"github.com/velosypedno/genesis-weather-api/internal/services"
 )
 
-type HandlerContainer struct {
+type Handlers struct {
 	WeatherGETHandler     gin.HandlerFunc
 	SubscribePOSTHandler  gin.HandlerFunc
 	ConfirmGETHandler     gin.HandlerFunc
 	UnsubscribeGETHandler gin.HandlerFunc
 }
 
-func BuildHandlerContainer(c *config.Config) *HandlerContainer {
+func NewHandlers(c *config.Config) *Handlers {
 	db, err := sql.Open(c.DbDriver, c.DbDSN)
 	if err != nil {
 		log.Fatal(err)
@@ -35,7 +35,7 @@ func BuildHandlerContainer(c *config.Config) *HandlerContainer {
 	subMailer := mailers.NewSubscriptionMailer(smtpEmailBackend)
 	subService := services.NewSubscriptionService(subRepo, subMailer)
 
-	return &HandlerContainer{
+	return &Handlers{
 		WeatherGETHandler:     handlers.NewWeatherGETHandler(weatherService),
 		SubscribePOSTHandler:  handlers.NewSubscribePOSTHandler(subService),
 		ConfirmGETHandler:     handlers.NewConfirmGETHandler(subService),

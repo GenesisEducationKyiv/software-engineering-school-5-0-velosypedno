@@ -10,8 +10,8 @@ import (
 
 func main() {
 	cfg := config.Load()
-	handlerContainer := ioc.BuildHandlerContainer(cfg)
-	router := server.SetupRoutes(handlerContainer)
+	handlers := ioc.NewHandlers(cfg)
+	router := server.SetupRoutes(handlers)
 	err := router.Run(":" + cfg.Port)
 	if err != nil {
 		log.Fatal("Server error:", err)

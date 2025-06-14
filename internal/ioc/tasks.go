@@ -16,12 +16,12 @@ import (
 
 type task func()
 
-type TaskContainer struct {
+type Tasks struct {
 	HourlyWeatherNotificationTask task
 	DailyWeatherNotificationTask  task
 }
 
-func BuildTaskContainer(c *config.Config) *TaskContainer {
+func NewTasks(c *config.Config) *Tasks {
 	db, err := sql.Open(c.DbDriver, c.DbDSN)
 	if err != nil {
 		log.Fatal(err)
@@ -32,7 +32,7 @@ func BuildTaskContainer(c *config.Config) *TaskContainer {
 	weatherMailer := mailers.NewWeatherMailer(stdoutEmailBackend)
 	weatherMailerSrv := services.NewWeatherNotificationService(subRepo, weatherMailer, weatherRepo)
 
-	return &TaskContainer{
+	return &Tasks{
 		HourlyWeatherNotificationTask: func() {
 			weatherMailerSrv.SendByFreq(models.FreqHourly)
 		},
