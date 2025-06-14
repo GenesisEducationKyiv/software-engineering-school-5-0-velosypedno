@@ -13,7 +13,7 @@ type activatedSubscriptionsRepo interface {
 }
 
 type currentWeatherEmailService interface {
-	SendWeatherEmail(subscription models.Subscription, weather models.Weather) error
+	SendCurrent(subscription models.Subscription, weather models.Weather) error
 }
 
 type weatherRepo interface {
@@ -51,7 +51,7 @@ func (s *WeatherMailerService) SendWeatherEmailsByFreq(freq models.Frequency) {
 			log.Println(err)
 			continue
 		}
-		if err := s.emailSrv.SendWeatherEmail(sub, weather); err != nil {
+		if err := s.emailSrv.SendCurrent(sub, weather); err != nil {
 			err = fmt.Errorf("weather mailer service: failed to send email to %s, err:%v ", sub.Email, err)
 			log.Println(err)
 			continue

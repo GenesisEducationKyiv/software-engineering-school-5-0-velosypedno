@@ -10,8 +10,8 @@ type SubscriptionRepo interface {
 	Activate(token uuid.UUID) error
 	DeleteByToken(token uuid.UUID) error
 }
-type confirmationEmailService interface {
-	SendConfirmationEmail(subscription models.Subscription) error
+type confirmationMailer interface {
+	SendConfirmation(subscription models.Subscription) error
 }
 type SubscriptionInput struct {
 	Email     string
@@ -21,10 +21,10 @@ type SubscriptionInput struct {
 
 type SubscriptionService struct {
 	repo   SubscriptionRepo
-	mailer confirmationEmailService
+	mailer confirmationMailer
 }
 
-func NewSubscriptionService(repo SubscriptionRepo, mailer confirmationEmailService) *SubscriptionService {
+func NewSubscriptionService(repo SubscriptionRepo, mailer confirmationMailer) *SubscriptionService {
 	return &SubscriptionService{repo: repo, mailer: mailer}
 }
 
@@ -40,7 +40,7 @@ func (s *SubscriptionService) Subscribe(subInput SubscriptionInput) error {
 	if err := s.repo.Create(subscription); err != nil {
 		return err
 	}
-	if err := s.mailer.SendConfirmationEmail(subscription); err != nil {
+	if err := s.mailer.SendConfirmation(subscription); err != nil {
 		return err
 	}
 	return nil

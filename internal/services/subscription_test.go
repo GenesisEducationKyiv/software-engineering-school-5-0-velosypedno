@@ -29,7 +29,7 @@ type mockMailer struct {
 	sendErr error
 }
 
-func (m *mockMailer) SendConfirmationEmail(sub models.Subscription) error {
+func (m *mockMailer) SendConfirmation(sub models.Subscription) error {
 	return m.sendErr
 }
 

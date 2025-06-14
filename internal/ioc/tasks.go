@@ -7,6 +7,8 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/velosypedno/genesis-weather-api/internal/config"
+	"github.com/velosypedno/genesis-weather-api/internal/email"
+	"github.com/velosypedno/genesis-weather-api/internal/mailers"
 	"github.com/velosypedno/genesis-weather-api/internal/models"
 	"github.com/velosypedno/genesis-weather-api/internal/repos"
 	"github.com/velosypedno/genesis-weather-api/internal/services"
@@ -26,9 +28,10 @@ func BuildTaskContainer(c *config.Config) *TaskContainer {
 	}
 	weatherRepo := repos.NewWeatherAPIRepo(c.WeatherAPIKey, &http.Client{})
 	subRepo := repos.NewSubscriptionDBRepo(db)
-	emailService := services.NewSMTPEmailService(c.SMTPHost, c.SMTPPort, c.SMTPUser, c.SMTPPass, c.EmailFrom)
+	stdoutEmailBackend := email.NewStdoutBackend()
+	weatherMailer := mailers.NewWeatherMailer(stdoutEmailBackend)
+	weatherMailerSrv := services.NewWeatherMailerService(subRepo, weatherMailer, weatherRepo)
 
-	weatherMailerSrv := services.NewWeatherMailerService(subRepo, emailService, weatherRepo)
 	return &TaskContainer{
 		HourlyWeatherNotificationTask: func() {
 			weatherMailerSrv.SendWeatherEmailsByFreq(models.FreqHourly)

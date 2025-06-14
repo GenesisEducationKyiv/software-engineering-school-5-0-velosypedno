@@ -8,7 +8,9 @@ import (
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
 	"github.com/velosypedno/genesis-weather-api/internal/config"
+	"github.com/velosypedno/genesis-weather-api/internal/email"
 	"github.com/velosypedno/genesis-weather-api/internal/handlers"
+	"github.com/velosypedno/genesis-weather-api/internal/mailers"
 	"github.com/velosypedno/genesis-weather-api/internal/repos"
 	"github.com/velosypedno/genesis-weather-api/internal/services"
 )
@@ -29,8 +31,9 @@ func BuildHandlerContainer(c *config.Config) *HandlerContainer {
 	weatherService := services.NewWeatherService(weatherRepo)
 
 	subRepo := repos.NewSubscriptionDBRepo(db)
-	emailService := services.NewSMTPEmailService(c.SMTPHost, c.SMTPPort, c.SMTPUser, c.SMTPPass, c.EmailFrom)
-	subService := services.NewSubscriptionService(subRepo, emailService)
+	smtpEmailBackend := email.NewSMTPBackend(c.SMTPHost, c.SMTPPort, c.SMTPUser, c.SMTPPass, c.EmailFrom)
+	subMailer := mailers.NewSubscriptionMailer(smtpEmailBackend)
+	subService := services.NewSubscriptionService(subRepo, subMailer)
 
 	return &HandlerContainer{
 		WeatherGETHandler:     handlers.NewWeatherGETHandler(weatherService),
