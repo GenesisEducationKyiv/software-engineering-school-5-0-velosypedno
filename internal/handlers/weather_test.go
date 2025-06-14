@@ -2,7 +2,6 @@ package handlers_test
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -13,7 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/velosypedno/genesis-weather-api/internal/handlers"
 	"github.com/velosypedno/genesis-weather-api/internal/models"
-	"github.com/velosypedno/genesis-weather-api/internal/repos"
+	"github.com/velosypedno/genesis-weather-api/internal/services"
 )
 
 type mockWeatherRepo struct {
@@ -56,14 +55,14 @@ func TestNewWeatherGETHandler(t *testing.T) {
 			name:           "city not found",
 			city:           "Bagatkino",
 			mockReturn:     models.Weather{},
-			mockError:      repos.ErrCityNotFound,
+			mockError:      services.ErrNotFound,
 			expectedStatus: http.StatusNotFound,
 		},
 		{
 			name:           "internal error",
 			city:           "Kyiv",
 			mockReturn:     models.Weather{},
-			mockError:      errors.New("api failure"),
+			mockError:      services.ErrInternal,
 			expectedStatus: http.StatusInternalServerError,
 		},
 		{

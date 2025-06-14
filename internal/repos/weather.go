@@ -12,7 +12,9 @@ import (
 	"github.com/velosypedno/genesis-weather-api/internal/models"
 )
 
-var ErrCityNotFound = errors.New("weather repo: city not found")
+const noMatchingLocationFoundCode = 1006
+
+var ErrCityNotFound = errors.New("city not found")
 
 type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
@@ -39,8 +41,6 @@ type weatherAPIResponse struct {
 		} `json:"condition"`
 	} `json:"current"`
 }
-
-const noMatchingLocationFoundCode = 1006
 
 type weatherAPIErrorResponse struct {
 	Error struct {

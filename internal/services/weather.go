@@ -2,8 +2,16 @@ package services
 
 import (
 	"context"
+	"errors"
+	"log"
 
 	"github.com/velosypedno/genesis-weather-api/internal/models"
+	"github.com/velosypedno/genesis-weather-api/internal/repos"
+)
+
+var (
+	ErrNotFound = errors.New("not found")
+	ErrInternal = errors.New("internal error")
 )
 
 type WeatherRepo interface {
@@ -19,5 +27,12 @@ func NewWeatherService(repo WeatherRepo) *WeatherService {
 }
 
 func (s *WeatherService) GetCurrent(ctx context.Context, city string) (models.Weather, error) {
-	return s.repo.GetCurrent(ctx, city)
+	w, err := s.repo.GetCurrent(ctx, city)
+	if errors.Is(err, repos.ErrCityNotFound) {
+		return models.Weather{}, ErrNotFound
+	} else if err != nil {
+		log.Println(err)
+		return models.Weather{}, ErrInternal
+	}
+	return w, nil
 }
