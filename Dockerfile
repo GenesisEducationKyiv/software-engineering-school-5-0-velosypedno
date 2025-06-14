@@ -22,5 +22,6 @@ COPY --from=builder /app/bin/cron ./bin/cron
 COPY --from=builder /go/bin/task /usr/local/bin/task
 COPY --from=builder /go/bin/migrate /usr/local/bin/migrate
 
-COPY --from=builder /app/db/migrations ./db/migrations
+COPY db/migrations ./db/migrations
+COPY internal/templates ./internal/templates
 
