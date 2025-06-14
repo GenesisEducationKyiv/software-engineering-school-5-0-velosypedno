@@ -30,14 +30,14 @@ func BuildTaskContainer(c *config.Config) *TaskContainer {
 	subRepo := repos.NewSubscriptionDBRepo(db)
 	stdoutEmailBackend := email.NewStdoutBackend()
 	weatherMailer := mailers.NewWeatherMailer(stdoutEmailBackend)
-	weatherMailerSrv := services.NewWeatherMailerService(subRepo, weatherMailer, weatherRepo)
+	weatherMailerSrv := services.NewWeatherNotificationService(subRepo, weatherMailer, weatherRepo)
 
 	return &TaskContainer{
 		HourlyWeatherNotificationTask: func() {
-			weatherMailerSrv.SendWeatherEmailsByFreq(models.FreqHourly)
+			weatherMailerSrv.SendByFreq(models.FreqHourly)
 		},
 		DailyWeatherNotificationTask: func() {
-			weatherMailerSrv.SendWeatherEmailsByFreq(models.FreqDaily)
+			weatherMailerSrv.SendByFreq(models.FreqDaily)
 		},
 	}
 }
