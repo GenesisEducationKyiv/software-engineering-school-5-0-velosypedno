@@ -20,7 +20,7 @@ type mockWeatherRepo struct {
 	mock.Mock
 }
 
-func (m *mockWeatherRepo) GetCurrentWeather(ctx context.Context, city string) (models.Weather, error) {
+func (m *mockWeatherRepo) GetCurrent(ctx context.Context, city string) (models.Weather, error) {
 	args := m.Called(ctx, city)
 	weather, ok := args.Get(0).(models.Weather)
 	if !ok {
@@ -81,7 +81,7 @@ func TestNewWeatherGETHandler(t *testing.T) {
 
 			if tt.city != "" {
 				mockRepo.
-					On("GetCurrentWeather", mock.Anything, tt.city).
+					On("GetCurrent", mock.Anything, tt.city).
 					Return(tt.mockReturn, tt.mockError)
 			}
 

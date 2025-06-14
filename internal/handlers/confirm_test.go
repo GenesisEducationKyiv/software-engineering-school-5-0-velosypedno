@@ -18,7 +18,7 @@ type mockSubscriptionActivator struct {
 	mock.Mock
 }
 
-func (m *mockSubscriptionActivator) ActivateSubscription(token uuid.UUID) error {
+func (m *mockSubscriptionActivator) Activate(token uuid.UUID) error {
 	args := m.Called(token)
 	return args.Error(0)
 }
@@ -67,7 +67,7 @@ func TestConfirmGETHandler(t *testing.T) {
 			if tt.mockErr != nil || tt.expectedStatus != http.StatusBadRequest {
 				tokenUUID, err := uuid.Parse(tt.token)
 				if err == nil {
-					mockService.On("ActivateSubscription", tokenUUID).Return(tt.mockErr)
+					mockService.On("Activate", tokenUUID).Return(tt.mockErr)
 				}
 			}
 

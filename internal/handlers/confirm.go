@@ -11,7 +11,7 @@ import (
 )
 
 type subscriptionActivator interface {
-	ActivateSubscription(token uuid.UUID) error
+	Activate(token uuid.UUID) error
 }
 
 func NewConfirmGETHandler(service subscriptionActivator) gin.HandlerFunc {
@@ -25,7 +25,7 @@ func NewConfirmGETHandler(service subscriptionActivator) gin.HandlerFunc {
 			return
 		}
 
-		err = service.ActivateSubscription(parsedToken)
+		err = service.Activate(parsedToken)
 		if err == repos.ErrTokenNotFound {
 			c.JSON(http.StatusNotFound, gin.H{"error": "token not found"})
 			return

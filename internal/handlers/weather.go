@@ -11,7 +11,7 @@ import (
 )
 
 type WeatherRepo interface {
-	GetCurrentWeather(ctx context.Context, city string) (models.Weather, error)
+	GetCurrent(ctx context.Context, city string) (models.Weather, error)
 }
 
 func NewWeatherGETHandler(repo WeatherRepo) gin.HandlerFunc {
@@ -21,7 +21,7 @@ func NewWeatherGETHandler(repo WeatherRepo) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 			return
 		}
-		weather, err := repo.GetCurrentWeather(c.Request.Context(), city)
+		weather, err := repo.GetCurrent(c.Request.Context(), city)
 		if err != nil {
 			if err == repos.ErrCityNotFound {
 				c.JSON(http.StatusNotFound, gin.H{"error": "city not found"})

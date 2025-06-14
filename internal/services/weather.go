@@ -18,6 +18,6 @@ func NewWeatherService(repo WeatherRepo) *WeatherService {
 	return &WeatherService{repo: repo}
 }
 
-func (s *WeatherService) GetCurrentWeather(ctx context.Context, city string) (models.Weather, error) {
+func (s *WeatherService) GetCurrent(ctx context.Context, city string) (models.Weather, error) {
 	return s.repo.GetCurrent(ctx, city)
 }

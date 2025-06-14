@@ -46,7 +46,7 @@ func (s *SubscriptionService) Subscribe(subInput SubscriptionInput) error {
 	return nil
 }
 
-func (s *SubscriptionService) ActivateSubscription(token uuid.UUID) error {
+func (s *SubscriptionService) Activate(token uuid.UUID) error {
 	return s.repo.Activate(token)
 }
 
