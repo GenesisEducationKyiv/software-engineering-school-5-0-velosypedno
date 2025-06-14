@@ -9,7 +9,13 @@ tasks:
     cmds:
       - go-task --list-all
 
-  copy-env:
+  setup:hook:pre-commit:
+    desc: Setup pre-commit hook
+    cmds:
+      - cp pre-commit .git/hooks/pre-commit
+      - chmod +x .git/hooks/pre-commit
+
+  copy:env:
     desc: Copy default env vars
     cmds:
       - cp .env.sample .env
