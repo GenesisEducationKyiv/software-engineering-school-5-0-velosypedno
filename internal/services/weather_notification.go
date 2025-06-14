@@ -47,12 +47,14 @@ func (s *WeatherNotificationService) SendByFreq(freq models.Frequency) {
 	for _, sub := range subscriptions {
 		weather, err := s.weatherRepo.GetCurrent(context.Background(), sub.City)
 		if err != nil {
-			err = fmt.Errorf("weather notification service: failed to get weather for %s, err:%v ", sub.City, err)
+			err = fmt.Errorf("weather notification service: failed to get weather for %s, err:%v ",
+				sub.City, err)
 			log.Println(err)
 			continue
 		}
 		if err := s.weatherMailer.SendCurrent(sub, weather); err != nil {
-			err = fmt.Errorf("weather notification service: failed to send email to %s, err:%v ", sub.Email, err)
+			err = fmt.Errorf("weather notification service: failed to send email to %s, err:%v ",
+				sub.Email, err)
 			log.Println(err)
 			continue
 		}
