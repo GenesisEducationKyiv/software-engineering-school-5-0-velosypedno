@@ -70,13 +70,13 @@ Ensure you have the following installed:
 - **To install the pre-commit Git hook that runs linter automatically before each commit:**
 
     ```bash
-    go-task copy:hook:pre-commit
+    go-task copy:hooks:pre-commit
     ```
 
 - **To remove the pre-commit Git hook:**
 
     ```bash
-    go-task rm:hook:pre-commit
+    go-task rm:hooks:pre-commit
     ```
 
 ## API
