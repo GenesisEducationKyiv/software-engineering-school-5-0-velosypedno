@@ -46,7 +46,7 @@ func TestCreateSubscription_Success(t *testing.T) {
 		WithArgs(sub.ID, sub.Email, sub.Frequency, sub.City, sub.Activated, sub.Token).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	err = repo.CreateSubscription(sub)
+	err = repo.Create(sub)
 	assert.NoError(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
@@ -78,7 +78,7 @@ func TestCreateSubscription_EmailExists(t *testing.T) {
 		WithArgs(sub.ID, sub.Email, sub.Frequency, sub.City, sub.Activated, sub.Token).
 		WillReturnError(pqErr)
 
-	err = repo.CreateSubscription(sub)
+	err = repo.Create(sub)
 	assert.ErrorIs(t, err, repos.ErrEmailAlreadyExists)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
@@ -95,7 +95,7 @@ func TestActivateSubscription_Success(t *testing.T) {
 		WithArgs(token).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	err = repo.ActivateSubscription(token)
+	err = repo.Activate(token)
 	assert.NoError(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
@@ -114,7 +114,7 @@ func TestActivateSubscription_TokenNotFound(t *testing.T) {
 		WithArgs(token).
 		WillReturnResult(sqlmock.NewResult(0, 0))
 
-	err = repo.ActivateSubscription(token)
+	err = repo.Activate(token)
 	assert.ErrorIs(t, err, repos.ErrTokenNotFound)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
@@ -131,7 +131,7 @@ func TestDeleteSubscriptionByToken_Success(t *testing.T) {
 		WithArgs(token).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	err = repo.DeleteSubscriptionByToken(token)
+	err = repo.DeleteByToken(token)
 	assert.NoError(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
@@ -148,7 +148,7 @@ func TestDeleteSubscriptionByToken_TokenNotFound(t *testing.T) {
 		WithArgs(token).
 		WillReturnResult(sqlmock.NewResult(0, 0))
 
-	err = repo.DeleteSubscriptionByToken(token)
+	err = repo.DeleteByToken(token)
 	assert.ErrorIs(t, err, repos.ErrTokenNotFound)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
@@ -172,7 +172,7 @@ func TestGetActivatedSubscriptionsByFreq_Success(t *testing.T) {
 		WithArgs(freq).
 		WillReturnRows(rows)
 
-	subs, err := repo.GetActivatedSubsByFreq(freq)
+	subs, err := repo.GetActivatedByFreq(freq)
 	assert.NoError(t, err)
 	assert.Len(t, subs, 2)
 }
@@ -192,7 +192,7 @@ func TestGetActivatedSubscriptionsByFreq_QueryError(t *testing.T) {
 		WithArgs(freq).
 		WillReturnError(errors.New("query error"))
 
-	subs, err := repo.GetActivatedSubsByFreq(freq)
+	subs, err := repo.GetActivatedByFreq(freq)
 	assert.Error(t, err)
 	assert.Nil(t, subs)
 }

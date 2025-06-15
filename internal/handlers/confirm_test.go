@@ -11,14 +11,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/velosypedno/genesis-weather-api/internal/handlers"
-	"github.com/velosypedno/genesis-weather-api/internal/repos"
+	"github.com/velosypedno/genesis-weather-api/internal/services"
 )
 
 type mockSubscriptionActivator struct {
 	mock.Mock
 }
 
-func (m *mockSubscriptionActivator) ActivateSubscription(token uuid.UUID) error {
+func (m *mockSubscriptionActivator) Activate(token uuid.UUID) error {
 	args := m.Called(token)
 	return args.Error(0)
 }
@@ -44,7 +44,7 @@ func TestConfirmGETHandler(t *testing.T) {
 		{
 			name:           "token not found",
 			token:          validUUID.String(),
-			mockErr:        repos.ErrTokenNotFound,
+			mockErr:        services.ErrSubNotFound,
 			expectedStatus: http.StatusNotFound,
 		},
 		{
@@ -67,7 +67,7 @@ func TestConfirmGETHandler(t *testing.T) {
 			if tt.mockErr != nil || tt.expectedStatus != http.StatusBadRequest {
 				tokenUUID, err := uuid.Parse(tt.token)
 				if err == nil {
-					mockService.On("ActivateSubscription", tokenUUID).Return(tt.mockErr)
+					mockService.On("Activate", tokenUUID).Return(tt.mockErr)
 				}
 			}
 

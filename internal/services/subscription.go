@@ -1,17 +1,27 @@
 package services
 
 import (
+	"errors"
+	"log"
+
 	"github.com/google/uuid"
+	"github.com/velosypedno/genesis-weather-api/internal/mailers"
 	"github.com/velosypedno/genesis-weather-api/internal/models"
+	"github.com/velosypedno/genesis-weather-api/internal/repos"
+)
+
+var (
+	ErrSubNotFound      = errors.New("subscription not found")
+	ErrSubAlreadyExists = errors.New("subscription with this email already exists")
 )
 
 type SubscriptionRepo interface {
-	CreateSubscription(subscription models.Subscription) error
-	ActivateSubscription(token uuid.UUID) error
-	DeleteSubscriptionByToken(token uuid.UUID) error
+	Create(subscription models.Subscription) error
+	Activate(token uuid.UUID) error
+	DeleteByToken(token uuid.UUID) error
 }
-type confirmationEmailService interface {
-	SendConfirmationEmail(subscription models.Subscription) error
+type confirmationMailer interface {
+	SendConfirmation(subscription models.Subscription) error
 }
 type SubscriptionInput struct {
 	Email     string
@@ -21,10 +31,10 @@ type SubscriptionInput struct {
 
 type SubscriptionService struct {
 	repo   SubscriptionRepo
-	mailer confirmationEmailService
+	mailer confirmationMailer
 }
 
-func NewSubscriptionService(repo SubscriptionRepo, mailer confirmationEmailService) *SubscriptionService {
+func NewSubscriptionService(repo SubscriptionRepo, mailer confirmationMailer) *SubscriptionService {
 	return &SubscriptionService{repo: repo, mailer: mailer}
 }
 
@@ -37,19 +47,41 @@ func (s *SubscriptionService) Subscribe(subInput SubscriptionInput) error {
 		Activated: false,
 		Token:     uuid.New(),
 	}
-	if err := s.repo.CreateSubscription(subscription); err != nil {
-		return err
+	if err := s.repo.Create(subscription); err != nil {
+		return handleSubRepoError(err)
 	}
-	if err := s.mailer.SendConfirmationEmail(subscription); err != nil {
-		return err
+
+	err := s.mailer.SendConfirmation(subscription)
+	if errors.Is(err, mailers.ErrSendEmail) {
+		return ErrInternal
+	} else if err != nil {
+		log.Println(err)
+		return ErrInternal
 	}
 	return nil
 }
 
-func (s *SubscriptionService) ActivateSubscription(token uuid.UUID) error {
-	return s.repo.ActivateSubscription(token)
+func (s *SubscriptionService) Activate(token uuid.UUID) error {
+	err := s.repo.Activate(token)
+	return handleSubRepoError(err)
 }
 
 func (s *SubscriptionService) Unsubscribe(token uuid.UUID) error {
-	return s.repo.DeleteSubscriptionByToken(token)
+	err := s.repo.DeleteByToken(token)
+	return handleSubRepoError(err)
+}
+
+func handleSubRepoError(err error) error {
+	switch {
+	case errors.Is(err, repos.ErrTokenNotFound):
+		return ErrSubNotFound
+	case errors.Is(err, repos.ErrInternal):
+		return ErrInternal
+	case errors.Is(err, repos.ErrEmailAlreadyExists):
+		return ErrSubAlreadyExists
+	case err != nil:
+		log.Println(err)
+		return ErrInternal
+	}
+	return nil
 }

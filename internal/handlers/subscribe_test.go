@@ -13,7 +13,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/velosypedno/genesis-weather-api/internal/handlers"
-	"github.com/velosypedno/genesis-weather-api/internal/repos"
 	"github.com/velosypedno/genesis-weather-api/internal/services"
 )
 
@@ -59,7 +58,7 @@ func TestSubscribePOSTHandler(t *testing.T) {
 		{
 			name:           "conflict - email already exists",
 			body:           `{"email": "test@example.com", "frequency": "daily", "city": "Kyiv"}`,
-			mockSrvErr:     repos.ErrEmailAlreadyExists,
+			mockSrvErr:     services.ErrSubAlreadyExists,
 			expectedStatus: http.StatusConflict,
 		},
 		{
