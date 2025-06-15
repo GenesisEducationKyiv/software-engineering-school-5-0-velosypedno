@@ -1,10 +1,14 @@
 package email
 
 import (
+	"errors"
 	"fmt"
+	"log"
 	"net/smtp"
 	"strings"
 )
+
+var ErrSendEmail = errors.New("smtp email service: failed to send email")
 
 type SMTPBackend struct {
 	host      string
@@ -36,7 +40,8 @@ func (s *SMTPBackend) Send(to, subject, body string) error {
 	auth := smtp.PlainAuth("", s.user, s.pass, s.host)
 	err := smtp.SendMail(addr, auth, s.emailFrom, []string{to}, []byte(msg.String()))
 	if err != nil {
-		return err
+		log.Println(ErrSendEmail)
+		return ErrSendEmail
 	}
 	return nil
 }

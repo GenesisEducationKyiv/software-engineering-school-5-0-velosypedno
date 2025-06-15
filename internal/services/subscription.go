@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/google/uuid"
+	"github.com/velosypedno/genesis-weather-api/internal/mailers"
 	"github.com/velosypedno/genesis-weather-api/internal/models"
 	"github.com/velosypedno/genesis-weather-api/internal/repos"
 )
@@ -49,8 +50,13 @@ func (s *SubscriptionService) Subscribe(subInput SubscriptionInput) error {
 	if err := s.repo.Create(subscription); err != nil {
 		return handleSubRepoError(err)
 	}
-	if err := s.mailer.SendConfirmation(subscription); err != nil {
-		return err
+
+	err := s.mailer.SendConfirmation(subscription)
+	if errors.Is(err, mailers.ErrSendEmail) {
+		return ErrInternal
+	} else if err != nil {
+		log.Println(err)
+		return ErrInternal
 	}
 	return nil
 }
