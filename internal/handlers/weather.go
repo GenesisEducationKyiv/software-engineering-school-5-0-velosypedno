@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"errors"
+	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -22,11 +23,16 @@ func NewWeatherGETHandler(repo WeatherRepo) gin.HandlerFunc {
 			return
 		}
 		weather, err := repo.GetCurrent(c.Request.Context(), city)
-		if errors.Is(err, services.ErrNotFound) {
+		if errors.Is(err, services.ErrCityNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "city not found"})
 			return
 		}
 		if errors.Is(err, services.ErrInternal) {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get weather for given city"})
+			return
+		}
+		if err != nil {
+			log.Println(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get weather for given city"})
 			return
 		}

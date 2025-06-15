@@ -55,7 +55,7 @@ func TestNewWeatherGETHandler(t *testing.T) {
 			name:           "city not found",
 			city:           "Bagatkino",
 			mockReturn:     models.Weather{},
-			mockError:      services.ErrNotFound,
+			mockError:      services.ErrCityNotFound,
 			expectedStatus: http.StatusNotFound,
 		},
 		{

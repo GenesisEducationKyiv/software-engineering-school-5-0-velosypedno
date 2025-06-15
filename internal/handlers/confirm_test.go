@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/velosypedno/genesis-weather-api/internal/handlers"
-	"github.com/velosypedno/genesis-weather-api/internal/repos"
+	"github.com/velosypedno/genesis-weather-api/internal/services"
 )
 
 type mockSubscriptionActivator struct {
@@ -44,7 +44,7 @@ func TestConfirmGETHandler(t *testing.T) {
 		{
 			name:           "token not found",
 			token:          validUUID.String(),
-			mockErr:        repos.ErrTokenNotFound,
+			mockErr:        services.ErrSubNotFound,
 			expectedStatus: http.StatusNotFound,
 		},
 		{

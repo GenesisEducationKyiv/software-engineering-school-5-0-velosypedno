@@ -1,8 +1,17 @@
 package services
 
 import (
+	"errors"
+	"log"
+
 	"github.com/google/uuid"
 	"github.com/velosypedno/genesis-weather-api/internal/models"
+	"github.com/velosypedno/genesis-weather-api/internal/repos"
+)
+
+var (
+	ErrSubNotFound      = errors.New("subscription not found")
+	ErrSubAlreadyExists = errors.New("subscription with this email already exists")
 )
 
 type SubscriptionRepo interface {
@@ -38,7 +47,7 @@ func (s *SubscriptionService) Subscribe(subInput SubscriptionInput) error {
 		Token:     uuid.New(),
 	}
 	if err := s.repo.Create(subscription); err != nil {
-		return err
+		return handleSubRepoError(err)
 	}
 	if err := s.mailer.SendConfirmation(subscription); err != nil {
 		return err
@@ -47,9 +56,26 @@ func (s *SubscriptionService) Subscribe(subInput SubscriptionInput) error {
 }
 
 func (s *SubscriptionService) Activate(token uuid.UUID) error {
-	return s.repo.Activate(token)
+	err := s.repo.Activate(token)
+	return handleSubRepoError(err)
 }
 
 func (s *SubscriptionService) Unsubscribe(token uuid.UUID) error {
-	return s.repo.DeleteByToken(token)
+	err := s.repo.DeleteByToken(token)
+	return handleSubRepoError(err)
+}
+
+func handleSubRepoError(err error) error {
+	switch {
+	case errors.Is(err, repos.ErrTokenNotFound):
+		return ErrSubNotFound
+	case errors.Is(err, repos.ErrInternal):
+		return ErrInternal
+	case errors.Is(err, repos.ErrEmailAlreadyExists):
+		return ErrSubAlreadyExists
+	case err != nil:
+		log.Println(err)
+		return ErrInternal
+	}
+	return nil
 }

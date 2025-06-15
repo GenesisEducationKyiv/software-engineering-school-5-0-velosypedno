@@ -15,8 +15,11 @@ const (
 	PGUniqueViolationCode = "23505"
 )
 
-var ErrEmailAlreadyExists = errors.New("subscription with this email already exists")
-var ErrTokenNotFound = errors.New("subscription with this token not found")
+var (
+	ErrEmailAlreadyExists = errors.New("subscription with this email already exists")
+	ErrTokenNotFound      = errors.New("subscription with this token not found")
+	ErrInternal           = errors.New("internal error")
+)
 
 type SubscriptionDBRepo struct {
 	db *sql.DB
@@ -45,8 +48,10 @@ func (r *SubscriptionDBRepo) Create(subscription models.Subscription) error {
 		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == PGUniqueViolationCode {
 			return ErrEmailAlreadyExists
 		}
+
 		err = fmt.Errorf("subscription repo: failed to create subscription, err:%v ", err)
-		return err
+		log.Println(err)
+		return ErrInternal
 	}
 
 	return nil
@@ -56,12 +61,14 @@ func (r *SubscriptionDBRepo) Activate(token uuid.UUID) error {
 	res, err := r.db.Exec("UPDATE subscriptions SET activated = true WHERE token = $1", token)
 	if err != nil {
 		err = fmt.Errorf("subscription repo: failed to activate subscription, err:%v ", err)
-		return err
+		log.Println(err)
+		return ErrInternal
 	}
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
 		err := fmt.Errorf("subscription repo: failed to activate subscription, err:%v ", err)
-		return err
+		log.Println(err)
+		return ErrInternal
 	}
 	if rowsAffected == 0 {
 		return ErrTokenNotFound
@@ -73,12 +80,14 @@ func (r *SubscriptionDBRepo) DeleteByToken(token uuid.UUID) error {
 	res, err := r.db.Exec("DELETE FROM subscriptions WHERE token = $1", token)
 	if err != nil {
 		err = fmt.Errorf("subscription repo: failed to delete subscription, err:%v ", err)
-		return err
+		log.Println(err)
+		return ErrInternal
 	}
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
 		err := fmt.Errorf("subscription repo: failed to delete subscription, err:%v ", err)
-		return err
+		log.Println(err)
+		return ErrInternal
 	}
 	if rowsAffected == 0 {
 		return ErrTokenNotFound
@@ -90,7 +99,8 @@ func (r *SubscriptionDBRepo) GetActivatedByFreq(freq models.Frequency) ([]models
 	rows, err := r.db.Query("SELECT * FROM subscriptions WHERE activated = true AND frequency = $1", freq)
 	if err != nil {
 		err = fmt.Errorf("subscription repo: failed to get subscriptions, err:%v ", err)
-		return nil, err
+		log.Println(err)
+		return nil, ErrInternal
 	}
 	defer func() {
 		if err := rows.Close(); err != nil {
@@ -113,7 +123,8 @@ func (r *SubscriptionDBRepo) GetActivatedByFreq(freq models.Frequency) ([]models
 		result = append(result, subscription)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
+		log.Println(err)
+		return nil, ErrInternal
 	}
 	return result, nil
 }
