@@ -14,15 +14,11 @@ var (
 	ErrInternal     = errors.New("internal error")
 )
 
-type WeatherRepo interface {
-	GetCurrent(ctx context.Context, city string) (models.Weather, error)
-}
-
 type WeatherService struct {
-	repo WeatherRepo
+	repo weatherRepo
 }
 
-func NewWeatherService(repo WeatherRepo) *WeatherService {
+func NewWeatherService(repo weatherRepo) *WeatherService {
 	return &WeatherService{repo: repo}
 }
 
