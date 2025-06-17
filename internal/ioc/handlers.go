@@ -15,6 +15,8 @@ import (
 	"github.com/velosypedno/genesis-weather-api/internal/services"
 )
 
+const confirmTmpl = "confirm_sub.html"
+
 type Handlers struct {
 	WeatherGETHandler     gin.HandlerFunc
 	SubscribePOSTHandler  gin.HandlerFunc
@@ -32,7 +34,7 @@ func NewHandlers(c *config.Config) *Handlers {
 
 	subRepo := repos.NewSubscriptionDBRepo(db)
 	smtpEmailBackend := email.NewSMTPBackend(c.SMTPHost, c.SMTPPort, c.SMTPUser, c.SMTPPass, c.EmailFrom)
-	subMailer := mailers.NewSubscriptionMailer(smtpEmailBackend)
+	subMailer := mailers.NewSubscriptionMailer(smtpEmailBackend, c.TemplatesDir, confirmTmpl)
 	subService := services.NewSubscriptionService(subRepo, subMailer)
 
 	return &Handlers{

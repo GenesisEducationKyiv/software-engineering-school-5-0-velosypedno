@@ -6,9 +6,10 @@ import (
 )
 
 type Config struct {
-	DbDriver string
-	DbDSN    string
-	Port     string
+	DbDriver     string
+	DbDSN        string
+	Port         string
+	TemplatesDir string
 
 	WeatherAPIKey string
 
@@ -29,8 +30,9 @@ func Load() *Config {
 			os.Getenv("DB_PASSWORD"),
 			os.Getenv("DB_NAME"),
 		),
-		DbDriver: os.Getenv("DB_DRIVER"),
-		Port:     os.Getenv("PORT"),
+		DbDriver:     os.Getenv("DB_DRIVER"),
+		Port:         os.Getenv("PORT"),
+		TemplatesDir: os.Getenv("TEMPLATES_DIR"),
 
 		WeatherAPIKey: os.Getenv("WEATHER_API_KEY"),
 

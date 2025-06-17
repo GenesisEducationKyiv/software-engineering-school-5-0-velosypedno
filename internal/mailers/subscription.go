@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"log"
+	"path/filepath"
 
 	"github.com/velosypedno/genesis-weather-api/internal/email"
 	"github.com/velosypedno/genesis-weather-api/internal/models"
@@ -16,12 +17,16 @@ type emailSender interface {
 }
 
 type SubscriptionMailer struct {
-	sender emailSender
+	sender      emailSender
+	templateDir string
+	confirmTmpl string
 }
 
-func NewSubscriptionMailer(sender emailSender) *SubscriptionMailer {
+func NewSubscriptionMailer(sender emailSender, templateDir, confirmTmpl string) *SubscriptionMailer {
 	return &SubscriptionMailer{
-		sender: sender,
+		sender:      sender,
+		templateDir: templateDir,
+		confirmTmpl: confirmTmpl,
 	}
 }
 
@@ -29,7 +34,8 @@ func (m *SubscriptionMailer) SendConfirmation(subscription models.Subscription) 
 	to := subscription.Email
 	subject := "Subscription Confirmation"
 	confirmSubURL := fmt.Sprintf("http://localhost:8080/api/confirm/%s", subscription.Token)
-	tmpl, err := template.ParseFiles("internal/templates/confirm_sub.html")
+	tmplPath := filepath.Join(m.templateDir, m.confirmTmpl)
+	tmpl, err := template.ParseFiles(tmplPath)
 	if err != nil {
 		log.Println(err)
 		return ErrInternal

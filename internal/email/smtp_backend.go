@@ -40,7 +40,7 @@ func (s *SMTPBackend) Send(to, subject, body string) error {
 	auth := smtp.PlainAuth("", s.user, s.pass, s.host)
 	err := smtp.SendMail(addr, auth, s.emailFrom, []string{to}, []byte(msg.String()))
 	if err != nil {
-		log.Println(ErrSendEmail)
+		log.Println(err)
 		return ErrSendEmail
 	}
 	return nil
