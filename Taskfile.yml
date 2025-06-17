@@ -25,6 +25,11 @@ tasks:
     cmds:
       - cp .env.sample .env
     silent: false
+  
+  copy:test-env:
+    desc: Copy test env vars
+    cmds:
+      - cp test/.env.test test/.env
 
   lint:
     desc: Run local linter config 
@@ -56,6 +61,7 @@ tasks:
     desc: Run integration tests
     dotenv: ["test/.env.test"]
     cmds:
+      - task: copy:test-env
       - docker compose -f test/docker-compose.test.yml up -d
       - migrate -database "${DB_DRIVER}://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable" -path db/migrations up
       - go test ./... -v -tags=integration
