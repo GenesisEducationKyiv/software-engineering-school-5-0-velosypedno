@@ -57,7 +57,6 @@ tasks:
     dotenv: ["test/.env.test"]
     cmds:
       - docker compose -f test/docker-compose.test.yml up -d
-      - sleep 5
       - migrate -database "${DB_DRIVER}://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable" -path db/migrations up
       - go test ./... -v -tags=integration
       - docker compose -f test/docker-compose.test.yml down
