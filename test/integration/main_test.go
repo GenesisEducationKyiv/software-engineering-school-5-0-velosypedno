@@ -25,7 +25,7 @@ var TestServer *httptest.Server
 
 func TestMain(m *testing.M) {
 	fmt.Println("Starting integration tests...")
-	err := godotenv.Load("../.env.test")
+	err := godotenv.Load("../.env")
 	if err != nil {
 		fmt.Println(err)
 	}
