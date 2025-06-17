@@ -53,10 +53,16 @@ tasks:
       - go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.16.2
 
   test:
-    desc: Run tests
+    desc: Run all tests
     cmds:
-      - go test ./... -v
-    
+      - task: test:unit
+      - task: test:integration
+  
+  test:unit:
+    desc: Run unit tests
+    cmds:
+      - go test ./... -v -tags=unit
+
   test:integration:
     desc: Run integration tests
     dotenv: ["test/.env.test"]
