@@ -26,7 +26,7 @@ func NewTasks(c *config.Config) *Tasks {
 	if err != nil {
 		log.Fatal(err)
 	}
-	weatherRepo := repos.NewWeatherAPIRepo(c.WeatherAPIKey, &http.Client{})
+	weatherRepo := repos.NewWeatherAPIRepo(c.WeatherAPIKey, c.WeatherAPIBaseURL, &http.Client{})
 	subRepo := repos.NewSubscriptionDBRepo(db)
 	stdoutEmailBackend := email.NewStdoutBackend()
 	weatherMailer := mailers.NewWeatherMailer(stdoutEmailBackend)

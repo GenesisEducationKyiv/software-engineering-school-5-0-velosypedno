@@ -11,7 +11,8 @@ type Config struct {
 	Port         string
 	TemplatesDir string
 
-	WeatherAPIKey string
+	WeatherAPIKey     string
+	WeatherAPIBaseURL string
 
 	SMTPHost  string
 	SMTPPort  string
@@ -34,7 +35,8 @@ func Load() *Config {
 		Port:         os.Getenv("PORT"),
 		TemplatesDir: os.Getenv("TEMPLATES_DIR"),
 
-		WeatherAPIKey: os.Getenv("WEATHER_API_KEY"),
+		WeatherAPIKey:     os.Getenv("WEATHER_API_KEY"),
+		WeatherAPIBaseURL: os.Getenv("WEATHER_API_BASE_URL"),
 
 		SMTPHost:  os.Getenv("SMTP_HOST"),
 		SMTPPort:  os.Getenv("SMTP_PORT"),

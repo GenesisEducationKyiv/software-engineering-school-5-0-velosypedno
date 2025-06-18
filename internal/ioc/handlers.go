@@ -29,7 +29,7 @@ func NewHandlers(c *config.Config) *Handlers {
 	if err != nil {
 		log.Fatal(err)
 	}
-	weatherRepo := repos.NewWeatherAPIRepo(c.WeatherAPIKey, &http.Client{})
+	weatherRepo := repos.NewWeatherAPIRepo(c.WeatherAPIKey, c.WeatherAPIBaseURL, &http.Client{})
 	weatherService := services.NewWeatherService(weatherRepo)
 
 	subRepo := repos.NewSubscriptionDBRepo(db)
