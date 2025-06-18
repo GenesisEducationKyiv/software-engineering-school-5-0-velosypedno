@@ -1,3 +1,6 @@
+//go:build unit
+// +build unit
+
 package repos_test
 
 import (
@@ -39,8 +42,8 @@ func TestGetCurrentWeather_Success(t *testing.T) {
 		},
 	}
 
-	repo := repos.NewWeatherAPIRepo("dummy-api-key", client)
-	weather, err := repo.GetCurrentWeather(context.Background(), "Kyiv")
+	repo := repos.NewWeatherAPIRepo("dummy-api-key", "http://dummy-url", client)
+	weather, err := repo.GetCurrent(context.Background(), "Kyiv")
 
 	assert.NoError(t, err)
 	assert.Equal(t, 10000.0, weather.Temperature)
@@ -65,8 +68,8 @@ func TestGetCurrentWeather_CityNotFound(t *testing.T) {
 		},
 	}
 
-	repo := repos.NewWeatherAPIRepo("dummy-api-key", client)
-	_, err := repo.GetCurrentWeather(context.Background(), "InvalidCity")
+	repo := repos.NewWeatherAPIRepo("dummy-api-key", "http://dummy-url", client)
+	_, err := repo.GetCurrent(context.Background(), "InvalidCity")
 
 	assert.ErrorIs(t, err, repos.ErrCityNotFound)
 }
@@ -81,8 +84,8 @@ func TestGetCurrentWeather_APIKeyInvalid(t *testing.T) {
 		},
 	}
 
-	repo := repos.NewWeatherAPIRepo("invalid-api-key", client)
-	_, err := repo.GetCurrentWeather(context.Background(), "Kyiv")
+	repo := repos.NewWeatherAPIRepo("invalid-api-key", "http://dummy-url", client)
+	_, err := repo.GetCurrent(context.Background(), "Kyiv")
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "api key is invalid")
@@ -95,8 +98,8 @@ func TestGetCurrentWeather_HTTPError(t *testing.T) {
 		},
 	}
 
-	repo := repos.NewWeatherAPIRepo("dummy-api-key", client)
-	_, err := repo.GetCurrentWeather(context.Background(), "Kyiv")
+	repo := repos.NewWeatherAPIRepo("dummy-api-key", "http://dummy-url", client)
+	_, err := repo.GetCurrent(context.Background(), "Kyiv")
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to get weather")
@@ -112,8 +115,8 @@ func TestGetCurrentWeather_BadJSON(t *testing.T) {
 		},
 	}
 
-	repo := repos.NewWeatherAPIRepo("dummy-api-key", client)
-	_, err := repo.GetCurrentWeather(context.Background(), "Kyiv")
+	repo := repos.NewWeatherAPIRepo("dummy-api-key", "http://dummy-url", client)
+	_, err := repo.GetCurrent(context.Background(), "Kyiv")
 
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to decode")

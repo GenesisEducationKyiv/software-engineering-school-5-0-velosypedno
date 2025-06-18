@@ -14,6 +14,10 @@ RUN task install:migrator
 FROM debian:bookworm
 WORKDIR /app
 
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates && \
+    rm -rf /var/lib/apt/lists/
+
 COPY --from=builder /app/Taskfile.yml ./Taskfile.yml
 COPY --from=builder /app/Taskfile.docker.yml ./Taskfile.docker.yml
 
@@ -22,5 +26,6 @@ COPY --from=builder /app/bin/cron ./bin/cron
 COPY --from=builder /go/bin/task /usr/local/bin/task
 COPY --from=builder /go/bin/migrate /usr/local/bin/migrate
 
-COPY --from=builder /app/db/migrations ./db/migrations
+COPY db/migrations ./db/migrations
+COPY internal/templates ./internal/templates
 

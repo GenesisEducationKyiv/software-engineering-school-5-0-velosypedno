@@ -10,8 +10,8 @@ import (
 
 func main() {
 	cfg := config.Load()
-	taskContainer := ioc.BuildTaskContainer(cfg)
-	cron := scheduler.SetupScheduler(taskContainer)
+	tasks := ioc.NewTasks(cfg)
+	cron := scheduler.SetupScheduler(tasks)
 	cron.Start()
 	log.Println("Cron tasks are scheduled")
 	select {}

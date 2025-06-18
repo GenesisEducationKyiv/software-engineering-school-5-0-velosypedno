@@ -1,3 +1,6 @@
+//go:build unit
+// +build unit
+
 package services_test
 
 import (
@@ -13,15 +16,15 @@ type mockSubscriptionRepo struct {
 	createErr error
 }
 
-func (m *mockSubscriptionRepo) CreateSubscription(sub models.Subscription) error {
+func (m *mockSubscriptionRepo) Create(sub models.Subscription) error {
 	return m.createErr
 }
 
-func (m *mockSubscriptionRepo) ActivateSubscription(token uuid.UUID) error {
+func (m *mockSubscriptionRepo) Activate(token uuid.UUID) error {
 	return nil
 }
 
-func (m *mockSubscriptionRepo) DeleteSubscriptionByToken(token uuid.UUID) error {
+func (m *mockSubscriptionRepo) DeleteByToken(token uuid.UUID) error {
 	return nil
 }
 
@@ -29,7 +32,7 @@ type mockMailer struct {
 	sendErr error
 }
 
-func (m *mockMailer) SendConfirmationEmail(sub models.Subscription) error {
+func (m *mockMailer) SendConfirmation(sub models.Subscription) error {
 	return m.sendErr
 }
 

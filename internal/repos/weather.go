@@ -12,21 +12,25 @@ import (
 	"github.com/velosypedno/genesis-weather-api/internal/models"
 )
 
-var ErrCityNotFound = errors.New("weather repo: city not found")
+const noMatchingLocationFoundCode = 1006
+
+var ErrCityNotFound = errors.New("city not found")
 
 type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
 type WeatherAPIRepo struct {
-	apiKey string
-	client HTTPClient
+	baseURL string
+	apiKey  string
+	client  HTTPClient
 }
 
-func NewWeatherAPIRepo(apiKey string, client HTTPClient) *WeatherAPIRepo {
+func NewWeatherAPIRepo(apiKey, baseURL string, client HTTPClient) *WeatherAPIRepo {
 	return &WeatherAPIRepo{
-		apiKey: apiKey,
-		client: client,
+		apiKey:  apiKey,
+		baseURL: baseURL,
+		client:  client,
 	}
 }
 
@@ -40,8 +44,6 @@ type weatherAPIResponse struct {
 	} `json:"current"`
 }
 
-const noMatchingLocationFoundCode = 1006
-
 type weatherAPIErrorResponse struct {
 	Error struct {
 		Code    int    `json:"code"`
@@ -49,9 +51,9 @@ type weatherAPIErrorResponse struct {
 	} `json:"error"`
 }
 
-func (r *WeatherAPIRepo) GetCurrentWeather(ctx context.Context, city string) (models.Weather, error) {
+func (r *WeatherAPIRepo) GetCurrent(ctx context.Context, city string) (models.Weather, error) {
 	q := url.QueryEscape(city)
-	url := fmt.Sprintf("http://api.weatherapi.com/v1/current.json?key=%s&q=%s", r.apiKey, q)
+	url := fmt.Sprintf("%s/current.json?key=%s&q=%s", r.baseURL, r.apiKey, q)
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {

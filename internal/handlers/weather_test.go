@@ -1,8 +1,10 @@
+//go:build unit
+// +build unit
+
 package handlers_test
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -13,14 +15,14 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/velosypedno/genesis-weather-api/internal/handlers"
 	"github.com/velosypedno/genesis-weather-api/internal/models"
-	"github.com/velosypedno/genesis-weather-api/internal/repos"
+	"github.com/velosypedno/genesis-weather-api/internal/services"
 )
 
 type mockWeatherRepo struct {
 	mock.Mock
 }
 
-func (m *mockWeatherRepo) GetCurrentWeather(ctx context.Context, city string) (models.Weather, error) {
+func (m *mockWeatherRepo) GetCurrent(ctx context.Context, city string) (models.Weather, error) {
 	args := m.Called(ctx, city)
 	weather, ok := args.Get(0).(models.Weather)
 	if !ok {
@@ -56,14 +58,14 @@ func TestNewWeatherGETHandler(t *testing.T) {
 			name:           "city not found",
 			city:           "Bagatkino",
 			mockReturn:     models.Weather{},
-			mockError:      repos.ErrCityNotFound,
+			mockError:      services.ErrCityNotFound,
 			expectedStatus: http.StatusNotFound,
 		},
 		{
 			name:           "internal error",
 			city:           "Kyiv",
 			mockReturn:     models.Weather{},
-			mockError:      errors.New("api failure"),
+			mockError:      services.ErrInternal,
 			expectedStatus: http.StatusInternalServerError,
 		},
 		{
@@ -81,7 +83,7 @@ func TestNewWeatherGETHandler(t *testing.T) {
 
 			if tt.city != "" {
 				mockRepo.
-					On("GetCurrentWeather", mock.Anything, tt.city).
+					On("GetCurrent", mock.Anything, tt.city).
 					Return(tt.mockReturn, tt.mockError)
 			}
 

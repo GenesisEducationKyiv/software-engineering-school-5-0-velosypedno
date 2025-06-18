@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/velosypedno/genesis-weather-api/internal/repos"
 	"github.com/velosypedno/genesis-weather-api/internal/services"
 )
 
@@ -24,6 +23,7 @@ func NewSubscribePOSTHandler(service subscriber) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var body subReqBody
 		if err := c.ShouldBindJSON(&body); err != nil {
+			log.Println(err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 			return
 		}
@@ -32,12 +32,17 @@ func NewSubscribePOSTHandler(service subscriber) gin.HandlerFunc {
 			Frequency: body.Frequency,
 			City:      body.City,
 		}
+
 		err := service.Subscribe(input)
+		if errors.Is(err, services.ErrSubAlreadyExists) {
+			c.JSON(http.StatusConflict, gin.H{"error": "Email already subscribed"})
+			return
+		}
+		if errors.Is(err, services.ErrInternal) {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create subscription"})
+			return
+		}
 		if err != nil {
-			if errors.Is(err, repos.ErrEmailAlreadyExists) {
-				c.JSON(http.StatusConflict, gin.H{"error": "Email already subscribed"})
-				return
-			}
 			log.Println(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create subscription"})
 			return

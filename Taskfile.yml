@@ -9,11 +9,27 @@ tasks:
     cmds:
       - go-task --list-all
 
-  copy-env:
+  copy:hooks:pre-commit:
+    desc: Setup pre-commit hook
+    cmds:
+      - cp githooks/pre-commit .git/hooks/pre-commit
+      - chmod +x .git/hooks/pre-commit
+
+  rm:hooks:pre-commit:
+    desc: Remove pre-commit hook
+    cmds:
+      - rm -f .git/hooks/pre-commit
+
+  copy:env:
     desc: Copy default env vars
     cmds:
       - cp .env.sample .env
     silent: false
+  
+  copy:test-env:
+    desc: Copy test env vars
+    cmds:
+      - cp test/.env.test test/.env
 
   lint:
     desc: Run local linter config 
@@ -37,9 +53,26 @@ tasks:
       - go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.16.2
 
   test:
-    desc: Run tests
+    desc: Run all tests
     cmds:
-      - go test ./... -v
+      - task: test:unit
+      - task: test:integration
+  
+  test:unit:
+    desc: Run unit tests
+    cmds:
+      - go test ./... -v -tags=unit
+
+  test:integration:
+    desc: Run integration tests
+    dotenv: ["test/.env.test"]
+    cmds:
+      - task: copy:test-env
+      - docker compose -f test/docker-compose.test.yml up -d
+      - migrate -database "${DB_DRIVER}://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable" -path db/migrations up
+      - go test ./... -v -tags=integration
+      - docker compose -f test/docker-compose.test.yml down
+
 
   migrate:up:
     desc: Run migrations
