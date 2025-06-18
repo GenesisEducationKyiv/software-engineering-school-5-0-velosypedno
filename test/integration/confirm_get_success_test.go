@@ -14,7 +14,7 @@ import (
 func TestSubscribeConfirmFlow(t *testing.T) {
 	// Step 1: Clear DB and insert a test subscription
 	t.Log("Clearing DB and inserting a fake subscription...")
-	ClearDB()
+	clearDB()
 
 	email := "test.confirm@example.com"
 	frequency := "daily"

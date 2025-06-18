@@ -16,7 +16,7 @@ import (
 func TestUnsubscribeFlow(t *testing.T) {
 	// Step 1: Clear DB
 	t.Log("Clearing the database...")
-	ClearDB()
+	clearDB()
 
 	// Step 2: Subscribe
 	toEmail := "test.unsubscribe.flow@example.com"

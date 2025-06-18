@@ -32,7 +32,7 @@ func TestMain(m *testing.M) {
 		fmt.Println(err)
 	}
 
-	testWeatherAPI := StartFakeWeatherAPI()
+	testWeatherAPI := startFakeWeatherAPI()
 	defer testWeatherAPI.Close()
 
 	err = os.Setenv("WEATHER_API_BASE_URL", testWeatherAPI.URL)
@@ -63,14 +63,14 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
-func ClearDB() {
+func clearDB() {
 	_, err := DB.Exec("TRUNCATE subscriptions")
 	if err != nil {
 		log.Fatal(err)
 	}
 }
 
-func StartFakeWeatherAPI() *httptest.Server {
+func startFakeWeatherAPI() *httptest.Server {
 	handler := http.NewServeMux()
 
 	handler.HandleFunc("/current.json", func(w http.ResponseWriter, r *http.Request) {

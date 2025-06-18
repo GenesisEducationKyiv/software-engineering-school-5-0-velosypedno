@@ -15,7 +15,7 @@ import (
 func TestSubscribeSuccessFlow(t *testing.T) {
 	// Step 1: Clear the database
 	t.Log("Clearing the database...")
-	ClearDB()
+	clearDB()
 
 	// Step 2: Send the POST request to /api/subscribe
 	toEmail := "test.subscribe.success@example.com"

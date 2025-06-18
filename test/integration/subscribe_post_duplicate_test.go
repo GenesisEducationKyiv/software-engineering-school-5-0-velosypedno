@@ -13,7 +13,7 @@ import (
 func TestSubscribeDuplicateFlow(t *testing.T) {
 	// Step 1: Clear the database
 	t.Log("Clearing the database...")
-	ClearDB()
+	clearDB()
 
 	// Step 2: Send the first subscription request
 	toEmail := "test.duplicate.subscribe@example.com"
