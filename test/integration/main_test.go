@@ -7,6 +7,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
@@ -19,6 +20,7 @@ import (
 )
 
 const serverTimeout = 10
+const invalidCity = "InvalidCity"
 
 var DB *sql.DB
 var TestServer *httptest.Server
@@ -29,6 +31,15 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		fmt.Println(err)
 	}
+
+	testWeatherAPI := StartFakeWeatherAPI()
+	defer testWeatherAPI.Close()
+
+	err = os.Setenv("WEATHER_API_BASE_URL", testWeatherAPI.URL)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	cfg := config.Load()
 	fmt.Println(cfg)
 	db, err := sql.Open(cfg.DbDriver, cfg.DbDSN)
@@ -57,4 +68,22 @@ func ClearDB() {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func StartFakeWeatherAPI() *httptest.Server {
+	handler := http.NewServeMux()
+
+	handler.HandleFunc("/current.json", func(w http.ResponseWriter, r *http.Request) {
+		city := r.URL.Query().Get("q")
+		if city == invalidCity {
+			http.Error(w, `{"error": {"code": 1006, "message": "No matching location found."}}`, http.StatusBadRequest)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Header().Set("Content-Type", "application/json")
+		w.Write([]byte(`{"current": {"temp_c": 20.0, "humidity": 80.0, "condition": {"text": "Sunny"}}}`))
+	})
+
+	httpServer := httptest.NewServer(handler)
+	return httpServer
 }
