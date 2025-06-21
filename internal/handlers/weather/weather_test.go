@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
 	weathh "github.com/velosypedno/genesis-weather-api/internal/handlers/weather"
-	services "github.com/velosypedno/genesis-weather-api/internal/services/weather"
 )
 
 type mockWeatherRepo struct {
@@ -55,14 +54,14 @@ func TestNewWeatherGETHandler(t *testing.T) {
 			name:           "city not found",
 			city:           "Bagatkino",
 			mockReturn:     domain.Weather{},
-			mockError:      services.ErrCityNotFound,
+			mockError:      domain.ErrCityNotFound,
 			expectedStatus: http.StatusNotFound,
 		},
 		{
 			name:           "internal error",
 			city:           "Kyiv",
 			mockReturn:     domain.Weather{},
-			mockError:      services.ErrInternal,
+			mockError:      domain.ErrInternal,
 			expectedStatus: http.StatusInternalServerError,
 		},
 		{

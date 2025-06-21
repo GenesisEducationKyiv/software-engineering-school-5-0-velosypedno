@@ -3,7 +3,6 @@ package repos
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 	"net/http"
@@ -13,8 +12,6 @@ import (
 )
 
 const noMatchingLocationFoundCode = 1006
-
-var ErrCityNotFound = errors.New("city not found")
 
 type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
@@ -55,40 +52,40 @@ func (r *WeatherAPIRepo) GetCurrent(ctx context.Context, city string) (domain.We
 
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
-		err = fmt.Errorf("weather repo: failed to format request for %s, err:%v ", city, err)
-		return domain.Weather{}, err
+		log.Printf("weather repo: failed to format request for %s, err:%v\n", city, err)
+		return domain.Weather{}, fmt.Errorf("weather repo: %w", domain.ErrInternal)
 	}
 	resp, err := r.client.Do(req)
 	if err != nil {
-		err = fmt.Errorf("weather repo: failed to get weather for %s, err:%v ", city, err)
-		return domain.Weather{}, err
+		log.Printf("weather repo: failed to get weather for %s, err:%v\n", city, err)
+		return domain.Weather{}, fmt.Errorf("weather repo: %w", domain.ErrInternal)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			log.Printf("failed to close resp body: %v", err)
+			log.Printf("failed to close resp body: %v\n", err)
 		}
 	}()
 	if resp.StatusCode == http.StatusForbidden {
-		err = errors.New("weather repo: api key is invalid")
-		return domain.Weather{}, err
+		log.Println("weather repo: api key is invalid")
+		return domain.Weather{}, fmt.Errorf("weather repo: %w", domain.ErrInternal)
 	}
 	if resp.StatusCode != http.StatusOK {
 		var errResp weatherAPIErrorResponse
 		if err := json.NewDecoder(resp.Body).Decode(&errResp); err == nil {
 			if errResp.Error.Code == noMatchingLocationFoundCode {
-				return domain.Weather{}, ErrCityNotFound
+				return domain.Weather{}, domain.ErrCityNotFound
 			}
-			err = fmt.Errorf("weather repo: api error: %s", errResp.Error.Message)
-			return domain.Weather{}, err
+			log.Printf("weather repo: api error: %s\n", errResp.Error.Message)
+			return domain.Weather{}, fmt.Errorf("weather repo: %w", domain.ErrInternal)
 		}
-		err = fmt.Errorf("weather repo: unexpected error %d", resp.StatusCode)
-		return domain.Weather{}, err
+		log.Printf("weather repo: unexpected error %d\n", resp.StatusCode)
+		return domain.Weather{}, fmt.Errorf("weather repo: %w", domain.ErrInternal)
 	}
 
 	var responseData weatherAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
-		err = fmt.Errorf("weather repo: failed to decode weather data: %w", err)
-		return domain.Weather{}, err
+		log.Printf("weather repo: failed to decode weather data: %v\n", err)
+		return domain.Weather{}, fmt.Errorf("weather repo: %w", domain.ErrInternal)
 	}
 
 	return domain.Weather{

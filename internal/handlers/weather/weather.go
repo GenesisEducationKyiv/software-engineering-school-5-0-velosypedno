@@ -8,7 +8,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
-	weathsrv "github.com/velosypedno/genesis-weather-api/internal/services/weather"
 )
 
 type weatherService interface {
@@ -29,11 +28,11 @@ func NewWeatherGETHandler(service weatherService) gin.HandlerFunc {
 			return
 		}
 		weatherEnt, err := service.GetCurrent(c.Request.Context(), city)
-		if errors.Is(err, weathsrv.ErrCityNotFound) {
+		if errors.Is(err, domain.ErrCityNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "city not found"})
 			return
 		}
-		if errors.Is(err, weathsrv.ErrInternal) {
+		if errors.Is(err, domain.ErrInternal) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get weather for given city"})
 			return
 		}
