@@ -7,9 +7,9 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/velosypedno/genesis-weather-api/internal/config"
+	"github.com/velosypedno/genesis-weather-api/internal/domain"
 	"github.com/velosypedno/genesis-weather-api/internal/email"
 	"github.com/velosypedno/genesis-weather-api/internal/mailers"
-	"github.com/velosypedno/genesis-weather-api/internal/models"
 	"github.com/velosypedno/genesis-weather-api/internal/repos"
 	services "github.com/velosypedno/genesis-weather-api/internal/services/weather_notification"
 )
@@ -34,10 +34,10 @@ func NewTasks(c *config.Config) *Tasks {
 
 	return &Tasks{
 		HourlyWeatherNotificationTask: func() {
-			weatherMailerSrv.SendByFreq(models.FreqHourly)
+			weatherMailerSrv.SendByFreq(domain.FreqHourly)
 		},
 		DailyWeatherNotificationTask: func() {
-			weatherMailerSrv.SendByFreq(models.FreqDaily)
+			weatherMailerSrv.SendByFreq(domain.FreqDaily)
 		},
 	}
 }

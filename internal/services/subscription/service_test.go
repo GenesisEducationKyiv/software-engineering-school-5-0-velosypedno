@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/velosypedno/genesis-weather-api/internal/models"
+	"github.com/velosypedno/genesis-weather-api/internal/domain"
 	subsvc "github.com/velosypedno/genesis-weather-api/internal/services/subscription"
 )
 
@@ -13,7 +13,7 @@ type mockSubscriptionRepo struct {
 	createErr error
 }
 
-func (m *mockSubscriptionRepo) Create(sub models.Subscription) error {
+func (m *mockSubscriptionRepo) Create(sub domain.Subscription) error {
 	return m.createErr
 }
 
@@ -29,7 +29,7 @@ type mockMailer struct {
 	sendErr error
 }
 
-func (m *mockMailer) SendConfirmation(sub models.Subscription) error {
+func (m *mockMailer) SendConfirmation(sub domain.Subscription) error {
 	return m.sendErr
 }
 

@@ -5,8 +5,8 @@ import (
 	"log"
 
 	"github.com/google/uuid"
+	"github.com/velosypedno/genesis-weather-api/internal/domain"
 	"github.com/velosypedno/genesis-weather-api/internal/mailers"
-	"github.com/velosypedno/genesis-weather-api/internal/models"
 	"github.com/velosypedno/genesis-weather-api/internal/repos"
 )
 
@@ -17,12 +17,12 @@ var (
 )
 
 type SubscriptionRepo interface {
-	Create(subscription models.Subscription) error
+	Create(subscription domain.Subscription) error
 	Activate(token uuid.UUID) error
 	DeleteByToken(token uuid.UUID) error
 }
 type confirmationMailer interface {
-	SendConfirmation(subscription models.Subscription) error
+	SendConfirmation(subscription domain.Subscription) error
 }
 type SubscriptionInput struct {
 	Email     string
@@ -40,7 +40,7 @@ func NewSubscriptionService(repo SubscriptionRepo, mailer confirmationMailer) *S
 }
 
 func (s *SubscriptionService) Subscribe(subInput SubscriptionInput) error {
-	subscription := models.Subscription{
+	subscription := domain.Subscription{
 		ID:        uuid.New(),
 		Email:     subInput.Email,
 		Frequency: subInput.Frequency,

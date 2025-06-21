@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
-	"github.com/velosypedno/genesis-weather-api/internal/models"
+	"github.com/velosypedno/genesis-weather-api/internal/domain"
 	"github.com/velosypedno/genesis-weather-api/internal/repos"
 )
 
@@ -29,10 +29,10 @@ func TestCreateSubscription_Success(t *testing.T) {
 
 	repo := repos.NewSubscriptionDBRepo(db)
 
-	sub := models.Subscription{
+	sub := domain.Subscription{
 		ID:        uuid.New(),
 		Email:     "test@example.com",
-		Frequency: string(models.FreqDaily),
+		Frequency: string(domain.FreqDaily),
 		City:      "Kyiv",
 		Activated: false,
 		Token:     uuid.New(),
@@ -58,10 +58,10 @@ func TestCreateSubscription_EmailExists(t *testing.T) {
 
 	repo := repos.NewSubscriptionDBRepo(db)
 
-	sub := models.Subscription{
+	sub := domain.Subscription{
 		ID:        uuid.New(),
 		Email:     "exists@example.com",
-		Frequency: string(models.FreqDaily),
+		Frequency: string(domain.FreqDaily),
 		City:      "Lviv",
 		Activated: false,
 		Token:     uuid.New(),
@@ -160,7 +160,7 @@ func TestGetActivatedSubscriptionsByFreq_Success(t *testing.T) {
 
 	repo := repos.NewSubscriptionDBRepo(db)
 
-	freq := models.FreqDaily
+	freq := domain.FreqDaily
 
 	rows := sqlmock.NewRows([]string{"id", "email", "frequency", "city", "activated", "token"}).
 		AddRow(uuid.New(), "user1@example.com", freq, "Kyiv", true, uuid.New()).
@@ -184,7 +184,7 @@ func TestGetActivatedSubscriptionsByFreq_QueryError(t *testing.T) {
 
 	repo := repos.NewSubscriptionDBRepo(db)
 
-	freq := models.FreqDaily
+	freq := domain.FreqDaily
 
 	mock.ExpectQuery(
 		regexp.QuoteMeta(`SELECT * FROM subscriptions WHERE activated = true AND frequency = $1`),

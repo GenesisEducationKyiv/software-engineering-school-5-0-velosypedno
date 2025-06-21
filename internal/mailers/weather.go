@@ -7,8 +7,8 @@ import (
 	"html/template"
 	"log"
 
+	"github.com/velosypedno/genesis-weather-api/internal/domain"
 	"github.com/velosypedno/genesis-weather-api/internal/email"
-	"github.com/velosypedno/genesis-weather-api/internal/models"
 )
 
 var ErrSendEmail = email.ErrSendEmail
@@ -24,7 +24,7 @@ func NewWeatherMailer(sender emailSender) *WeatherMailer {
 	}
 }
 
-func (m *WeatherMailer) SendCurrent(subscription models.Subscription, weather models.Weather) error {
+func (m *WeatherMailer) SendCurrent(subscription domain.Subscription, weather domain.Weather) error {
 	to := subscription.Email
 	subject := "Weather Update"
 

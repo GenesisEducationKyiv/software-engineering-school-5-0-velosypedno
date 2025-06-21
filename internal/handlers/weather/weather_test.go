@@ -10,20 +10,20 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/velosypedno/genesis-weather-api/internal/domain"
 	weathh "github.com/velosypedno/genesis-weather-api/internal/handlers/weather"
-	"github.com/velosypedno/genesis-weather-api/internal/models"
-	weathsrv "github.com/velosypedno/genesis-weather-api/internal/services/weather"
+	services "github.com/velosypedno/genesis-weather-api/internal/services/weather"
 )
 
 type mockWeatherRepo struct {
 	mock.Mock
 }
 
-func (m *mockWeatherRepo) GetCurrent(ctx context.Context, city string) (models.Weather, error) {
+func (m *mockWeatherRepo) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
 	args := m.Called(ctx, city)
-	weather, ok := args.Get(0).(models.Weather)
+	weather, ok := args.Get(0).(domain.Weather)
 	if !ok {
-		return models.Weather{}, fmt.Errorf("mock: expected models.Weather, got %T", weather)
+		return domain.Weather{}, fmt.Errorf("mock: expected models.Weather, got %T", weather)
 	}
 	return weather, args.Error(1)
 }
@@ -31,7 +31,7 @@ func (m *mockWeatherRepo) GetCurrent(ctx context.Context, city string) (models.W
 func TestNewWeatherGETHandler(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
-	mockWeather := models.Weather{
+	mockWeather := domain.Weather{
 		Temperature: 1000.0,
 		Humidity:    100.0,
 		Description: "H_E_L_L",
@@ -40,29 +40,29 @@ func TestNewWeatherGETHandler(t *testing.T) {
 	tests := []struct {
 		name           string
 		city           string
-		mockReturn     models.Weather
+		mockReturn     domain.Weather
 		mockError      error
 		expectedStatus int
 	}{
 		{
 			name:           "missing city parameter",
 			city:           "",
-			mockReturn:     models.Weather{},
+			mockReturn:     domain.Weather{},
 			mockError:      nil,
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
 			name:           "city not found",
 			city:           "Bagatkino",
-			mockReturn:     models.Weather{},
-			mockError:      weathsrv.ErrCityNotFound,
+			mockReturn:     domain.Weather{},
+			mockError:      services.ErrCityNotFound,
 			expectedStatus: http.StatusNotFound,
 		},
 		{
 			name:           "internal error",
 			city:           "Kyiv",
-			mockReturn:     models.Weather{},
-			mockError:      weathsrv.ErrInternal,
+			mockReturn:     domain.Weather{},
+			mockError:      services.ErrInternal,
 			expectedStatus: http.StatusInternalServerError,
 		},
 		{

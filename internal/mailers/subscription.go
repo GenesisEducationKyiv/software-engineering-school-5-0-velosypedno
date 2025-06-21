@@ -7,8 +7,8 @@ import (
 	"html/template"
 	"log"
 
+	"github.com/velosypedno/genesis-weather-api/internal/domain"
 	"github.com/velosypedno/genesis-weather-api/internal/email"
-	"github.com/velosypedno/genesis-weather-api/internal/models"
 )
 
 type emailSender interface {
@@ -25,7 +25,7 @@ func NewSubscriptionMailer(sender emailSender) *SubscriptionMailer {
 	}
 }
 
-func (m *SubscriptionMailer) SendConfirmation(subscription models.Subscription) error {
+func (m *SubscriptionMailer) SendConfirmation(subscription domain.Subscription) error {
 	to := subscription.Email
 	subject := "Subscription Confirmation"
 	confirmSubURL := fmt.Sprintf("http://localhost:8080/api/confirm/%s", subscription.Token)

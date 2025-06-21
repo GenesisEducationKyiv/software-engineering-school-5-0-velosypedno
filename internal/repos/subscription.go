@@ -8,7 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
-	"github.com/velosypedno/genesis-weather-api/internal/models"
+	"github.com/velosypedno/genesis-weather-api/internal/domain"
 )
 
 const (
@@ -31,7 +31,7 @@ func NewSubscriptionDBRepo(db *sql.DB) *SubscriptionDBRepo {
 	}
 }
 
-func (r *SubscriptionDBRepo) Create(subscription models.Subscription) error {
+func (r *SubscriptionDBRepo) Create(subscription domain.Subscription) error {
 	_, err := r.db.Exec(`
 		INSERT INTO subscriptions (id, email, frequency, city, activated, token)
 		VALUES ($1, $2, $3, $4, $5, $6)
@@ -95,7 +95,7 @@ func (r *SubscriptionDBRepo) DeleteByToken(token uuid.UUID) error {
 	return nil
 }
 
-func (r *SubscriptionDBRepo) GetActivatedByFreq(freq models.Frequency) ([]models.Subscription, error) {
+func (r *SubscriptionDBRepo) GetActivatedByFreq(freq domain.Frequency) ([]domain.Subscription, error) {
 	rows, err := r.db.Query("SELECT * FROM subscriptions WHERE activated = true AND frequency = $1", freq)
 	if err != nil {
 		err = fmt.Errorf("subscription repo: failed to get subscriptions, err:%v ", err)
@@ -107,9 +107,9 @@ func (r *SubscriptionDBRepo) GetActivatedByFreq(freq models.Frequency) ([]models
 			log.Printf("failed to close rows: %v", err)
 		}
 	}()
-	var result []models.Subscription
+	var result []domain.Subscription
 	for rows.Next() {
-		var subscription models.Subscription
+		var subscription domain.Subscription
 		if err := rows.Scan(
 			&subscription.ID,
 			&subscription.Email,
