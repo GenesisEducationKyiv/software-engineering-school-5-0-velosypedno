@@ -7,34 +7,37 @@ import (
 
 	_ "github.com/lib/pq"
 	"github.com/velosypedno/genesis-weather-api/internal/config"
-	"github.com/velosypedno/genesis-weather-api/internal/models"
+	"github.com/velosypedno/genesis-weather-api/internal/domain"
+	"github.com/velosypedno/genesis-weather-api/internal/email"
+	"github.com/velosypedno/genesis-weather-api/internal/mailers"
 	"github.com/velosypedno/genesis-weather-api/internal/repos"
-	"github.com/velosypedno/genesis-weather-api/internal/services"
+	services "github.com/velosypedno/genesis-weather-api/internal/services/weather_notification"
 )
 
 type task func()
 
-type TaskContainer struct {
+type Tasks struct {
 	HourlyWeatherNotificationTask task
 	DailyWeatherNotificationTask  task
 }
 
-func BuildTaskContainer(c *config.Config) *TaskContainer {
+func NewTasks(c *config.Config) *Tasks {
 	db, err := sql.Open(c.DbDriver, c.DbDSN)
 	if err != nil {
 		log.Fatal(err)
 	}
 	weatherRepo := repos.NewWeatherAPIRepo(c.WeatherAPIKey, &http.Client{})
 	subRepo := repos.NewSubscriptionDBRepo(db)
-	emailService := services.NewSMTPEmailService(c.SMTPHost, c.SMTPPort, c.SMTPUser, c.SMTPPass, c.EmailFrom)
+	stdoutEmailBackend := email.NewStdoutBackend()
+	weatherMailer := mailers.NewWeatherMailer(stdoutEmailBackend)
+	weatherMailerSrv := services.NewWeatherNotificationService(subRepo, weatherMailer, weatherRepo)
 
-	weatherMailerSrv := services.NewWeatherMailerService(subRepo, emailService, weatherRepo)
-	return &TaskContainer{
+	return &Tasks{
 		HourlyWeatherNotificationTask: func() {
-			weatherMailerSrv.SendWeatherEmailsByFreq(models.FreqHourly)
+			weatherMailerSrv.SendByFreq(domain.FreqHourly)
 		},
 		DailyWeatherNotificationTask: func() {
-			weatherMailerSrv.SendWeatherEmailsByFreq(models.FreqDaily)
+			weatherMailerSrv.SendByFreq(domain.FreqDaily)
 		},
 	}
 }

@@ -11,7 +11,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
-	"github.com/velosypedno/genesis-weather-api/internal/models"
+	"github.com/velosypedno/genesis-weather-api/internal/domain"
 	"github.com/velosypedno/genesis-weather-api/internal/repos"
 )
 
@@ -29,10 +29,10 @@ func TestCreateSubscription_Success(t *testing.T) {
 
 	repo := repos.NewSubscriptionDBRepo(db)
 
-	sub := models.Subscription{
+	sub := domain.Subscription{
 		ID:        uuid.New(),
 		Email:     "test@example.com",
-		Frequency: string(models.FreqDaily),
+		Frequency: string(domain.FreqDaily),
 		City:      "Kyiv",
 		Activated: false,
 		Token:     uuid.New(),
@@ -46,7 +46,7 @@ func TestCreateSubscription_Success(t *testing.T) {
 		WithArgs(sub.ID, sub.Email, sub.Frequency, sub.City, sub.Activated, sub.Token).
 		WillReturnResult(sqlmock.NewResult(1, 1))
 
-	err = repo.CreateSubscription(sub)
+	err = repo.Create(sub)
 	assert.NoError(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
@@ -58,10 +58,10 @@ func TestCreateSubscription_EmailExists(t *testing.T) {
 
 	repo := repos.NewSubscriptionDBRepo(db)
 
-	sub := models.Subscription{
+	sub := domain.Subscription{
 		ID:        uuid.New(),
 		Email:     "exists@example.com",
-		Frequency: string(models.FreqDaily),
+		Frequency: string(domain.FreqDaily),
 		City:      "Lviv",
 		Activated: false,
 		Token:     uuid.New(),
@@ -78,7 +78,7 @@ func TestCreateSubscription_EmailExists(t *testing.T) {
 		WithArgs(sub.ID, sub.Email, sub.Frequency, sub.City, sub.Activated, sub.Token).
 		WillReturnError(pqErr)
 
-	err = repo.CreateSubscription(sub)
+	err = repo.Create(sub)
 	assert.ErrorIs(t, err, repos.ErrEmailAlreadyExists)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
@@ -95,7 +95,7 @@ func TestActivateSubscription_Success(t *testing.T) {
 		WithArgs(token).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	err = repo.ActivateSubscription(token)
+	err = repo.Activate(token)
 	assert.NoError(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
@@ -114,7 +114,7 @@ func TestActivateSubscription_TokenNotFound(t *testing.T) {
 		WithArgs(token).
 		WillReturnResult(sqlmock.NewResult(0, 0))
 
-	err = repo.ActivateSubscription(token)
+	err = repo.Activate(token)
 	assert.ErrorIs(t, err, repos.ErrTokenNotFound)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
@@ -131,7 +131,7 @@ func TestDeleteSubscriptionByToken_Success(t *testing.T) {
 		WithArgs(token).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
-	err = repo.DeleteSubscriptionByToken(token)
+	err = repo.DeleteByToken(token)
 	assert.NoError(t, err)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
@@ -148,7 +148,7 @@ func TestDeleteSubscriptionByToken_TokenNotFound(t *testing.T) {
 		WithArgs(token).
 		WillReturnResult(sqlmock.NewResult(0, 0))
 
-	err = repo.DeleteSubscriptionByToken(token)
+	err = repo.DeleteByToken(token)
 	assert.ErrorIs(t, err, repos.ErrTokenNotFound)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
@@ -160,7 +160,7 @@ func TestGetActivatedSubscriptionsByFreq_Success(t *testing.T) {
 
 	repo := repos.NewSubscriptionDBRepo(db)
 
-	freq := models.FreqDaily
+	freq := domain.FreqDaily
 
 	rows := sqlmock.NewRows([]string{"id", "email", "frequency", "city", "activated", "token"}).
 		AddRow(uuid.New(), "user1@example.com", freq, "Kyiv", true, uuid.New()).
@@ -172,7 +172,7 @@ func TestGetActivatedSubscriptionsByFreq_Success(t *testing.T) {
 		WithArgs(freq).
 		WillReturnRows(rows)
 
-	subs, err := repo.GetActivatedSubsByFreq(freq)
+	subs, err := repo.GetActivatedByFreq(freq)
 	assert.NoError(t, err)
 	assert.Len(t, subs, 2)
 }
@@ -184,7 +184,7 @@ func TestGetActivatedSubscriptionsByFreq_QueryError(t *testing.T) {
 
 	repo := repos.NewSubscriptionDBRepo(db)
 
-	freq := models.FreqDaily
+	freq := domain.FreqDaily
 
 	mock.ExpectQuery(
 		regexp.QuoteMeta(`SELECT * FROM subscriptions WHERE activated = true AND frequency = $1`),
@@ -192,7 +192,7 @@ func TestGetActivatedSubscriptionsByFreq_QueryError(t *testing.T) {
 		WithArgs(freq).
 		WillReturnError(errors.New("query error"))
 
-	subs, err := repo.GetActivatedSubsByFreq(freq)
+	subs, err := repo.GetActivatedByFreq(freq)
 	assert.Error(t, err)
 	assert.Nil(t, subs)
 }
