@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/velosypedno/genesis-weather-api/internal/services"
+	subsrv "github.com/velosypedno/genesis-weather-api/internal/services/subscription"
 )
 
 type subscriptionActivator interface {
@@ -27,11 +27,11 @@ func NewConfirmGETHandler(service subscriptionActivator) gin.HandlerFunc {
 		}
 
 		err = service.Activate(parsedToken)
-		if errors.Is(err, services.ErrSubNotFound) {
+		if errors.Is(err, subsrv.ErrSubNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "token not found"})
 			return
 		}
-		if errors.Is(err, services.ErrInternal) {
+		if errors.Is(err, subsrv.ErrInternal) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to activate subscription"})
 			return
 		}

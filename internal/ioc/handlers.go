@@ -9,10 +9,12 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/velosypedno/genesis-weather-api/internal/config"
 	"github.com/velosypedno/genesis-weather-api/internal/email"
-	"github.com/velosypedno/genesis-weather-api/internal/handlers"
+	subh "github.com/velosypedno/genesis-weather-api/internal/handlers/subscription"
+	weathh "github.com/velosypedno/genesis-weather-api/internal/handlers/weather"
 	"github.com/velosypedno/genesis-weather-api/internal/mailers"
 	"github.com/velosypedno/genesis-weather-api/internal/repos"
-	"github.com/velosypedno/genesis-weather-api/internal/services"
+	subsvc "github.com/velosypedno/genesis-weather-api/internal/services/subscription"
+	weathsvc "github.com/velosypedno/genesis-weather-api/internal/services/weather"
 )
 
 type Handlers struct {
@@ -28,17 +30,17 @@ func NewHandlers(c *config.Config) *Handlers {
 		log.Fatal(err)
 	}
 	weatherRepo := repos.NewWeatherAPIRepo(c.WeatherAPIKey, &http.Client{})
-	weatherService := services.NewWeatherService(weatherRepo)
+	weatherService := weathsvc.NewWeatherService(weatherRepo)
 
 	subRepo := repos.NewSubscriptionDBRepo(db)
 	smtpEmailBackend := email.NewSMTPBackend(c.SMTPHost, c.SMTPPort, c.SMTPUser, c.SMTPPass, c.EmailFrom)
 	subMailer := mailers.NewSubscriptionMailer(smtpEmailBackend)
-	subService := services.NewSubscriptionService(subRepo, subMailer)
+	subService := subsvc.NewSubscriptionService(subRepo, subMailer)
 
 	return &Handlers{
-		WeatherGETHandler:     handlers.NewWeatherGETHandler(weatherService),
-		SubscribePOSTHandler:  handlers.NewSubscribePOSTHandler(subService),
-		ConfirmGETHandler:     handlers.NewConfirmGETHandler(subService),
-		UnsubscribeGETHandler: handlers.NewUnsubscribeGETHandler(subService),
+		WeatherGETHandler:     weathh.NewWeatherGETHandler(weatherService),
+		SubscribePOSTHandler:  subh.NewSubscribePOSTHandler(subService),
+		ConfirmGETHandler:     subh.NewConfirmGETHandler(subService),
+		UnsubscribeGETHandler: subh.NewUnsubscribeGETHandler(subService),
 	}
 }

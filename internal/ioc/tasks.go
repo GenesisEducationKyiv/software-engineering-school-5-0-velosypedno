@@ -11,7 +11,7 @@ import (
 	"github.com/velosypedno/genesis-weather-api/internal/mailers"
 	"github.com/velosypedno/genesis-weather-api/internal/models"
 	"github.com/velosypedno/genesis-weather-api/internal/repos"
-	"github.com/velosypedno/genesis-weather-api/internal/services"
+	services "github.com/velosypedno/genesis-weather-api/internal/services/weather_notification"
 )
 
 type task func()

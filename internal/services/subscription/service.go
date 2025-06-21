@@ -13,6 +13,7 @@ import (
 var (
 	ErrSubNotFound      = errors.New("subscription not found")
 	ErrSubAlreadyExists = errors.New("subscription with this email already exists")
+	ErrInternal         = errors.New("internal error")
 )
 
 type SubscriptionRepo interface {

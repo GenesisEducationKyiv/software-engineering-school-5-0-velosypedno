@@ -10,9 +10,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/velosypedno/genesis-weather-api/internal/handlers"
+	weathh "github.com/velosypedno/genesis-weather-api/internal/handlers/weather"
 	"github.com/velosypedno/genesis-weather-api/internal/models"
-	"github.com/velosypedno/genesis-weather-api/internal/services"
+	weathsrv "github.com/velosypedno/genesis-weather-api/internal/services/weather"
 )
 
 type mockWeatherRepo struct {
@@ -55,14 +55,14 @@ func TestNewWeatherGETHandler(t *testing.T) {
 			name:           "city not found",
 			city:           "Bagatkino",
 			mockReturn:     models.Weather{},
-			mockError:      services.ErrCityNotFound,
+			mockError:      weathsrv.ErrCityNotFound,
 			expectedStatus: http.StatusNotFound,
 		},
 		{
 			name:           "internal error",
 			city:           "Kyiv",
 			mockReturn:     models.Weather{},
-			mockError:      services.ErrInternal,
+			mockError:      weathsrv.ErrInternal,
 			expectedStatus: http.StatusInternalServerError,
 		},
 		{
@@ -85,7 +85,7 @@ func TestNewWeatherGETHandler(t *testing.T) {
 			}
 
 			router := gin.New()
-			router.GET("/weather", handlers.NewWeatherGETHandler(mockRepo))
+			router.GET("/weather", weathh.NewWeatherGETHandler(mockRepo))
 			req := httptest.NewRequest(http.MethodGet, "/weather?city="+tt.city, nil)
 			resp := httptest.NewRecorder()
 			router.ServeHTTP(resp, req)
