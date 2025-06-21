@@ -15,6 +15,10 @@ import (
 	"github.com/velosypedno/genesis-weather-api/internal/repos"
 )
 
+const (
+	pgUniqueViolationCode = "23505"
+)
+
 func closeDB(mock sqlmock.Sqlmock, db *sql.DB, t *testing.T) {
 	mock.ExpectClose()
 	if err := db.Close(); err != nil {
@@ -67,7 +71,7 @@ func TestCreateSubscription_EmailExists(t *testing.T) {
 		Token:     uuid.New(),
 	}
 
-	pqErr := &pq.Error{Code: repos.PGUniqueViolationCode}
+	pqErr := &pq.Error{Code: pgUniqueViolationCode}
 
 	mock.ExpectExec(
 		regexp.QuoteMeta(
@@ -79,7 +83,7 @@ func TestCreateSubscription_EmailExists(t *testing.T) {
 		WillReturnError(pqErr)
 
 	err = repo.Create(sub)
-	assert.ErrorIs(t, err, repos.ErrEmailAlreadyExists)
+	assert.ErrorIs(t, err, domain.ErrSubAlreadyExists)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
@@ -115,7 +119,7 @@ func TestActivateSubscription_TokenNotFound(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 0))
 
 	err = repo.Activate(token)
-	assert.ErrorIs(t, err, repos.ErrTokenNotFound)
+	assert.ErrorIs(t, err, domain.ErrSubNotFound)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 
@@ -149,7 +153,7 @@ func TestDeleteSubscriptionByToken_TokenNotFound(t *testing.T) {
 		WillReturnResult(sqlmock.NewResult(0, 0))
 
 	err = repo.DeleteByToken(token)
-	assert.ErrorIs(t, err, repos.ErrTokenNotFound)
+	assert.ErrorIs(t, err, domain.ErrSubNotFound)
 	assert.NoError(t, mock.ExpectationsWereMet())
 }
 

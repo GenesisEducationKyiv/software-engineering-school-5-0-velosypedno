@@ -10,8 +10,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/velosypedno/genesis-weather-api/internal/domain"
 	subh "github.com/velosypedno/genesis-weather-api/internal/handlers/subscription"
-	subsrv "github.com/velosypedno/genesis-weather-api/internal/services/subscription"
 )
 
 type mockSubscriptionActivator struct {
@@ -44,7 +44,7 @@ func TestConfirmGETHandler(t *testing.T) {
 		{
 			name:           "token not found",
 			token:          validUUID.String(),
-			mockErr:        subsrv.ErrSubNotFound,
+			mockErr:        domain.ErrSubNotFound,
 			expectedStatus: http.StatusNotFound,
 		},
 		{

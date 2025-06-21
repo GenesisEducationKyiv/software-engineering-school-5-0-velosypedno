@@ -1,19 +1,10 @@
 package services
 
 import (
-	"errors"
-	"log"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
-	"github.com/velosypedno/genesis-weather-api/internal/mailers"
-	"github.com/velosypedno/genesis-weather-api/internal/repos"
-)
-
-var (
-	ErrSubNotFound      = errors.New("subscription not found")
-	ErrSubAlreadyExists = errors.New("subscription with this email already exists")
-	ErrInternal         = errors.New("internal error")
 )
 
 type SubscriptionRepo interface {
@@ -49,40 +40,20 @@ func (s *SubscriptionService) Subscribe(subInput SubscriptionInput) error {
 		Token:     uuid.New(),
 	}
 	if err := s.repo.Create(subscription); err != nil {
-		return handleSubRepoError(err)
+		return fmt.Errorf("subscription service: %w", err)
 	}
-
-	err := s.mailer.SendConfirmation(subscription)
-	if errors.Is(err, mailers.ErrSendEmail) {
-		return ErrInternal
-	} else if err != nil {
-		log.Println(err)
-		return ErrInternal
+	if err := s.mailer.SendConfirmation(subscription); err != nil {
+		return fmt.Errorf("subscription service: %w", err)
 	}
 	return nil
 }
 
 func (s *SubscriptionService) Activate(token uuid.UUID) error {
 	err := s.repo.Activate(token)
-	return handleSubRepoError(err)
+	return fmt.Errorf("subscription service: %w", err)
 }
 
 func (s *SubscriptionService) Unsubscribe(token uuid.UUID) error {
 	err := s.repo.DeleteByToken(token)
-	return handleSubRepoError(err)
-}
-
-func handleSubRepoError(err error) error {
-	switch {
-	case errors.Is(err, repos.ErrTokenNotFound):
-		return ErrSubNotFound
-	case errors.Is(err, repos.ErrInternal):
-		return ErrInternal
-	case errors.Is(err, repos.ErrEmailAlreadyExists):
-		return ErrSubAlreadyExists
-	case err != nil:
-		log.Println(err)
-		return ErrInternal
-	}
-	return nil
+	return fmt.Errorf("subscription service: %w", err)
 }

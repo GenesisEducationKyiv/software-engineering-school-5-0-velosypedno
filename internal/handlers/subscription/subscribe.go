@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/velosypedno/genesis-weather-api/internal/domain"
 	subsrv "github.com/velosypedno/genesis-weather-api/internal/services/subscription"
 )
 
@@ -34,11 +35,11 @@ func NewSubscribePOSTHandler(service subscriber) gin.HandlerFunc {
 		}
 
 		err := service.Subscribe(input)
-		if errors.Is(err, subsrv.ErrSubAlreadyExists) {
+		if errors.Is(err, domain.ErrSubAlreadyExists) {
 			c.JSON(http.StatusConflict, gin.H{"error": "Email already subscribed"})
 			return
 		}
-		if errors.Is(err, subsrv.ErrInternal) {
+		if errors.Is(err, domain.ErrInternal) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create subscription"})
 			return
 		}
