@@ -53,17 +53,6 @@ services:
         condition: service_completed_successfully
     entrypoint: ["/app/bin/api"]
     restart: unless-stopped
-
-  cron-weather:
-    build: .
-    environment:
-      <<: [*db-env, *smtp-env]
-      WEATHER_API_KEY: ${WEATHER_API_KEY}
-    depends_on:
-      migrator:
-        condition: service_completed_successfully
-    entrypoint: ["/app/bin/cron"]
-    restart: unless-stopped
   
 volumes:
   postgres-data:
