@@ -10,8 +10,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/velosypedno/genesis-weather-api/internal/handlers"
-	"github.com/velosypedno/genesis-weather-api/internal/repos"
+	"github.com/velosypedno/genesis-weather-api/internal/domain"
+	subh "github.com/velosypedno/genesis-weather-api/internal/handlers/subscription"
 )
 
 type mockSubscriptionDeactivator struct {
@@ -44,7 +44,7 @@ func TestUnsubscribeGETHandler(t *testing.T) {
 		{
 			name:           "token not found",
 			token:          validUUID.String(),
-			mockErr:        repos.ErrTokenNotFound,
+			mockErr:        domain.ErrSubNotFound,
 			expectedStatus: http.StatusNotFound,
 		},
 		{
@@ -72,7 +72,7 @@ func TestUnsubscribeGETHandler(t *testing.T) {
 			}
 
 			route := gin.New()
-			route.GET("/unsubscribe/:token", handlers.NewUnsubscribeGETHandler(mockService))
+			route.GET("/unsubscribe/:token", subh.NewUnsubscribeGETHandler(mockService))
 			req := httptest.NewRequest(http.MethodGet, "/unsubscribe/"+tt.token, nil)
 			resp := httptest.NewRecorder()
 			route.ServeHTTP(resp, req)

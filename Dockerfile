@@ -8,7 +8,6 @@ RUN go mod download
 COPY . . 
 
 RUN go build -o ./bin/api cmd/api/main.go
-RUN go build -o ./bin/cron cmd/cron/main.go
 RUN task install:migrator
 
 FROM debian:bookworm
@@ -18,9 +17,9 @@ COPY --from=builder /app/Taskfile.yml ./Taskfile.yml
 COPY --from=builder /app/Taskfile.docker.yml ./Taskfile.docker.yml
 
 COPY --from=builder /app/bin/api ./bin/api
-COPY --from=builder /app/bin/cron ./bin/cron
 COPY --from=builder /go/bin/task /usr/local/bin/task
 COPY --from=builder /go/bin/migrate /usr/local/bin/migrate
 
-COPY --from=builder /app/db/migrations ./db/migrations
+COPY db/migrations ./db/migrations
+COPY internal/templates ./internal/templates
 

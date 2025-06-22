@@ -1,17 +1,18 @@
 package handlers
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/velosypedno/genesis-weather-api/internal/repos"
+	"github.com/velosypedno/genesis-weather-api/internal/domain"
 )
 
 type subscriptionActivator interface {
-	ActivateSubscription(token uuid.UUID) error
+	Activate(token uuid.UUID) error
 }
 
 func NewConfirmGETHandler(service subscriptionActivator) gin.HandlerFunc {
@@ -25,9 +26,13 @@ func NewConfirmGETHandler(service subscriptionActivator) gin.HandlerFunc {
 			return
 		}
 
-		err = service.ActivateSubscription(parsedToken)
-		if err == repos.ErrTokenNotFound {
+		err = service.Activate(parsedToken)
+		if errors.Is(err, domain.ErrSubNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "token not found"})
+			return
+		}
+		if errors.Is(err, domain.ErrInternal) {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to activate subscription"})
 			return
 		}
 		if err != nil {

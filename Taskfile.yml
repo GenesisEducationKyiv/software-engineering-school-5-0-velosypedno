@@ -9,7 +9,18 @@ tasks:
     cmds:
       - go-task --list-all
 
-  copy-env:
+  copy:hooks:pre-commit:
+    desc: Setup pre-commit hook
+    cmds:
+      - cp githooks/pre-commit .git/hooks/pre-commit
+      - chmod +x .git/hooks/pre-commit
+
+  rm:hooks:pre-commit:
+    desc: Remove pre-commit hook
+    cmds:
+      - rm -f .git/hooks/pre-commit
+
+  copy:env:
     desc: Copy default env vars
     cmds:
       - cp .env.sample .env
@@ -45,3 +56,11 @@ tasks:
     desc: Run migrations
     cmds:
       - migrate -database "${DB_DRIVER}://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable" -path db/migrations up
+    
+  api:run:debug:
+    desc: Run API in debug mode
+    dotenv: [".env"]
+    env:
+      DB_HOST: localhost
+    cmds:
+      - go run cmd/api/main.go

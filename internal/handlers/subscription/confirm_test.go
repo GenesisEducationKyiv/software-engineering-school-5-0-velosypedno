@@ -10,15 +10,15 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/velosypedno/genesis-weather-api/internal/handlers"
-	"github.com/velosypedno/genesis-weather-api/internal/repos"
+	"github.com/velosypedno/genesis-weather-api/internal/domain"
+	subh "github.com/velosypedno/genesis-weather-api/internal/handlers/subscription"
 )
 
 type mockSubscriptionActivator struct {
 	mock.Mock
 }
 
-func (m *mockSubscriptionActivator) ActivateSubscription(token uuid.UUID) error {
+func (m *mockSubscriptionActivator) Activate(token uuid.UUID) error {
 	args := m.Called(token)
 	return args.Error(0)
 }
@@ -44,7 +44,7 @@ func TestConfirmGETHandler(t *testing.T) {
 		{
 			name:           "token not found",
 			token:          validUUID.String(),
-			mockErr:        repos.ErrTokenNotFound,
+			mockErr:        domain.ErrSubNotFound,
 			expectedStatus: http.StatusNotFound,
 		},
 		{
@@ -67,12 +67,12 @@ func TestConfirmGETHandler(t *testing.T) {
 			if tt.mockErr != nil || tt.expectedStatus != http.StatusBadRequest {
 				tokenUUID, err := uuid.Parse(tt.token)
 				if err == nil {
-					mockService.On("ActivateSubscription", tokenUUID).Return(tt.mockErr)
+					mockService.On("Activate", tokenUUID).Return(tt.mockErr)
 				}
 			}
 
 			route := gin.New()
-			route.GET("/confirm/:token", handlers.NewConfirmGETHandler(mockService))
+			route.GET("/confirm/:token", subh.NewConfirmGETHandler(mockService))
 			req := httptest.NewRequest(http.MethodGet, "/confirm/"+tt.token, nil)
 			resp := httptest.NewRecorder()
 			route.ServeHTTP(resp, req)

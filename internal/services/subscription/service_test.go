@@ -5,23 +5,23 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/velosypedno/genesis-weather-api/internal/models"
-	"github.com/velosypedno/genesis-weather-api/internal/services"
+	"github.com/velosypedno/genesis-weather-api/internal/domain"
+	subsvc "github.com/velosypedno/genesis-weather-api/internal/services/subscription"
 )
 
 type mockSubscriptionRepo struct {
 	createErr error
 }
 
-func (m *mockSubscriptionRepo) CreateSubscription(sub models.Subscription) error {
+func (m *mockSubscriptionRepo) Create(sub domain.Subscription) error {
 	return m.createErr
 }
 
-func (m *mockSubscriptionRepo) ActivateSubscription(token uuid.UUID) error {
+func (m *mockSubscriptionRepo) Activate(token uuid.UUID) error {
 	return nil
 }
 
-func (m *mockSubscriptionRepo) DeleteSubscriptionByToken(token uuid.UUID) error {
+func (m *mockSubscriptionRepo) DeleteByToken(token uuid.UUID) error {
 	return nil
 }
 
@@ -29,7 +29,7 @@ type mockMailer struct {
 	sendErr error
 }
 
-func (m *mockMailer) SendConfirmationEmail(sub models.Subscription) error {
+func (m *mockMailer) SendConfirmation(sub domain.Subscription) error {
 	return m.sendErr
 }
 
@@ -49,9 +49,9 @@ func TestSubscriptionService_Subscribe(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := &mockSubscriptionRepo{createErr: tt.repoErr}
 			mailer := &mockMailer{sendErr: tt.mailerErr}
-			service := services.NewSubscriptionService(repo, mailer)
+			service := subsvc.NewSubscriptionService(repo, mailer)
 
-			err := service.Subscribe(services.SubscriptionInput{
+			err := service.Subscribe(subsvc.SubscriptionInput{
 				Email:     "test@example.com",
 				Frequency: "daily",
 				City:      "Kyiv",

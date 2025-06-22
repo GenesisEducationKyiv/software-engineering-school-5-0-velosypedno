@@ -8,7 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"github.com/velosypedno/genesis-weather-api/internal/repos"
+	"github.com/velosypedno/genesis-weather-api/internal/domain"
 )
 
 type subscriptionDeactivator interface {
@@ -26,11 +26,15 @@ func NewUnsubscribeGETHandler(service subscriptionDeactivator) gin.HandlerFunc {
 			return
 		}
 		err = service.Unsubscribe(parsedToken)
+		if errors.Is(err, domain.ErrSubNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{"error": "token not found"})
+			return
+		}
+		if errors.Is(err, domain.ErrInternal) {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to unsubscribe"})
+			return
+		}
 		if err != nil {
-			if errors.Is(err, repos.ErrTokenNotFound) {
-				c.JSON(http.StatusNotFound, gin.H{"error": "token not found"})
-				return
-			}
 			log.Println(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to unsubscribe"})
 			return

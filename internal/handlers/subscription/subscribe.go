@@ -6,8 +6,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/velosypedno/genesis-weather-api/internal/repos"
-	"github.com/velosypedno/genesis-weather-api/internal/services"
+	"github.com/velosypedno/genesis-weather-api/internal/domain"
+	subsrv "github.com/velosypedno/genesis-weather-api/internal/services/subscription"
 )
 
 type subReqBody struct {
@@ -17,27 +17,33 @@ type subReqBody struct {
 }
 
 type subscriber interface {
-	Subscribe(subscription services.SubscriptionInput) error
+	Subscribe(subInput subsrv.SubscriptionInput) error
 }
 
 func NewSubscribePOSTHandler(service subscriber) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var body subReqBody
 		if err := c.ShouldBindJSON(&body); err != nil {
+			log.Println(err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 			return
 		}
-		input := services.SubscriptionInput{
+		input := subsrv.SubscriptionInput{
 			Email:     body.Email,
 			Frequency: body.Frequency,
 			City:      body.City,
 		}
+
 		err := service.Subscribe(input)
+		if errors.Is(err, domain.ErrSubAlreadyExists) {
+			c.JSON(http.StatusConflict, gin.H{"error": "Email already subscribed"})
+			return
+		}
+		if errors.Is(err, domain.ErrInternal) {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create subscription"})
+			return
+		}
 		if err != nil {
-			if errors.Is(err, repos.ErrEmailAlreadyExists) {
-				c.JSON(http.StatusConflict, gin.H{"error": "Email already subscribed"})
-				return
-			}
 			log.Println(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create subscription"})
 			return
