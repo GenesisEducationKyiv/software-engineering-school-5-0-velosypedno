@@ -8,15 +8,15 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/velosypedno/genesis-weather-api/internal/models"
-	"github.com/velosypedno/genesis-weather-api/internal/services"
+	"github.com/velosypedno/genesis-weather-api/internal/domain"
+	subsvc "github.com/velosypedno/genesis-weather-api/internal/services/subscription"
 )
 
 type mockSubscriptionRepo struct {
 	createErr error
 }
 
-func (m *mockSubscriptionRepo) Create(sub models.Subscription) error {
+func (m *mockSubscriptionRepo) Create(sub domain.Subscription) error {
 	return m.createErr
 }
 
@@ -32,7 +32,7 @@ type mockMailer struct {
 	sendErr error
 }
 
-func (m *mockMailer) SendConfirmation(sub models.Subscription) error {
+func (m *mockMailer) SendConfirmation(sub domain.Subscription) error {
 	return m.sendErr
 }
 
@@ -52,9 +52,9 @@ func TestSubscriptionService_Subscribe(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := &mockSubscriptionRepo{createErr: tt.repoErr}
 			mailer := &mockMailer{sendErr: tt.mailerErr}
-			service := services.NewSubscriptionService(repo, mailer)
+			service := subsvc.NewSubscriptionService(repo, mailer)
 
-			err := service.Subscribe(services.SubscriptionInput{
+			err := service.Subscribe(subsvc.SubscriptionInput{
 				Email:     "test@example.com",
 				Frequency: "daily",
 				City:      "Kyiv",

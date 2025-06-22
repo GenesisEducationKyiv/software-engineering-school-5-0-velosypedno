@@ -5,19 +5,19 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/velosypedno/genesis-weather-api/internal/models"
+	"github.com/velosypedno/genesis-weather-api/internal/domain"
 )
 
 type activeSubsRepo interface {
-	GetActivatedByFreq(freq models.Frequency) ([]models.Subscription, error)
+	GetActivatedByFreq(freq domain.Frequency) ([]domain.Subscription, error)
 }
 
 type weatherMailer interface {
-	SendCurrent(subscription models.Subscription, weather models.Weather) error
+	SendCurrent(subscription domain.Subscription, weather domain.Weather) error
 }
 
 type weatherRepo interface {
-	GetCurrent(ctx context.Context, city string) (models.Weather, error)
+	GetCurrent(ctx context.Context, city string) (domain.Weather, error)
 }
 
 type WeatherNotificationService struct {
@@ -38,10 +38,10 @@ func NewWeatherNotificationService(
 	}
 }
 
-func (s *WeatherNotificationService) SendByFreq(freq models.Frequency) {
+func (s *WeatherNotificationService) SendByFreq(freq domain.Frequency) {
 	subscriptions, err := s.subRepo.GetActivatedByFreq(freq)
 	if err != nil {
-		log.Println(fmt.Errorf("weather notification service: failed to get subscriptions, err:%v ", err))
+		log.Println(fmt.Errorf("weather notification service: %v ", err))
 		return
 	}
 	for _, sub := range subscriptions {

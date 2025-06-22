@@ -9,7 +9,7 @@ import (
 )
 
 func TestGetWeatherSuccess(t *testing.T) {
-	resp, err := http.Get(TestServer.URL + "/api/weather?city=Kyiv")
+	resp, err := http.Get(apiURL + "/api/weather?city=Kyiv")
 	if err != nil {
 		t.Fatalf("Failed to send GET request: %v", err)
 	}
@@ -21,7 +21,7 @@ func TestGetWeatherSuccess(t *testing.T) {
 }
 
 func TestGetWeatherInvalidCity(t *testing.T) {
-	resp, err := http.Get(TestServer.URL + "/api/weather?city=" + invalidCity)
+	resp, err := http.Get(apiURL + "/api/weather?city=" + invalidCity)
 	if err != nil {
 		t.Fatalf("Failed to send GET request: %v", err)
 	}

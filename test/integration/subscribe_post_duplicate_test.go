@@ -23,7 +23,7 @@ func TestSubscribeDuplicateFlow(t *testing.T) {
         "city": "Kyiv"
     }`, toEmail)
 	t.Log("Sending first subscription request...")
-	resp, err := http.Post(TestServer.URL+"/api/subscribe", "application/json", strings.NewReader(payload))
+	resp, err := http.Post(apiURL+"/api/subscribe", "application/json", strings.NewReader(payload))
 	if err != nil {
 		t.Fatalf("Failed to send first POST request: %v", err)
 	}
@@ -31,7 +31,7 @@ func TestSubscribeDuplicateFlow(t *testing.T) {
 
 	// Step 3: Send the second (duplicate) subscription request
 	t.Log("Sending duplicate subscription request...")
-	resp, err = http.Post(TestServer.URL+"/api/subscribe", "application/json", strings.NewReader(payload))
+	resp, err = http.Post(apiURL+"/api/subscribe", "application/json", strings.NewReader(payload))
 	if err != nil {
 		t.Fatalf("Failed to send duplicate POST request: %v", err)
 	}

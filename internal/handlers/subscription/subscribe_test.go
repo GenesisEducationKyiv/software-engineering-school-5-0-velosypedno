@@ -15,8 +15,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/velosypedno/genesis-weather-api/internal/handlers"
-	"github.com/velosypedno/genesis-weather-api/internal/services"
+	"github.com/velosypedno/genesis-weather-api/internal/domain"
+	subh "github.com/velosypedno/genesis-weather-api/internal/handlers/subscription"
+	subsrv "github.com/velosypedno/genesis-weather-api/internal/services/subscription"
 )
 
 func extractField(jsonStr, field string) string {
@@ -32,7 +33,7 @@ type mockSubscriber struct {
 	mock.Mock
 }
 
-func (m *mockSubscriber) Subscribe(input services.SubscriptionInput) error {
+func (m *mockSubscriber) Subscribe(input subsrv.SubscriptionInput) error {
 	args := m.Called(input)
 	return args.Error(0)
 }
@@ -61,7 +62,7 @@ func TestSubscribePOSTHandler(t *testing.T) {
 		{
 			name:           "conflict - email already exists",
 			body:           `{"email": "test@example.com", "frequency": "daily", "city": "Kyiv"}`,
-			mockSrvErr:     services.ErrSubAlreadyExists,
+			mockSrvErr:     domain.ErrSubAlreadyExists,
 			expectedStatus: http.StatusConflict,
 		},
 		{
@@ -83,7 +84,7 @@ func TestSubscribePOSTHandler(t *testing.T) {
 			mockService := new(mockSubscriber)
 
 			if tt.expectedStatus != http.StatusBadRequest {
-				input := services.SubscriptionInput{
+				input := subsrv.SubscriptionInput{
 					Email:     extractField(tt.body, "email"),
 					Frequency: extractField(tt.body, "frequency"),
 					City:      extractField(tt.body, "city"),
@@ -92,7 +93,7 @@ func TestSubscribePOSTHandler(t *testing.T) {
 			}
 
 			route := gin.New()
-			route.POST("/subscribe", handlers.NewSubscribePOSTHandler(mockService))
+			route.POST("/subscribe", subh.NewSubscribePOSTHandler(mockService))
 			req := httptest.NewRequest(http.MethodPost, "/subscribe", bytes.NewBuffer([]byte(tt.body)))
 			req.Header.Set("Content-Type", "application/json")
 			resp := httptest.NewRecorder()

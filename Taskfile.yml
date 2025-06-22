@@ -65,7 +65,15 @@ tasks:
 
   test:integration:
     desc: Run integration tests
-    dotenv: ["test/.env.test"]
+    dotenv: [".env"]
+    env:
+      PORT: 8081
+      DB_PORT: 5433
+      DB_HOST: localhost
+      SMTP_HOST: localhost
+      SMTP_PORT: 1025
+      EMAIL_FROM: testuser@example.com
+      TEMPLATES_DIR: ../../internal/templates
     cmds:
       - task: copy:test-env
       - docker compose -f test/docker-compose.test.yml up -d
@@ -78,3 +86,11 @@ tasks:
     desc: Run migrations
     cmds:
       - migrate -database "${DB_DRIVER}://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable" -path db/migrations up
+    
+  api:run:debug:
+    desc: Run API in debug mode
+    dotenv: [".env"]
+    env:
+      DB_HOST: localhost
+    cmds:
+      - go run cmd/api/main.go

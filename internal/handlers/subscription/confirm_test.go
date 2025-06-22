@@ -13,24 +13,24 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/velosypedno/genesis-weather-api/internal/handlers"
-	"github.com/velosypedno/genesis-weather-api/internal/services"
+	"github.com/velosypedno/genesis-weather-api/internal/domain"
+	subh "github.com/velosypedno/genesis-weather-api/internal/handlers/subscription"
 )
 
-type mockSubscriptionDeactivator struct {
+type mockSubscriptionActivator struct {
 	mock.Mock
 }
 
-func (m *mockSubscriptionDeactivator) Unsubscribe(token uuid.UUID) error {
+func (m *mockSubscriptionActivator) Activate(token uuid.UUID) error {
 	args := m.Called(token)
 	return args.Error(0)
 }
 
-func TestUnsubscribeGETHandler(t *testing.T) {
+func TestConfirmGETHandler(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	validUUID := uuid.New()
-	invalidUUIDStr := "invalid-uuid"
+	invalidUUIDStr := "not-a-uuid"
 
 	tests := []struct {
 		name           string
@@ -47,17 +47,17 @@ func TestUnsubscribeGETHandler(t *testing.T) {
 		{
 			name:           "token not found",
 			token:          validUUID.String(),
-			mockErr:        services.ErrSubNotFound,
+			mockErr:        domain.ErrSubNotFound,
 			expectedStatus: http.StatusNotFound,
 		},
 		{
-			name:           "internal error during unsubscribe",
+			name:           "internal error on activation",
 			token:          validUUID.String(),
-			mockErr:        errors.New("internal error"),
+			mockErr:        errors.New("some internal error"),
 			expectedStatus: http.StatusInternalServerError,
 		},
 		{
-			name:           "successful unsubscribe",
+			name:           "successful activation",
 			token:          validUUID.String(),
 			mockErr:        nil,
 			expectedStatus: http.StatusOK,
@@ -66,20 +66,21 @@ func TestUnsubscribeGETHandler(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockService := new(mockSubscriptionDeactivator)
+			mockService := new(mockSubscriptionActivator)
 			if tt.mockErr != nil || tt.expectedStatus != http.StatusBadRequest {
 				tokenUUID, err := uuid.Parse(tt.token)
 				if err == nil {
-					mockService.On("Unsubscribe", tokenUUID).Return(tt.mockErr)
+					mockService.On("Activate", tokenUUID).Return(tt.mockErr)
 				}
 			}
 
 			route := gin.New()
-			route.GET("/unsubscribe/:token", handlers.NewUnsubscribeGETHandler(mockService))
-			req := httptest.NewRequest(http.MethodGet, "/unsubscribe/"+tt.token, nil)
+			route.GET("/confirm/:token", subh.NewConfirmGETHandler(mockService))
+			req := httptest.NewRequest(http.MethodGet, "/confirm/"+tt.token, nil)
 			resp := httptest.NewRecorder()
 			route.ServeHTTP(resp, req)
 			assert.Equal(t, tt.expectedStatus, resp.Code)
+			mockService.AssertExpectations(t)
 		})
 	}
 }

@@ -27,7 +27,7 @@ func TestUnsubscribeFlow(t *testing.T) {
     }`, toEmail)
 
 	t.Log("Sending subscribe request...")
-	resp, err := http.Post(TestServer.URL+"/api/subscribe", "application/json", strings.NewReader(payload))
+	resp, err := http.Post(apiURL+"/api/subscribe", "application/json", strings.NewReader(payload))
 	if err != nil {
 		t.Fatalf("Failed to send POST: %v", err)
 	}
@@ -47,7 +47,7 @@ func TestUnsubscribeFlow(t *testing.T) {
 
 	// Step 4: Activate subscription
 	t.Log("Activating subscription...")
-	confirmResp, err := http.Get(TestServer.URL + "/api/confirm/" + token.String())
+	confirmResp, err := http.Get(apiURL + "/api/confirm/" + token.String())
 	if err != nil {
 		t.Fatalf("Failed to confirm subscription: %v", err)
 	}
@@ -58,7 +58,7 @@ func TestUnsubscribeFlow(t *testing.T) {
 
 	// Step 5: Unsubscribe
 	t.Log("Sending unsubscribe request...")
-	unsubResp, err := http.Get(TestServer.URL + "/api/unsubscribe/" + token.String())
+	unsubResp, err := http.Get(apiURL + "/api/unsubscribe/" + token.String())
 	if err != nil {
 		t.Fatalf("Failed to unsubscribe: %v", err)
 	}

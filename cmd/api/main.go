@@ -3,17 +3,23 @@ package main
 import (
 	"log"
 
+	"github.com/velosypedno/genesis-weather-api/internal/app"
 	"github.com/velosypedno/genesis-weather-api/internal/config"
-	"github.com/velosypedno/genesis-weather-api/internal/ioc"
-	"github.com/velosypedno/genesis-weather-api/internal/server"
 )
 
 func main() {
-	cfg := config.Load()
-	handlers := ioc.NewHandlers(cfg)
-	router := server.SetupRoutes(handlers)
-	err := router.Run(":" + cfg.Port)
+	cfg, err := config.Load()
 	if err != nil {
-		log.Fatal("Server error:", err)
+		log.Panic(err)
+	}
+	a := app.New(cfg)
+	err = a.Run()
+	if err != nil {
+		log.Panic(err)
+	}
+	a.WaitOnSIGINT()
+	err = a.Shutdown()
+	if err != nil {
+		log.Panic(err)
 	}
 }

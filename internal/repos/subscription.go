@@ -2,23 +2,16 @@ package repos
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
 	"log"
 
 	"github.com/google/uuid"
 	"github.com/lib/pq"
-	"github.com/velosypedno/genesis-weather-api/internal/models"
+	"github.com/velosypedno/genesis-weather-api/internal/domain"
 )
 
 const (
-	PGUniqueViolationCode = "23505"
-)
-
-var (
-	ErrEmailAlreadyExists = errors.New("subscription with this email already exists")
-	ErrTokenNotFound      = errors.New("subscription with this token not found")
-	ErrInternal           = errors.New("internal error")
+	pgUniqueViolationCode = "23505"
 )
 
 type SubscriptionDBRepo struct {
@@ -31,7 +24,7 @@ func NewSubscriptionDBRepo(db *sql.DB) *SubscriptionDBRepo {
 	}
 }
 
-func (r *SubscriptionDBRepo) Create(subscription models.Subscription) error {
+func (r *SubscriptionDBRepo) Create(subscription domain.Subscription) error {
 	_, err := r.db.Exec(`
 		INSERT INTO subscriptions (id, email, frequency, city, activated, token)
 		VALUES ($1, $2, $3, $4, $5, $6)
@@ -45,13 +38,12 @@ func (r *SubscriptionDBRepo) Create(subscription models.Subscription) error {
 	)
 
 	if err != nil {
-		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == PGUniqueViolationCode {
-			return ErrEmailAlreadyExists
+		if pgErr, ok := err.(*pq.Error); ok && pgErr.Code == pgUniqueViolationCode {
+			return domain.ErrSubAlreadyExists
 		}
 
-		err = fmt.Errorf("subscription repo: failed to create subscription, err:%v ", err)
-		log.Println(err)
-		return ErrInternal
+		log.Printf("subscription repo: create: %v\n", err)
+		return fmt.Errorf("subscription repo: %w", domain.ErrInternal)
 	}
 
 	return nil
@@ -60,18 +52,16 @@ func (r *SubscriptionDBRepo) Create(subscription models.Subscription) error {
 func (r *SubscriptionDBRepo) Activate(token uuid.UUID) error {
 	res, err := r.db.Exec("UPDATE subscriptions SET activated = true WHERE token = $1", token)
 	if err != nil {
-		err = fmt.Errorf("subscription repo: failed to activate subscription, err:%v ", err)
-		log.Println(err)
-		return ErrInternal
+		log.Printf("subscription repo: activate: %v\n", err)
+		return fmt.Errorf("subscription repo: %w", domain.ErrInternal)
 	}
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
-		err := fmt.Errorf("subscription repo: failed to activate subscription, err:%v ", err)
-		log.Println(err)
-		return ErrInternal
+		log.Printf("subscription repo: activate: %v\n", err)
+		return fmt.Errorf("subscription repo: %w", domain.ErrInternal)
 	}
 	if rowsAffected == 0 {
-		return ErrTokenNotFound
+		return fmt.Errorf("subscription repo: %w", domain.ErrSubNotFound)
 	}
 	return nil
 }
@@ -79,37 +69,34 @@ func (r *SubscriptionDBRepo) Activate(token uuid.UUID) error {
 func (r *SubscriptionDBRepo) DeleteByToken(token uuid.UUID) error {
 	res, err := r.db.Exec("DELETE FROM subscriptions WHERE token = $1", token)
 	if err != nil {
-		err = fmt.Errorf("subscription repo: failed to delete subscription, err:%v ", err)
-		log.Println(err)
-		return ErrInternal
+		log.Printf("subscription repo: delete: %v\n", err)
+		return fmt.Errorf("subscription repo: %w", domain.ErrInternal)
 	}
 	rowsAffected, err := res.RowsAffected()
 	if err != nil {
-		err := fmt.Errorf("subscription repo: failed to delete subscription, err:%v ", err)
-		log.Println(err)
-		return ErrInternal
+		log.Printf("subscription repo: delete: %v\n", err)
+		return fmt.Errorf("subscription repo: %w", domain.ErrInternal)
 	}
 	if rowsAffected == 0 {
-		return ErrTokenNotFound
+		return fmt.Errorf("subscription repo: %w", domain.ErrSubNotFound)
 	}
 	return nil
 }
 
-func (r *SubscriptionDBRepo) GetActivatedByFreq(freq models.Frequency) ([]models.Subscription, error) {
+func (r *SubscriptionDBRepo) GetActivatedByFreq(freq domain.Frequency) ([]domain.Subscription, error) {
 	rows, err := r.db.Query("SELECT * FROM subscriptions WHERE activated = true AND frequency = $1", freq)
 	if err != nil {
-		err = fmt.Errorf("subscription repo: failed to get subscriptions, err:%v ", err)
-		log.Println(err)
-		return nil, ErrInternal
+		log.Printf("subscription repo: select: %v\n", err)
+		return nil, fmt.Errorf("subscription repo: %w", domain.ErrInternal)
 	}
 	defer func() {
 		if err := rows.Close(); err != nil {
 			log.Printf("failed to close rows: %v", err)
 		}
 	}()
-	var result []models.Subscription
+	var result []domain.Subscription
 	for rows.Next() {
-		var subscription models.Subscription
+		var subscription domain.Subscription
 		if err := rows.Scan(
 			&subscription.ID,
 			&subscription.Email,
@@ -123,8 +110,8 @@ func (r *SubscriptionDBRepo) GetActivatedByFreq(freq models.Frequency) ([]models
 		result = append(result, subscription)
 	}
 	if err := rows.Err(); err != nil {
-		log.Println(err)
-		return nil, ErrInternal
+		log.Printf("subscription repo: select: %v\n", err)
+		return nil, fmt.Errorf("subscription repo: %w", domain.ErrInternal)
 	}
 	return result, nil
 }

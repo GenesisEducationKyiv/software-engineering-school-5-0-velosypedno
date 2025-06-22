@@ -2,46 +2,42 @@ package config
 
 import (
 	"fmt"
-	"os"
+
+	"github.com/kelseyhightower/envconfig"
 )
 
 type Config struct {
-	DbDriver     string
-	DbDSN        string
-	Port         string
-	TemplatesDir string
+	DbDriver string `envconfig:"DB_DRIVER" required:"true"`
+	DbHost   string `envconfig:"DB_HOST" required:"true"`
+	DbPort   string `envconfig:"DB_PORT" required:"true"`
+	DbUser   string `envconfig:"DB_USER" required:"true"`
+	DbPass   string `envconfig:"DB_PASSWORD" required:"true"`
+	DbName   string `envconfig:"DB_NAME" required:"true"`
 
-	WeatherAPIKey     string
-	WeatherAPIBaseURL string
+	Port         string `envconfig:"PORT" required:"true"`
+	TemplatesDir string `envconfig:"TEMPLATES_DIR" required:"true"`
 
-	SMTPHost  string
-	SMTPPort  string
-	SMTPUser  string
-	SMTPPass  string
-	EmailFrom string
+	WeatherAPIKey     string `envconfig:"WEATHER_API_KEY" required:"true"`
+	WeatherAPIBaseURL string `envconfig:"WEATHER_API_BASE_URL" required:"true"`
+
+	SMTPHost  string `envconfig:"SMTP_HOST" required:"true"`
+	SMTPPort  string `envconfig:"SMTP_PORT" required:"true"`
+	SMTPUser  string `envconfig:"SMTP_USER" required:"true"`
+	SMTPPass  string `envconfig:"SMTP_PASS" required:"true"`
+	EmailFrom string `envconfig:"EMAIL_FROM" required:"true"`
 }
 
-func Load() *Config {
-	return &Config{
-		DbDSN: fmt.Sprintf(
-			"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-			os.Getenv("DB_HOST"),
-			os.Getenv("DB_PORT"),
-			os.Getenv("DB_USER"),
-			os.Getenv("DB_PASSWORD"),
-			os.Getenv("DB_NAME"),
-		),
-		DbDriver:     os.Getenv("DB_DRIVER"),
-		Port:         os.Getenv("PORT"),
-		TemplatesDir: os.Getenv("TEMPLATES_DIR"),
+func (c *Config) DSN() string {
+	return fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		c.DbHost, c.DbPort, c.DbUser, c.DbPass, c.DbName,
+	)
+}
 
-		WeatherAPIKey:     os.Getenv("WEATHER_API_KEY"),
-		WeatherAPIBaseURL: os.Getenv("WEATHER_API_BASE_URL"),
-
-		SMTPHost:  os.Getenv("SMTP_HOST"),
-		SMTPPort:  os.Getenv("SMTP_PORT"),
-		SMTPUser:  os.Getenv("SMTP_USER"),
-		SMTPPass:  os.Getenv("SMTP_PASS"),
-		EmailFrom: os.Getenv("EMAIL_FROM"),
+func Load() (*Config, error) {
+	var cfg Config
+	if err := envconfig.Process("", &cfg); err != nil {
+		return nil, err
 	}
+	return &cfg, nil
 }

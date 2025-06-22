@@ -12,37 +12,33 @@ import (
 	"os"
 	"testing"
 
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	"github.com/velosypedno/genesis-weather-api/internal/app"
 	"github.com/velosypedno/genesis-weather-api/internal/config"
-	"github.com/velosypedno/genesis-weather-api/internal/ioc"
-	"github.com/velosypedno/genesis-weather-api/internal/server"
 )
 
-const serverTimeout = 10
-const invalidCity = "InvalidCity"
+const (
+	invalidCity = "InvalidCity"
+)
 
 var DB *sql.DB
-var TestServer *httptest.Server
+var apiURL = "http://127.0.0.1:8081"
 
 func TestMain(m *testing.M) {
-	fmt.Println("Starting integration tests...")
-	err := godotenv.Load("../.env")
-	if err != nil {
-		fmt.Println(err)
-	}
-
+	// setup fake weather API
 	testWeatherAPI := startFakeWeatherAPI()
 	defer testWeatherAPI.Close()
 
-	err = os.Setenv("WEATHER_API_BASE_URL", testWeatherAPI.URL)
+	// setup config
+	cfg, err := config.Load()
 	if err != nil {
 		log.Fatal(err)
 	}
-
-	cfg := config.Load()
+	cfg.WeatherAPIBaseURL = testWeatherAPI.URL
 	fmt.Println(cfg)
-	db, err := sql.Open(cfg.DbDriver, cfg.DbDSN)
+
+	// setup DB
+	db, err := sql.Open(cfg.DbDriver, cfg.DSN())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -53,13 +49,14 @@ func TestMain(m *testing.M) {
 		}
 	}()
 
-	router := server.SetupRoutes(ioc.NewHandlers(cfg))
+	// run app
+	app := app.New(cfg)
+	app.Run()
 
-	testServer := httptest.NewServer(router)
-	TestServer = testServer
-	defer testServer.Close()
-
+	// run tests
 	code := m.Run()
+	app.Shutdown()
+
 	os.Exit(code)
 }
 

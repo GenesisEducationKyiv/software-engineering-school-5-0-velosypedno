@@ -25,7 +25,7 @@ func TestSubscribeSuccessFlow(t *testing.T) {
         "city": "Kyiv"
     }`, toEmail)
 	t.Logf("Sending subscription request for email: %s", toEmail)
-	resp, err := http.Post(TestServer.URL+"/api/subscribe", "application/json", strings.NewReader(payload))
+	resp, err := http.Post(apiURL+"/api/subscribe", "application/json", strings.NewReader(payload))
 	if err != nil {
 		t.Fatalf("Failed to send POST request: %v", err)
 	}

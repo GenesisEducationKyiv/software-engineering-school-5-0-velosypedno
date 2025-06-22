@@ -31,7 +31,7 @@ func TestSubscribeConfirmFlow(t *testing.T) {
 	t.Logf("Inserted subscription with token: %s", token)
 
 	// Step 2: Make GET request to /api/confirm/:token
-	url := fmt.Sprintf("%s/api/confirm/%s", TestServer.URL, token.String())
+	url := fmt.Sprintf("%s/api/confirm/%s", apiURL, token.String())
 	t.Logf("Sending GET request to: %s", url)
 
 	resp, err := http.Get(url)
