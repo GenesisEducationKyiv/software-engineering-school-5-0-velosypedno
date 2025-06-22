@@ -74,7 +74,6 @@ func (a *App) Shutdown(timeoutCtx context.Context) error {
 			wrapped := fmt.Errorf("shutdown api server: %w", err)
 			log.Println(wrapped)
 			shutdownErr = wrapped
-
 		} else {
 			log.Println("APIServer Shutdown successfully")
 		}
@@ -93,7 +92,6 @@ func (a *App) Shutdown(timeoutCtx context.Context) error {
 			if shutdownErr == nil {
 				shutdownErr = wrapped
 			}
-
 		}
 	}
 

@@ -22,7 +22,8 @@ func setupRouter(db *sql.DB, router *gin.Engine, cfg *config.Config) {
 	weatherRepo := repos.NewWeatherAPIRepo(cfg.WeatherAPIKey, &http.Client{})
 	weatherService := weathsvc.NewWeatherService(weatherRepo)
 	subRepo := repos.NewSubscriptionDBRepo(db)
-	smtpEmailBackend := email.NewSMTPBackend(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPass, cfg.EmailFrom)
+	smtpEmailBackend := email.NewSMTPBackend(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPass,
+		cfg.EmailFrom)
 	subMailer := mailers.NewSubscriptionMailer(smtpEmailBackend)
 	subService := subsvc.NewSubscriptionService(subRepo, subMailer)
 

@@ -21,7 +21,7 @@ func main() {
 	a := app.New(cfg)
 	err := a.Run()
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 
 	<-shutdownCtx.Done()
@@ -30,6 +30,6 @@ func main() {
 	defer cancel()
 	err = a.Shutdown(timeoutCtx)
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 }
