@@ -1,4 +1,4 @@
-# ADR-0007: Replace `ioc` package with idiomatic `app` package
+# ADR-0008: Replace `ioc` package with idiomatic `app` package
 
 ## Status
 
