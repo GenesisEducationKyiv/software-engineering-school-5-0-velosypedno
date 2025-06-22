@@ -6,14 +6,16 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os/signal"
+	"syscall"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/robfig/cron/v3"
 	"github.com/velosypedno/genesis-weather-api/internal/config"
 )
 
 const readTimeout = 15 * time.Second
+const shutdownTimeout = 20 * time.Second
 
 type App struct {
 	cfg    *config.Config
@@ -29,6 +31,9 @@ func New(cfg *config.Config) *App {
 }
 
 func (a *App) Run() error {
+	shutdownCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
+	defer stop()
+
 	var err error
 
 	// db
@@ -39,8 +44,7 @@ func (a *App) Run() error {
 	log.Println("DB connected")
 
 	// cron
-	a.cron = cron.New()
-	err = setupCron(a.db, a.cron, a.cfg)
+	err = a.setupCron()
 	if err != nil {
 		return err
 	}
@@ -48,8 +52,7 @@ func (a *App) Run() error {
 	log.Println("Cron tasks are scheduled")
 
 	// api
-	router := gin.Default()
-	setupRouter(a.db, router, a.cfg)
+	router := a.setupRouter()
 	a.apiSrv = &http.Server{
 		Addr:        ":" + a.cfg.Port,
 		Handler:     router,
@@ -62,10 +65,15 @@ func (a *App) Run() error {
 	}()
 	log.Printf("APIServer started on port %s", a.cfg.Port)
 
-	return nil
+	<-shutdownCtx.Done()
+	timeoutCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+	defer cancel()
+
+	err = a.shutdown(timeoutCtx)
+	return err
 }
 
-func (a *App) Shutdown(timeoutCtx context.Context) error {
+func (a *App) shutdown(timeoutCtx context.Context) error {
 	var shutdownErr error
 
 	// api

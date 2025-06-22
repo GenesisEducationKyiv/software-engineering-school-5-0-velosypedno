@@ -1,12 +1,10 @@
 package app
 
 import (
-	"database/sql"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/robfig/cron/v3"
-	"github.com/velosypedno/genesis-weather-api/internal/config"
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
 	"github.com/velosypedno/genesis-weather-api/internal/email"
 	subh "github.com/velosypedno/genesis-weather-api/internal/handlers/subscription"
@@ -18,12 +16,13 @@ import (
 	weathnotsvc "github.com/velosypedno/genesis-weather-api/internal/services/weather_notification"
 )
 
-func setupRouter(db *sql.DB, router *gin.Engine, cfg *config.Config) {
-	weatherRepo := repos.NewWeatherAPIRepo(cfg.WeatherAPIKey, &http.Client{})
+func (a *App) setupRouter() *gin.Engine {
+	router := gin.Default()
+	weatherRepo := repos.NewWeatherAPIRepo(a.cfg.WeatherAPIKey, &http.Client{})
 	weatherService := weathsvc.NewWeatherService(weatherRepo)
-	subRepo := repos.NewSubscriptionDBRepo(db)
-	smtpEmailBackend := email.NewSMTPBackend(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUser, cfg.SMTPPass,
-		cfg.EmailFrom)
+	subRepo := repos.NewSubscriptionDBRepo(a.db)
+	smtpEmailBackend := email.NewSMTPBackend(a.cfg.SMTPHost, a.cfg.SMTPPort, a.cfg.SMTPUser, a.cfg.SMTPPass,
+		a.cfg.EmailFrom)
 	subMailer := mailers.NewSubscriptionMailer(smtpEmailBackend)
 	subService := subsvc.NewSubscriptionService(subRepo, subMailer)
 
@@ -34,22 +33,24 @@ func setupRouter(db *sql.DB, router *gin.Engine, cfg *config.Config) {
 		api.GET("/confirm/:token", subh.NewConfirmGETHandler(subService))
 		api.GET("/unsubscribe/:token", subh.NewUnsubscribeGETHandler(subService))
 	}
+	return router
 }
 
-func setupCron(db *sql.DB, cron *cron.Cron, cfg *config.Config) error {
-	subRepo := repos.NewSubscriptionDBRepo(db)
-	weatherRepo := repos.NewWeatherAPIRepo(cfg.WeatherAPIKey, &http.Client{})
+func (a *App) setupCron() error {
+	a.cron = cron.New()
+	subRepo := repos.NewSubscriptionDBRepo(a.db)
+	weatherRepo := repos.NewWeatherAPIRepo(a.cfg.WeatherAPIKey, &http.Client{})
 	stdoutEmailBackend := email.NewStdoutBackend()
 	weatherMailer := mailers.NewWeatherMailer(stdoutEmailBackend)
 	weatherMailerSrv := weathnotsvc.NewWeatherNotificationService(subRepo, weatherMailer, weatherRepo)
 
-	_, err := cron.AddFunc("0 * * * *", func() {
+	_, err := a.cron.AddFunc("0 * * * *", func() {
 		weatherMailerSrv.SendByFreq(domain.FreqHourly)
 	})
 	if err != nil {
 		return err
 	}
-	_, err = cron.AddFunc("0 7 * * *", func() {
+	_, err = a.cron.AddFunc("0 7 * * *", func() {
 		weatherMailerSrv.SendByFreq(domain.FreqDaily)
 	})
 	if err != nil {
