@@ -32,7 +32,7 @@ func (a *App) Run() error {
 	var err error
 
 	// db
-	a.db, err = sql.Open(a.cfg.DbDriver, a.cfg.DbDSN)
+	a.db, err = sql.Open(a.cfg.DbDriver, a.cfg.DSN())
 	if err != nil {
 		return err
 	}

@@ -17,16 +17,19 @@ func main() {
 	shutdownCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer stop()
 
-	cfg := config.Load()
+	cfg, err := config.Load()
+	if err != nil {
+		log.Panic(err)
+	}
 	a := app.New(cfg)
-	err := a.Run()
+	err = a.Run()
 	if err != nil {
 		log.Panic(err)
 	}
 
 	<-shutdownCtx.Done()
 
-	timeoutCtx, cancel := context.WithTimeout(shutdownCtx, shutdownTimeout)
+	timeoutCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
 	err = a.Shutdown(timeoutCtx)
 	if err != nil {

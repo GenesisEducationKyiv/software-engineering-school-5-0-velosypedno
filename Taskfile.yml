@@ -56,3 +56,11 @@ tasks:
     desc: Run migrations
     cmds:
       - migrate -database "${DB_DRIVER}://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable" -path db/migrations up
+    
+  api:run:debug:
+    desc: Run API in debug mode
+    dotenv: [".env"]
+    env:
+      DB_HOST: localhost
+    cmds:
+      - go run cmd/api/main.go
