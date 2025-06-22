@@ -21,5 +21,8 @@ func NewWeatherService(repo weatherRepo) *WeatherService {
 
 func (s *WeatherService) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
 	w, err := s.repo.GetCurrent(ctx, city)
-	return w, fmt.Errorf("weather service: %w", err)
+	if err != nil {
+		return w, fmt.Errorf("weather service: %w", err)
+	}
+	return w, nil
 }
