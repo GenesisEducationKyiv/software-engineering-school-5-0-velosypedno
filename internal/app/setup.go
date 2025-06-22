@@ -43,7 +43,7 @@ func setupCron(db *sql.DB, cron *cron.Cron, cfg *config.Config) error {
 	weatherMailer := mailers.NewWeatherMailer(stdoutEmailBackend)
 	weatherMailerSrv := weathnotsvc.NewWeatherNotificationService(subRepo, weatherMailer, weatherRepo)
 
-	_, err := cron.AddFunc("@every 1m", func() {
+	_, err := cron.AddFunc("0 * * * *", func() {
 		weatherMailerSrv.SendByFreq(domain.FreqHourly)
 	})
 	if err != nil {

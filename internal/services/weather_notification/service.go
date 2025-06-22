@@ -41,7 +41,7 @@ func NewWeatherNotificationService(
 func (s *WeatherNotificationService) SendByFreq(freq domain.Frequency) {
 	subscriptions, err := s.subRepo.GetActivatedByFreq(freq)
 	if err != nil {
-		log.Println(fmt.Errorf("weather notification service: failed to get subscriptions, err:%v ", err))
+		log.Println(fmt.Errorf("weather notification service: %v ", err))
 		return
 	}
 	for _, sub := range subscriptions {
