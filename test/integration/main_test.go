@@ -19,10 +19,10 @@ import (
 
 const (
 	invalidCity = "InvalidCity"
+	apiURL      = "http://127.0.0.1:8081"
 )
 
 var DB *sql.DB
-var apiURL = "http://127.0.0.1:8081"
 
 func TestMain(m *testing.M) {
 	// setup fake weather API
