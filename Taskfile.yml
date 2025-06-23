@@ -65,7 +65,7 @@ tasks:
 
   test:integration:
     desc: Run integration tests
-    dotenv: [".env"]
+    dotenv: ["./test/.env.test"]
     env:
       PORT: 8081
       DB_PORT: 5433
