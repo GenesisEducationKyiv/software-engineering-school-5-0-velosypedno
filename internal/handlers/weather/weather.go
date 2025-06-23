@@ -36,6 +36,10 @@ func NewWeatherGETHandler(service weatherService) gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get weather for given city"})
 			return
 		}
+		if errors.Is(err, domain.ErrWeatherUnavailable) {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "sources are unavailable"})
+			return
+		}
 		if err != nil {
 			log.Println(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get weather for given city"})

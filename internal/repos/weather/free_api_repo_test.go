@@ -86,7 +86,7 @@ func TestGetCurrentWeather_APIKeyInvalid(t *testing.T) {
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, domain.ErrInternal)
+	assert.ErrorIs(t, err, domain.ErrWeatherUnavailable)
 }
 
 func TestGetCurrentWeather_HTTPError(t *testing.T) {
@@ -100,7 +100,7 @@ func TestGetCurrentWeather_HTTPError(t *testing.T) {
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
 
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, domain.ErrInternal)
+	assert.ErrorIs(t, err, domain.ErrWeatherUnavailable)
 }
 
 func TestGetCurrentWeather_BadJSON(t *testing.T) {

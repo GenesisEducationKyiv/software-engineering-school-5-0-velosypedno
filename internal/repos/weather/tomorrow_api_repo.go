@@ -54,7 +54,7 @@ func (r *TomorrowAPIRepo) GetCurrent(ctx context.Context, city string) (domain.W
 	resp, err := r.client.Do(req)
 	if err != nil {
 		log.Printf("tomorrow weather repo: failed to get weather for %s, err:%v\n", city, err)
-		return domain.Weather{}, fmt.Errorf("tomorrow weather repo: %w", domain.ErrInternal)
+		return domain.Weather{}, fmt.Errorf("tomorrow weather repo: %w", domain.ErrWeatherUnavailable)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -63,7 +63,7 @@ func (r *TomorrowAPIRepo) GetCurrent(ctx context.Context, city string) (domain.W
 	}()
 	if resp.StatusCode == http.StatusUnauthorized {
 		log.Println("tomorrow weather repo: api key is invalid")
-		return domain.Weather{}, fmt.Errorf("weather repo: %w", domain.ErrInternal)
+		return domain.Weather{}, fmt.Errorf("weather repo: %w", domain.ErrWeatherUnavailable)
 	}
 	if resp.StatusCode != http.StatusOK {
 		var errResp tomorrowAPIErrorResponse
