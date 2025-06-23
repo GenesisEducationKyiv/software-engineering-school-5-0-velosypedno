@@ -2,6 +2,7 @@ package app
 
 import (
 	"net/http"
+	"path/filepath"
 
 	"github.com/gin-gonic/gin"
 	"github.com/robfig/cron/v3"
@@ -25,7 +26,8 @@ func (a *App) setupRouter() *gin.Engine {
 	subRepo := repos.NewSubscriptionDBRepo(a.db)
 	smtpEmailBackend := email.NewSMTPBackend(a.cfg.SMTPHost, a.cfg.SMTPPort, a.cfg.SMTPUser, a.cfg.SMTPPass,
 		a.cfg.EmailFrom)
-	subMailer := mailers.NewSubscriptionMailer(smtpEmailBackend, a.cfg.TemplatesDir, confirmSubTmplName)
+	confirmTmplPath := filepath.Join(a.cfg.TemplatesDir, confirmSubTmplName)
+	subMailer := mailers.NewSubscriptionMailer(smtpEmailBackend, confirmTmplPath)
 	subService := subsvc.NewSubscriptionService(subRepo, subMailer)
 
 	api := router.Group("/api")
