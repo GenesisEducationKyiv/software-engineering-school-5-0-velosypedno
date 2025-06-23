@@ -17,6 +17,11 @@ import (
 	weathnotsvc "github.com/velosypedno/genesis-weather-api/internal/services/weather_notification"
 )
 
+const (
+	freeWeathRName     = "weatherapi.com"
+	tomorrowWeathRName = "tomorrow.io"
+)
+
 func (a *App) setupRouter() *gin.Engine {
 	router := gin.Default()
 
@@ -24,12 +29,13 @@ func (a *App) setupRouter() *gin.Engine {
 		a.cfg.EmailFrom)
 
 	freeWeathR := weathr.NewWeatherAPIRepo(a.cfg.FreeWeatherAPIKey, &http.Client{})
+	logFreeWeathR := weathr.NewLoggingWeatherRepo(freeWeathR, freeWeathRName, a.reposLogger)
 	tomorrowWeathR := weathr.NewTomorrowAPIRepo(a.cfg.TomorrowWeatherAPIKey, &http.Client{})
-	weatherRepoChain := weathr.NewWeatherRepoChain(freeWeathR, tomorrowWeathR)
+	logTomorrowWeathR := weathr.NewLoggingWeatherRepo(tomorrowWeathR, tomorrowWeathRName, a.reposLogger)
+	weatherRepoChain := weathr.NewWeatherRepoChain(logFreeWeathR, logTomorrowWeathR)
 	weatherService := weathsvc.NewWeatherService(weatherRepoChain)
 
 	subRepo := subr.NewSubscriptionDBRepo(a.db)
-
 	subMailer := mailers.NewSubscriptionMailer(smtpEmailBackend)
 	subService := subsvc.NewSubscriptionService(subRepo, subMailer)
 

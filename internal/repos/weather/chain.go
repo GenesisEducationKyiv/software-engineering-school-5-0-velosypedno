@@ -30,7 +30,6 @@ func (c *WeatherRepoChain) GetCurrent(ctx context.Context, city string) (domain.
 		err = fmt.Errorf("chain: %w", err)
 		log.Println(err)
 		lastError = err
-
 	}
 	return domain.Weather{}, lastError
 }

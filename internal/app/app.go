@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"os/signal"
 	"syscall"
 	"time"
@@ -16,12 +17,15 @@ import (
 
 const readTimeout = 15 * time.Second
 const shutdownTimeout = 20 * time.Second
+const logFilepath = "log.log"
+const logPerm os.FileMode = 0644
 
 type App struct {
-	cfg    *config.Config
-	db     *sql.DB
-	cron   *cron.Cron
-	apiSrv *http.Server
+	cfg         *config.Config
+	db          *sql.DB
+	cron        *cron.Cron
+	apiSrv      *http.Server
+	reposLogger *log.Logger
 }
 
 func New(cfg *config.Config) *App {
@@ -35,6 +39,12 @@ func (a *App) Run() error {
 	defer stop()
 
 	var err error
+
+	f, err := os.OpenFile(logFilepath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, logPerm)
+	if err != nil {
+		return err
+	}
+	a.reposLogger = log.New(f, "", log.LstdFlags)
 
 	// db
 	a.db, err = sql.Open(a.cfg.DbDriver, a.cfg.DSN())
