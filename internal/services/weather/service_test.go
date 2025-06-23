@@ -2,6 +2,7 @@ package services_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -16,7 +17,11 @@ type mockWeatherRepo struct {
 
 func (m *mockWeatherRepo) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
 	args := m.Called(ctx, city)
-	return args.Get(0).(domain.Weather), args.Error(1)
+	weather, ok := args.Get(0).(domain.Weather)
+	if !ok {
+		return domain.Weather{}, fmt.Errorf("mock: expected models.Weather, got %T", weather)
+	}
+	return weather, args.Error(1)
 }
 
 func TestWeatherService_GetCurrent_Success(t *testing.T) {
