@@ -10,7 +10,8 @@ import (
 	subh "github.com/velosypedno/genesis-weather-api/internal/handlers/subscription"
 	weathh "github.com/velosypedno/genesis-weather-api/internal/handlers/weather"
 	"github.com/velosypedno/genesis-weather-api/internal/mailers"
-	"github.com/velosypedno/genesis-weather-api/internal/repos"
+	subr "github.com/velosypedno/genesis-weather-api/internal/repos/subscription"
+	weathr "github.com/velosypedno/genesis-weather-api/internal/repos/weather"
 	subsvc "github.com/velosypedno/genesis-weather-api/internal/services/subscription"
 	weathsvc "github.com/velosypedno/genesis-weather-api/internal/services/weather"
 	weathnotsvc "github.com/velosypedno/genesis-weather-api/internal/services/weather_notification"
@@ -18,9 +19,9 @@ import (
 
 func (a *App) setupRouter() *gin.Engine {
 	router := gin.Default()
-	weatherRepo := repos.NewWeatherAPIRepo(a.cfg.WeatherAPIKey, &http.Client{})
+	weatherRepo := weathr.NewWeatherAPIRepo(a.cfg.WeatherAPIKey, &http.Client{})
 	weatherService := weathsvc.NewWeatherService(weatherRepo)
-	subRepo := repos.NewSubscriptionDBRepo(a.db)
+	subRepo := subr.NewSubscriptionDBRepo(a.db)
 	smtpEmailBackend := email.NewSMTPBackend(a.cfg.SMTPHost, a.cfg.SMTPPort, a.cfg.SMTPUser, a.cfg.SMTPPass,
 		a.cfg.EmailFrom)
 	subMailer := mailers.NewSubscriptionMailer(smtpEmailBackend)
@@ -38,8 +39,8 @@ func (a *App) setupRouter() *gin.Engine {
 
 func (a *App) setupCron() error {
 	a.cron = cron.New()
-	subRepo := repos.NewSubscriptionDBRepo(a.db)
-	weatherRepo := repos.NewWeatherAPIRepo(a.cfg.WeatherAPIKey, &http.Client{})
+	subRepo := subr.NewSubscriptionDBRepo(a.db)
+	weatherRepo := weathr.NewWeatherAPIRepo(a.cfg.WeatherAPIKey, &http.Client{})
 	stdoutEmailBackend := email.NewStdoutBackend()
 	weatherMailer := mailers.NewWeatherMailer(stdoutEmailBackend)
 	weatherMailerSrv := weathnotsvc.NewWeatherNotificationService(subRepo, weatherMailer, weatherRepo)
