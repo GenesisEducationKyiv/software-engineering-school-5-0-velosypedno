@@ -25,12 +25,7 @@ tasks:
     cmds:
       - cp .env.sample .env
     silent: false
-  
-  copy:test-env:
-    desc: Copy test env vars
-    cmds:
-      - cp test/.env.test test/.env
-
+    
   lint:
     desc: Run local linter config 
     cmds:
@@ -65,7 +60,7 @@ tasks:
 
   test:integration:
     desc: Run integration tests
-    dotenv: ["./test/.env.test"]
+    dotenv: [".env.sample"]
     env:
       PORT: 8081
       DB_PORT: 5433
@@ -75,11 +70,11 @@ tasks:
       EMAIL_FROM: testuser@example.com
       TEMPLATES_DIR: ../../internal/templates
     cmds:
-      - task: copy:test-env
-      - docker compose -f test/docker-compose.test.yml up -d
+      - task: copy:env:optional
+      - docker compose -f docker-compose.test.yml up -d
       - migrate -database "${DB_DRIVER}://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable" -path db/migrations up
       - go test ./... -v -tags=integration
-      - docker compose -f test/docker-compose.test.yml down
+      - docker compose -f docker-compose.test.yml down
 
 
   migrate:up:
@@ -94,3 +89,14 @@ tasks:
       DB_HOST: localhost
     cmds:
       - go run cmd/api/main.go
+
+  copy:env:optional:
+     desc: Ensure .env exists
+     cmds:
+      - |
+        if [ ! -f .env ]; then
+          echo ".env not found, copying from .env.sample"
+          cp .env.sample .env
+        else
+          echo ".env already exists"
+        fi
