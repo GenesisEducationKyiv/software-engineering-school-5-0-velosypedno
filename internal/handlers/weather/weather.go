@@ -15,9 +15,9 @@ type weatherService interface {
 }
 
 type weatherResp struct {
-	temperature float64
-	humidity    float64
-	description string
+	Temperature float64 `json:"temperature"`
+	Humidity    float64 `json:"humidity"`
+	Description string  `json:"description"`
 }
 
 func NewWeatherGETHandler(service weatherService) gin.HandlerFunc {
@@ -42,9 +42,9 @@ func NewWeatherGETHandler(service weatherService) gin.HandlerFunc {
 			return
 		}
 		weatherResp := weatherResp{
-			temperature: weatherEnt.Temperature,
-			humidity:    weatherEnt.Humidity,
-			description: weatherEnt.Description,
+			Temperature: weatherEnt.Temperature,
+			Humidity:    weatherEnt.Humidity,
+			Description: weatherEnt.Description,
 		}
 		c.JSON(http.StatusOK, weatherResp)
 	}

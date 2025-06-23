@@ -19,7 +19,8 @@ import (
 
 func (a *App) setupRouter() *gin.Engine {
 	router := gin.Default()
-	weatherRepo := weathr.NewWeatherAPIRepo(a.cfg.WeatherAPIKey, &http.Client{})
+	weatherRepo := weathr.NewWeatherAPIRepo(a.cfg.FreeWeatherAPIKey, &http.Client{})
+	// weatherRepo := weathr.NewTomorrowAPIRepo(a.cfg.TomorrowWeatherAPIKey, &http.Client{})
 	weatherService := weathsvc.NewWeatherService(weatherRepo)
 	subRepo := subr.NewSubscriptionDBRepo(a.db)
 	smtpEmailBackend := email.NewSMTPBackend(a.cfg.SMTPHost, a.cfg.SMTPPort, a.cfg.SMTPUser, a.cfg.SMTPPass,
@@ -40,7 +41,7 @@ func (a *App) setupRouter() *gin.Engine {
 func (a *App) setupCron() error {
 	a.cron = cron.New()
 	subRepo := subr.NewSubscriptionDBRepo(a.db)
-	weatherRepo := weathr.NewWeatherAPIRepo(a.cfg.WeatherAPIKey, &http.Client{})
+	weatherRepo := weathr.NewWeatherAPIRepo(a.cfg.FreeWeatherAPIKey, &http.Client{})
 	stdoutEmailBackend := email.NewStdoutBackend()
 	weatherMailer := mailers.NewWeatherMailer(stdoutEmailBackend)
 	weatherMailerSrv := weathnotsvc.NewWeatherNotificationService(subRepo, weatherMailer, weatherRepo)

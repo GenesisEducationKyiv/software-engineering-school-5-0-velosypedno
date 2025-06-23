@@ -16,7 +16,8 @@ type Config struct {
 
 	Port string `envconfig:"PORT" required:"true"`
 
-	WeatherAPIKey string `envconfig:"WEATHER_API_KEY" required:"true"`
+	FreeWeatherAPIKey     string `envconfig:"FREE_WEATHER_API_KEY" required:"true"`
+	TomorrowWeatherAPIKey string `envconfig:"TOMORROW_WEATHER_API_KEY" required:"true"`
 
 	SMTPHost  string `envconfig:"SMTP_HOST" required:"true"`
 	SMTPPort  string `envconfig:"SMTP_PORT" required:"true"`
