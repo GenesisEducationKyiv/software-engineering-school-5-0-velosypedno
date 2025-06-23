@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
@@ -20,14 +21,16 @@ type weatherResp struct {
 	description string
 }
 
-func NewWeatherGETHandler(service weatherService) gin.HandlerFunc {
+func NewWeatherGETHandler(service weatherService, requestTimeout time.Duration) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		city := c.Query("city")
 		if city == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 			return
 		}
-		weatherEnt, err := service.GetCurrent(c.Request.Context(), city)
+		ctxWithTimeout, cancel := context.WithTimeout(c.Request.Context(), requestTimeout)
+		defer cancel()
+		weatherEnt, err := service.GetCurrent(ctxWithTimeout, city)
 		if errors.Is(err, domain.ErrCityNotFound) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "city not found"})
 			return

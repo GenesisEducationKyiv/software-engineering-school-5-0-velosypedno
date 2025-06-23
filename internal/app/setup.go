@@ -3,6 +3,7 @@ package app
 import (
 	"net/http"
 	"path/filepath"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/robfig/cron/v3"
@@ -18,6 +19,7 @@ import (
 )
 
 const confirmSubTmplName = "confirm_sub.html"
+const weatherTimeout = 5 * time.Second
 
 func (a *App) setupRouter() *gin.Engine {
 	router := gin.Default()
@@ -32,7 +34,7 @@ func (a *App) setupRouter() *gin.Engine {
 
 	api := router.Group("/api")
 	{
-		api.GET("/weather", weathh.NewWeatherGETHandler(weatherService))
+		api.GET("/weather", weathh.NewWeatherGETHandler(weatherService, weatherTimeout))
 		api.POST("/subscribe", subh.NewSubscribePOSTHandler(subService))
 		api.GET("/confirm/:token", subh.NewConfirmGETHandler(subService))
 		api.GET("/unsubscribe/:token", subh.NewUnsubscribeGETHandler(subService))

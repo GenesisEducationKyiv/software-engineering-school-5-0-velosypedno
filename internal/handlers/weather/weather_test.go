@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -30,7 +31,7 @@ func (m *mockWeatherRepo) GetCurrent(ctx context.Context, city string) (domain.W
 	return weather, args.Error(1)
 }
 
-func TestNewWeatherGETHandler(t *testing.T) {
+func TestWeatherHandler(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	mockWeather := domain.Weather{
@@ -76,6 +77,7 @@ func TestNewWeatherGETHandler(t *testing.T) {
 		},
 	}
 
+	var requestTimeout = 5 * time.Second
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := new(mockWeatherRepo)
@@ -87,7 +89,7 @@ func TestNewWeatherGETHandler(t *testing.T) {
 			}
 
 			router := gin.New()
-			router.GET("/weather", weathh.NewWeatherGETHandler(mockRepo))
+			router.GET("/weather", weathh.NewWeatherGETHandler(mockRepo, requestTimeout))
 			req := httptest.NewRequest(http.MethodGet, "/weather?city="+tt.city, nil)
 			resp := httptest.NewRecorder()
 			router.ServeHTTP(resp, req)
@@ -95,4 +97,25 @@ func TestNewWeatherGETHandler(t *testing.T) {
 			mockRepo.AssertExpectations(t)
 		})
 	}
+}
+
+type timeoutErrRepo struct {
+}
+
+func (t *timeoutErrRepo) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
+	select {
+	case <-time.After(time.Second):
+		return domain.Weather{}, nil
+	case <-ctx.Done():
+		return domain.Weather{}, ctx.Err()
+	}
+}
+
+func TestWeatherHandler_Timeout(t *testing.T) {
+	router := gin.New()
+	router.GET("/weather", weathh.NewWeatherGETHandler(&timeoutErrRepo{}, time.Millisecond))
+	req := httptest.NewRequest(http.MethodGet, "/weather?city=Kyiv", nil)
+	resp := httptest.NewRecorder()
+	router.ServeHTTP(resp, req)
+	assert.Equal(t, http.StatusInternalServerError, resp.Code)
 }
