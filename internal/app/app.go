@@ -47,7 +47,7 @@ func (a *App) Run() error {
 	a.reposLogger = log.New(f, "", log.LstdFlags)
 
 	// db
-	a.db, err = sql.Open(a.cfg.DbDriver, a.cfg.DSN())
+	a.db, err = sql.Open(a.cfg.DB.Driver, a.cfg.DB.DSN())
 	if err != nil {
 		return err
 	}
@@ -64,7 +64,7 @@ func (a *App) Run() error {
 	// api
 	router := a.setupRouter()
 	a.apiSrv = &http.Server{
-		Addr:        ":" + a.cfg.Port,
+		Addr:        ":" + a.cfg.Srv.Port,
 		Handler:     router,
 		ReadTimeout: readTimeout,
 	}
@@ -73,7 +73,7 @@ func (a *App) Run() error {
 			log.Printf("api server: %v", err)
 		}
 	}()
-	log.Printf("APIServer started on port %s", a.cfg.Port)
+	log.Printf("APIServer started on port %s", a.cfg.Srv.Port)
 
 	<-shutdownCtx.Done()
 	timeoutCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)

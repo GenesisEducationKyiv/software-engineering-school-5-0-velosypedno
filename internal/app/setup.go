@@ -25,12 +25,12 @@ const (
 func (a *App) setupRouter() *gin.Engine {
 	router := gin.Default()
 
-	smtpEmailBackend := email.NewSMTPBackend(a.cfg.SMTPHost, a.cfg.SMTPPort, a.cfg.SMTPUser, a.cfg.SMTPPass,
-		a.cfg.EmailFrom)
+	smtpEmailBackend := email.NewSMTPBackend(a.cfg.SMTP.Host, a.cfg.SMTP.Port, a.cfg.SMTP.User,
+		a.cfg.SMTP.Pass, a.cfg.SMTP.EmailFrom)
 
-	freeWeathR := weathr.NewWeatherAPIRepo(a.cfg.FreeWeatherAPIKey, &http.Client{})
+	freeWeathR := weathr.NewWeatherAPIRepo(a.cfg.FreeWeather.Key, &http.Client{})
 	logFreeWeathR := weathr.NewLoggingWeatherRepo(freeWeathR, freeWeathRName, a.reposLogger)
-	tomorrowWeathR := weathr.NewTomorrowAPIRepo(a.cfg.TomorrowWeatherAPIKey, &http.Client{})
+	tomorrowWeathR := weathr.NewTomorrowAPIRepo(a.cfg.TomorrowWeather.Key, &http.Client{})
 	logTomorrowWeathR := weathr.NewLoggingWeatherRepo(tomorrowWeathR, tomorrowWeathRName, a.reposLogger)
 	weatherRepoChain := weathr.NewWeatherRepoChain(logFreeWeathR, logTomorrowWeathR)
 	weatherService := weathsvc.NewWeatherService(weatherRepoChain)
@@ -52,7 +52,7 @@ func (a *App) setupRouter() *gin.Engine {
 func (a *App) setupCron() error {
 	a.cron = cron.New()
 	subRepo := subr.NewSubscriptionDBRepo(a.db)
-	weatherRepo := weathr.NewWeatherAPIRepo(a.cfg.FreeWeatherAPIKey, &http.Client{})
+	weatherRepo := weathr.NewWeatherAPIRepo(a.cfg.FreeWeather.Key, &http.Client{})
 	stdoutEmailBackend := email.NewStdoutBackend()
 	weatherMailer := mailers.NewWeatherMailer(stdoutEmailBackend)
 	weatherMailerSrv := weathnotsvc.NewWeatherNotificationService(subRepo, weatherMailer, weatherRepo)
