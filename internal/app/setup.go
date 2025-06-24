@@ -18,9 +18,21 @@ import (
 )
 
 const (
-	freeWeathRName     = "weatherapi.com"
-	tomorrowWeathRName = "tomorrow.io"
+	freeWeathRName      = "weatherapi.com"
+	tomorrowWeathRName  = "tomorrow.io"
+	visualCrossingRName = "visualcrossing.com"
 )
+
+func (a *App) setupWeatherRepoChain() *weathr.WeatherRepoChain {
+	freeWeathR := weathr.NewWeatherAPIRepo(a.cfg.FreeWeather.Key, &http.Client{})
+	logFreeWeathR := weathr.NewLoggingWeatherRepo(freeWeathR, freeWeathRName, a.reposLogger)
+	tomorrowWeathR := weathr.NewTomorrowAPIRepo(a.cfg.TomorrowWeather.Key, &http.Client{})
+	logTomorrowWeathR := weathr.NewLoggingWeatherRepo(tomorrowWeathR, tomorrowWeathRName, a.reposLogger)
+	vsWeathR := weathr.NewVisualCrossingAPIRepo(a.cfg.VisualCrossing.Key, &http.Client{})
+	logVsWeathR := weathr.NewLoggingWeatherRepo(vsWeathR, visualCrossingRName, a.reposLogger)
+	weatherRepoChain := weathr.NewWeatherRepoChain(logFreeWeathR, logTomorrowWeathR, logVsWeathR)
+	return weatherRepoChain
+}
 
 func (a *App) setupRouter() *gin.Engine {
 	router := gin.Default()
@@ -28,11 +40,7 @@ func (a *App) setupRouter() *gin.Engine {
 	smtpEmailBackend := email.NewSMTPBackend(a.cfg.SMTP.Host, a.cfg.SMTP.Port, a.cfg.SMTP.User,
 		a.cfg.SMTP.Pass, a.cfg.SMTP.EmailFrom)
 
-	freeWeathR := weathr.NewWeatherAPIRepo(a.cfg.FreeWeather.Key, &http.Client{})
-	logFreeWeathR := weathr.NewLoggingWeatherRepo(freeWeathR, freeWeathRName, a.reposLogger)
-	tomorrowWeathR := weathr.NewTomorrowAPIRepo(a.cfg.TomorrowWeather.Key, &http.Client{})
-	logTomorrowWeathR := weathr.NewLoggingWeatherRepo(tomorrowWeathR, tomorrowWeathRName, a.reposLogger)
-	weatherRepoChain := weathr.NewWeatherRepoChain(logFreeWeathR, logTomorrowWeathR)
+	weatherRepoChain := a.setupWeatherRepoChain()
 	weatherService := weathsvc.NewWeatherService(weatherRepoChain)
 
 	subRepo := subr.NewSubscriptionDBRepo(a.db)
@@ -52,10 +60,10 @@ func (a *App) setupRouter() *gin.Engine {
 func (a *App) setupCron() error {
 	a.cron = cron.New()
 	subRepo := subr.NewSubscriptionDBRepo(a.db)
-	weatherRepo := weathr.NewWeatherAPIRepo(a.cfg.FreeWeather.Key, &http.Client{})
+	weatherRepoChain := a.setupWeatherRepoChain()
 	stdoutEmailBackend := email.NewStdoutBackend()
 	weatherMailer := mailers.NewWeatherMailer(stdoutEmailBackend)
-	weatherMailerSrv := weathnotsvc.NewWeatherNotificationService(subRepo, weatherMailer, weatherRepo)
+	weatherMailerSrv := weathnotsvc.NewWeatherNotificationService(subRepo, weatherMailer, weatherRepoChain)
 
 	_, err := a.cron.AddFunc("0 * * * *", func() {
 		weatherMailerSrv.SendByFreq(domain.FreqHourly)

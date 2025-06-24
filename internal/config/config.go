@@ -31,8 +31,11 @@ type FreeWeatherConfig struct {
 	Key string `envconfig:"FREE_WEATHER_API_KEY" required:"true"`
 }
 
+type VisualCrossingConfig struct {
+	Key string `envconfig:"VISUAL_CROSSING_API_KEY" required:"true"`
+}
 type SrvConfig struct {
-	Port string `envconfig:"PORT" required:"true"`
+	Port string `envconfig:"API_PORT" required:"true"`
 }
 
 type Config struct {
@@ -41,6 +44,7 @@ type Config struct {
 	Srv             SrvConfig
 	TomorrowWeather TomorrowWeatherConfig
 	FreeWeather     FreeWeatherConfig
+	VisualCrossing  VisualCrossingConfig
 }
 
 func (c DBConfig) DSN() string {
@@ -76,12 +80,18 @@ func Load() (*Config, error) {
 		return nil, err
 	}
 
+	var visualCrossingCfg VisualCrossingConfig
+	if err := envconfig.Process("", &visualCrossingCfg); err != nil {
+		return nil, err
+	}
+
 	cfg := Config{
 		DB:              dbCfg,
 		SMTP:            smtpCfg,
 		Srv:             srvCfg,
 		TomorrowWeather: tomorrowWeatherCfg,
 		FreeWeather:     freeWeatherCfg,
+		VisualCrossing:  visualCrossingCfg,
 	}
 
 	return &cfg, nil
