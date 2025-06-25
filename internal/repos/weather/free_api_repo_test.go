@@ -20,7 +20,7 @@ func (m *mockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	return m.doFunc(req)
 }
 
-func TestGetCurrentWeather_Success(t *testing.T) {
+func TestFreeApiGetCurrentWeather_Success(t *testing.T) {
 	mockRespBody := `{
 		"current": {
 			"temp_c": 10000.0,
@@ -49,7 +49,7 @@ func TestGetCurrentWeather_Success(t *testing.T) {
 	assert.Equal(t, "H_E_L_L", weather.Description)
 }
 
-func TestGetCurrentWeather_CityNotFound(t *testing.T) {
+func TestFreeApiGetCurrentWeather_CityNotFound(t *testing.T) {
 	mockRespBody := `{
 		"error": {
 			"code": 1006,
@@ -72,7 +72,7 @@ func TestGetCurrentWeather_CityNotFound(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrCityNotFound)
 }
 
-func TestGetCurrentWeather_APIKeyInvalid(t *testing.T) {
+func TestFreeApiGetCurrentWeather_APIKeyInvalid(t *testing.T) {
 	client := &mockHTTPClient{
 		doFunc: func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
@@ -89,7 +89,7 @@ func TestGetCurrentWeather_APIKeyInvalid(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrWeatherUnavailable)
 }
 
-func TestGetCurrentWeather_HTTPError(t *testing.T) {
+func TestFreeApiGetCurrentWeather_HTTPError(t *testing.T) {
 	client := &mockHTTPClient{
 		doFunc: func(req *http.Request) (*http.Response, error) {
 			return nil, assert.AnError
@@ -103,7 +103,7 @@ func TestGetCurrentWeather_HTTPError(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrWeatherUnavailable)
 }
 
-func TestGetCurrentWeather_BadJSON(t *testing.T) {
+func TestFreeApiGetCurrentWeather_BadJSON(t *testing.T) {
 	client := &mockHTTPClient{
 		doFunc: func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
