@@ -13,6 +13,7 @@ import (
 )
 
 func TestVisualCrossingGetCurrentWeather_Success(t *testing.T) {
+	// Arrange
 	mockRespBody := `{
 		"currentConditions": {
 			"temp": 10000.0,
@@ -20,7 +21,6 @@ func TestVisualCrossingGetCurrentWeather_Success(t *testing.T) {
 			"conditions": "H_E_L_L"
 		}
 	}`
-
 	client := &mockHTTPClient{
 		doFunc: func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
@@ -29,10 +29,12 @@ func TestVisualCrossingGetCurrentWeather_Success(t *testing.T) {
 			}, nil
 		},
 	}
-
 	repo := weathr.NewVisualCrossingAPIRepo("dummy-api-key", "http://dummy-url.com", client)
+
+	// Act
 	weather, err := repo.GetCurrent(context.Background(), "Kyiv")
 
+	// Assert
 	assert.NoError(t, err)
 	assert.Equal(t, 10000.0, weather.Temperature)
 	assert.Equal(t, 100.0, weather.Humidity)
@@ -40,8 +42,8 @@ func TestVisualCrossingGetCurrentWeather_Success(t *testing.T) {
 }
 
 func TestVisualCrossingGetCurrentWeather_CityNotFound(t *testing.T) {
+	// Arrange
 	mockRespBody := `NOt found`
-
 	client := &mockHTTPClient{
 		doFunc: func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
@@ -50,14 +52,17 @@ func TestVisualCrossingGetCurrentWeather_CityNotFound(t *testing.T) {
 			}, nil
 		},
 	}
-
 	repo := weathr.NewVisualCrossingAPIRepo("dummy-api-key", "http://dummy-url.com", client)
+
+	// Act
 	_, err := repo.GetCurrent(context.Background(), "InvalidCity")
 
+	// Assert
 	assert.ErrorIs(t, err, domain.ErrCityNotFound)
 }
 
 func TestVisualCrossingGetCurrentWeather_APIKeyInvalid(t *testing.T) {
+	// Arrange
 	client := &mockHTTPClient{
 		doFunc: func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
@@ -66,29 +71,35 @@ func TestVisualCrossingGetCurrentWeather_APIKeyInvalid(t *testing.T) {
 			}, nil
 		},
 	}
-
 	repo := weathr.NewVisualCrossingAPIRepo("invalid-api-key", "http://dummy-url.com", client)
+
+	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
 
+	// Assert
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, domain.ErrWeatherUnavailable)
 }
 
 func TestVisualCrossingGetCurrentWeather_HTTPError(t *testing.T) {
+	// Arrange
 	client := &mockHTTPClient{
 		doFunc: func(req *http.Request) (*http.Response, error) {
 			return nil, assert.AnError
 		},
 	}
-
 	repo := weathr.NewVisualCrossingAPIRepo("dummy-api-key", "http://dummy-url.com", client)
+
+	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
 
+	// Assert
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, domain.ErrWeatherUnavailable)
 }
 
 func TestVisualCrossingGetCurrentWeather_BadJSON(t *testing.T) {
+	// Arrange
 	client := &mockHTTPClient{
 		doFunc: func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
@@ -97,10 +108,12 @@ func TestVisualCrossingGetCurrentWeather_BadJSON(t *testing.T) {
 			}, nil
 		},
 	}
-
 	repo := weathr.NewVisualCrossingAPIRepo("dummy-api-key", "http://dummy-url.com", client)
+
+	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
 
+	// Assert
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, domain.ErrInternal)
 }

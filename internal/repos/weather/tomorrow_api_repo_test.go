@@ -13,6 +13,7 @@ import (
 )
 
 func TestTomorrowGetCurrentWeather_Success(t *testing.T) {
+	// Arrange
 	mockRespBody := `{
 		"data": {
 			"values": {
@@ -23,7 +24,6 @@ func TestTomorrowGetCurrentWeather_Success(t *testing.T) {
 			}
 		}
 	}`
-
 	client := &mockHTTPClient{
 		doFunc: func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
@@ -32,22 +32,24 @@ func TestTomorrowGetCurrentWeather_Success(t *testing.T) {
 			}, nil
 		},
 	}
-
 	repo := weathr.NewTomorrowAPIRepo("dummy-api-key", "http://dummy-url.com", client)
+
+	// Act
 	weather, err := repo.GetCurrent(context.Background(), "Kyiv")
 
+	// Assert
 	assert.NoError(t, err)
 	assert.Equal(t, 10000.0, weather.Temperature)
 	assert.Equal(t, 100.0, weather.Humidity)
 }
 
 func TestTomorrowGetCurrentWeather_CityNotFound(t *testing.T) {
+	// Arrange
 	mockRespBody := `{
 		"code": 400001,
 		"message": "No matching location found.",
 		"type": "error"
 	}`
-
 	client := &mockHTTPClient{
 		doFunc: func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
@@ -56,14 +58,17 @@ func TestTomorrowGetCurrentWeather_CityNotFound(t *testing.T) {
 			}, nil
 		},
 	}
-
 	repo := weathr.NewTomorrowAPIRepo("dummy-api-key", "http://dummy-url.com", client)
+
+	// Act
 	_, err := repo.GetCurrent(context.Background(), "InvalidCity")
 
+	// Assert
 	assert.ErrorIs(t, err, domain.ErrCityNotFound)
 }
 
 func TestTomorrowGetCurrentWeather_APIKeyInvalid(t *testing.T) {
+	// Arrange
 	client := &mockHTTPClient{
 		doFunc: func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
@@ -72,29 +77,35 @@ func TestTomorrowGetCurrentWeather_APIKeyInvalid(t *testing.T) {
 			}, nil
 		},
 	}
-
 	repo := weathr.NewTomorrowAPIRepo("invalid-api-key", "http://dummy-url.com", client)
+
+	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
 
+	// Assert
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, domain.ErrWeatherUnavailable)
 }
 
 func TestTomorrowGetCurrentWeather_HTTPError(t *testing.T) {
+	// Arrange
 	client := &mockHTTPClient{
 		doFunc: func(req *http.Request) (*http.Response, error) {
 			return nil, assert.AnError
 		},
 	}
-
 	repo := weathr.NewTomorrowAPIRepo("dummy-api-key", "http://dummy-url.com", client)
+
+	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
 
+	// Assert
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, domain.ErrWeatherUnavailable)
 }
 
 func TestTomorrowGetCurrentWeather_BadJSON(t *testing.T) {
+	// Arrange
 	client := &mockHTTPClient{
 		doFunc: func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
@@ -103,10 +114,12 @@ func TestTomorrowGetCurrentWeather_BadJSON(t *testing.T) {
 			}, nil
 		},
 	}
-
 	repo := weathr.NewTomorrowAPIRepo("dummy-api-key", "http://dummy-url.com", client)
+
+	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
 
+	// Assert
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, domain.ErrInternal)
 }
