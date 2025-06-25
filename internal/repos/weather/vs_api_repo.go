@@ -12,10 +12,9 @@ import (
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
 )
 
-const baseURL = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/"
-
 type VisualCrossingAPIRepo struct {
 	apiKey string
+	apiURL string
 	client HTTPClient
 }
 
@@ -27,9 +26,10 @@ type visualCrossingAPIResponse struct {
 	} `json:"currentConditions"`
 }
 
-func NewVisualCrossingAPIRepo(apiKey string, client HTTPClient) *VisualCrossingAPIRepo {
+func NewVisualCrossingAPIRepo(apiKey, apiURL string, client HTTPClient) *VisualCrossingAPIRepo {
 	return &VisualCrossingAPIRepo{
 		apiKey: apiKey,
+		apiURL: apiURL,
 		client: client,
 	}
 }
@@ -37,7 +37,7 @@ func NewVisualCrossingAPIRepo(apiKey string, client HTTPClient) *VisualCrossingA
 func (r *VisualCrossingAPIRepo) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
 	// step 1: format request
 	q := url.QueryEscape(city)
-	url := fmt.Sprintf("%s%s/today?key=%s&include=current&unitGroup=metric", baseURL, q, r.apiKey)
+	url := fmt.Sprintf("%s/%s/today?key=%s&include=current&unitGroup=metric", r.apiURL, q, r.apiKey)
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		log.Printf("visual crossing repo: failed to format request for %s, err:%v\n", city, err)

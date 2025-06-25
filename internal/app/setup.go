@@ -24,11 +24,14 @@ const (
 )
 
 func (a *App) setupWeatherRepoChain() *weathr.WeatherRepoChain {
-	freeWeathR := weathr.NewWeatherAPIRepo(a.cfg.FreeWeather.Key, &http.Client{})
+	freeWeathR := weathr.NewWeatherAPIRepo(a.cfg.FreeWeather.Key,
+		a.cfg.FreeWeather.URL, &http.Client{})
 	logFreeWeathR := weathr.NewLoggingWeatherRepo(freeWeathR, freeWeathRName, a.reposLogger)
-	tomorrowWeathR := weathr.NewTomorrowAPIRepo(a.cfg.TomorrowWeather.Key, &http.Client{})
+	tomorrowWeathR := weathr.NewTomorrowAPIRepo(a.cfg.TomorrowWeather.Key,
+		a.cfg.TomorrowWeather.URL, &http.Client{})
 	logTomorrowWeathR := weathr.NewLoggingWeatherRepo(tomorrowWeathR, tomorrowWeathRName, a.reposLogger)
-	vsWeathR := weathr.NewVisualCrossingAPIRepo(a.cfg.VisualCrossing.Key, &http.Client{})
+	vsWeathR := weathr.NewVisualCrossingAPIRepo(a.cfg.VisualCrossing.Key,
+		a.cfg.VisualCrossing.URL, &http.Client{})
 	logVsWeathR := weathr.NewLoggingWeatherRepo(vsWeathR, visualCrossingRName, a.reposLogger)
 	weatherRepoChain := weathr.NewWeatherRepoChain(logFreeWeathR, logTomorrowWeathR, logVsWeathR)
 	return weatherRepoChain

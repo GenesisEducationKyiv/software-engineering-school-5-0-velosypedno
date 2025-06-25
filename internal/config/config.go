@@ -25,14 +25,17 @@ type SMTPConfig struct {
 
 type TomorrowWeatherConfig struct {
 	Key string `envconfig:"TOMORROW_WEATHER_API_KEY" required:"true"`
+	URL string `envconfig:"TOMORROW_API_BASE_URL" required:"true"`
 }
 
 type FreeWeatherConfig struct {
 	Key string `envconfig:"FREE_WEATHER_API_KEY" required:"true"`
+	URL string `envconfig:"WEATHER_API_BASE_URL" required:"true"`
 }
 
 type VisualCrossingConfig struct {
 	Key string `envconfig:"VISUAL_CROSSING_API_KEY" required:"true"`
+	URL string `envconfig:"VISUAL_CROSSING_API_BASE_URL" required:"true"`
 }
 type SrvConfig struct {
 	Port string `envconfig:"API_PORT" required:"true"`
