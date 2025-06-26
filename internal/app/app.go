@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/robfig/cron/v3"
@@ -30,7 +28,7 @@ func New(cfg *config.Config) *App {
 	}
 }
 
-func (a *App) Run() error {
+func (a *App) Run(ctx context.Context) error {
 	var err error
 
 	// db
@@ -61,18 +59,18 @@ func (a *App) Run() error {
 		}
 	}()
 	log.Printf("APIServer started on port %s", a.cfg.Port)
-	return nil
-}
 
-func (a *App) WaitOnSIGINT() {
-	shutdownCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
-	defer stop()
-	<-shutdownCtx.Done()
-}
+	// wait on shutdown signal
+	<-ctx.Done()
 
-func (a *App) Shutdown() error {
+	// shutdown
 	timeoutCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
+	err = a.shutdown(timeoutCtx)
+	return err
+}
+
+func (a *App) shutdown(timeoutCtx context.Context) error {
 	var shutdownErr error
 
 	// api

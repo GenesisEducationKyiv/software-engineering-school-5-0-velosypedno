@@ -4,6 +4,7 @@
 package integration_test
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"log"
@@ -49,13 +50,14 @@ func TestMain(m *testing.M) {
 		}
 	}()
 
+	ctx, cancel := context.WithCancel(context.Background())
 	// run app
 	app := app.New(cfg)
-	app.Run()
+	go app.Run(ctx)
 
 	// run tests
 	code := m.Run()
-	app.Shutdown()
+	cancel()
 
 	os.Exit(code)
 }
