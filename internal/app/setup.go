@@ -48,7 +48,7 @@ func (a *App) setupRouter() *gin.Engine {
 	weatherRepoChain := a.setupWeatherRepoChain()
 	weatherService := weathsvc.NewWeatherService(weatherRepoChain)
 
-	subRepo := subr.NewSubscriptionDBRepo(a.db)
+	subRepo := subr.NewDBRepo(a.db)
 	subMailer := mailers.NewSubscriptionMailer(smtpEmailBackend)
 	subService := subsvc.NewSubscriptionService(subRepo, subMailer)
 
@@ -64,7 +64,7 @@ func (a *App) setupRouter() *gin.Engine {
 
 func (a *App) setupCron() error {
 	a.cron = cron.New()
-	subRepo := subr.NewSubscriptionDBRepo(a.db)
+	subRepo := subr.NewDBRepo(a.db)
 	weatherRepoChain := a.setupWeatherRepoChain()
 	stdoutEmailBackend := email.NewStdoutBackend()
 	weatherMailer := mailers.NewWeatherMailer(stdoutEmailBackend)
