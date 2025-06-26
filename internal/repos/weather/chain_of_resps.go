@@ -12,15 +12,15 @@ type weatherRepo interface {
 	GetCurrent(ctx context.Context, city string) (domain.Weather, error)
 }
 
-type WeatherRepoChain struct {
+type Chain struct {
 	Repos []weatherRepo
 }
 
-func NewWeatherRepoChain(repos ...weatherRepo) *WeatherRepoChain {
-	return &WeatherRepoChain{Repos: repos}
+func NewChain(repos ...weatherRepo) *Chain {
+	return &Chain{Repos: repos}
 }
 
-func (c *WeatherRepoChain) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
+func (c *Chain) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
 	var lastError error
 	for _, repo := range c.Repos {
 		weather, err := repo.GetCurrent(ctx, city)

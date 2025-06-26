@@ -17,21 +17,21 @@ type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-type WeatherAPIRepo struct {
+type FreeWeatherAPI struct {
 	apiKey string
 	apiURL string
 	client HTTPClient
 }
 
-func NewWeatherAPIRepo(apiKey, apiURL string, client HTTPClient) *WeatherAPIRepo {
-	return &WeatherAPIRepo{
+func NewFreeWeatherAPI(apiKey, apiURL string, client HTTPClient) *FreeWeatherAPI {
+	return &FreeWeatherAPI{
 		apiKey: apiKey,
 		apiURL: apiURL,
 		client: client,
 	}
 }
 
-type weatherAPIResponse struct {
+type freeWeatherAPIResponse struct {
 	Current struct {
 		TempC     float64 `json:"temp_c"`
 		Humidity  float64 `json:"humidity"`
@@ -41,14 +41,14 @@ type weatherAPIResponse struct {
 	} `json:"current"`
 }
 
-type weatherAPIErrorResponse struct {
+type freeWeatherAPIErrorResponse struct {
 	Error struct {
 		Code    int    `json:"code"`
 		Message string `json:"message"`
 	} `json:"error"`
 }
 
-func (r *WeatherAPIRepo) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
+func (r *FreeWeatherAPI) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
 	// step 1: format request
 	q := url.QueryEscape(city)
 	url := fmt.Sprintf("%s/current.json?key=%s&q=%s", r.apiURL, r.apiKey, q)
@@ -76,7 +76,7 @@ func (r *WeatherAPIRepo) GetCurrent(ctx context.Context, city string) (domain.We
 		return domain.Weather{}, fmt.Errorf("weather repo: %w", domain.ErrWeatherUnavailable)
 	}
 	if resp.StatusCode != http.StatusOK {
-		var errResp weatherAPIErrorResponse
+		var errResp freeWeatherAPIErrorResponse
 		if err := json.NewDecoder(resp.Body).Decode(&errResp); err == nil {
 			if errResp.Error.Code == noMatchingLocationFoundCode {
 				return domain.Weather{}, domain.ErrCityNotFound
@@ -89,7 +89,7 @@ func (r *WeatherAPIRepo) GetCurrent(ctx context.Context, city string) (domain.We
 	}
 
 	// step 4: parse response body
-	var responseData weatherAPIResponse
+	var responseData freeWeatherAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
 		log.Printf("weather repo: failed to decode weather data: %v\n", err)
 		return domain.Weather{}, fmt.Errorf("weather repo: %w", domain.ErrInternal)

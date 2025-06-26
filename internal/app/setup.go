@@ -23,17 +23,19 @@ const (
 	visualCrossingRName = "visualcrossing.com"
 )
 
-func (a *App) setupWeatherRepoChain() *weathr.WeatherRepoChain {
-	freeWeathR := weathr.NewWeatherAPIRepo(a.cfg.FreeWeather.Key,
+func (a *App) setupWeatherRepoChain() *weathr.Chain {
+	freeWeathR := weathr.NewFreeWeatherAPI(a.cfg.FreeWeather.Key,
 		a.cfg.FreeWeather.URL, &http.Client{})
-	logFreeWeathR := weathr.NewLoggingWeatherRepo(freeWeathR, freeWeathRName, a.reposLogger)
-	tomorrowWeathR := weathr.NewTomorrowAPIRepo(a.cfg.TomorrowWeather.Key,
+	tomorrowWeathR := weathr.NewTomorrowAPI(a.cfg.TomorrowWeather.Key,
 		a.cfg.TomorrowWeather.URL, &http.Client{})
-	logTomorrowWeathR := weathr.NewLoggingWeatherRepo(tomorrowWeathR, tomorrowWeathRName, a.reposLogger)
-	vcWeathR := weathr.NewVisualCrossingAPIRepo(a.cfg.VisualCrossing.Key,
+	vcWeathR := weathr.NewVisualCrossingAPI(a.cfg.VisualCrossing.Key,
 		a.cfg.VisualCrossing.URL, &http.Client{})
-	logVcWeathR := weathr.NewLoggingWeatherRepo(vcWeathR, visualCrossingRName, a.reposLogger)
-	weatherRepoChain := weathr.NewWeatherRepoChain(logFreeWeathR, logTomorrowWeathR, logVcWeathR)
+
+	logFreeWeathR := weathr.NewLogDecorator(freeWeathR, freeWeathRName, a.reposLogger)
+	logTomorrowWeathR := weathr.NewLogDecorator(tomorrowWeathR, tomorrowWeathRName, a.reposLogger)
+	logVcWeathR := weathr.NewLogDecorator(vcWeathR, visualCrossingRName, a.reposLogger)
+
+	weatherRepoChain := weathr.NewChain(logFreeWeathR, logTomorrowWeathR, logVcWeathR)
 	return weatherRepoChain
 }
 

@@ -30,7 +30,7 @@ func TestWeatherRepoChain_FirstSuccess(t *testing.T) {
 	second := &mockRepo{
 		err: errors.New("should not be called"),
 	}
-	chain := weathr.NewWeatherRepoChain(first, second)
+	chain := weathr.NewChain(first, second)
 
 	// Act
 	weather, err := chain.GetCurrent(context.Background(), "Kyiv")
@@ -51,7 +51,7 @@ func TestWeatherRepoChain_SecondSuccess(t *testing.T) {
 		resp: domain.Weather{Temperature: 10, Humidity: 80, Description: "Rain"},
 		err:  nil,
 	}
-	chain := weathr.NewWeatherRepoChain(first, second)
+	chain := weathr.NewChain(first, second)
 
 	// Act
 	weather, err := chain.GetCurrent(context.Background(), "Lviv")
@@ -67,7 +67,7 @@ func TestWeatherRepoChain_AllFail(t *testing.T) {
 	// Arrange
 	first := &mockRepo{err: errors.New("first fail")}
 	second := &mockRepo{err: errors.New("second fail")}
-	chain := weathr.NewWeatherRepoChain(first, second)
+	chain := weathr.NewChain(first, second)
 
 	// Act
 	weather, err := chain.GetCurrent(context.Background(), "Tsrcuny")

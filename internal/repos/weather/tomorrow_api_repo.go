@@ -13,14 +13,14 @@ import (
 
 const tomorrowCityNotFoundCode = 400001
 
-type TomorrowAPIRepo struct {
+type TomorrowAPI struct {
 	apiKey string
 	apiURL string
 	client HTTPClient
 }
 
-func NewTomorrowAPIRepo(apiKey, apiURL string, client HTTPClient) *TomorrowAPIRepo {
-	return &TomorrowAPIRepo{
+func NewTomorrowAPI(apiKey, apiURL string, client HTTPClient) *TomorrowAPI {
+	return &TomorrowAPI{
 		apiKey: apiKey,
 		apiURL: apiURL,
 		client: client,
@@ -44,7 +44,7 @@ type tomorrowAPIErrorResponse struct {
 	Type    string `json:"type"`
 }
 
-func (r *TomorrowAPIRepo) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
+func (r *TomorrowAPI) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
 	// step 1: format request
 	q := url.QueryEscape(city)
 	url := fmt.Sprintf("%s/weather/realtime?location=%s&apikey=%s", r.apiURL, q, r.apiKey)

@@ -32,7 +32,7 @@ func TestTomorrowGetCurrentWeather_Success(t *testing.T) {
 			}, nil
 		},
 	}
-	repo := weathr.NewTomorrowAPIRepo("dummy-api-key", "http://dummy-url.com", client)
+	repo := weathr.NewTomorrowAPI("dummy-api-key", "http://dummy-url.com", client)
 
 	// Act
 	weather, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -58,7 +58,7 @@ func TestTomorrowGetCurrentWeather_CityNotFound(t *testing.T) {
 			}, nil
 		},
 	}
-	repo := weathr.NewTomorrowAPIRepo("dummy-api-key", "http://dummy-url.com", client)
+	repo := weathr.NewTomorrowAPI("dummy-api-key", "http://dummy-url.com", client)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "InvalidCity")
@@ -77,7 +77,7 @@ func TestTomorrowGetCurrentWeather_APIKeyInvalid(t *testing.T) {
 			}, nil
 		},
 	}
-	repo := weathr.NewTomorrowAPIRepo("invalid-api-key", "http://dummy-url.com", client)
+	repo := weathr.NewTomorrowAPI("invalid-api-key", "http://dummy-url.com", client)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -94,7 +94,7 @@ func TestTomorrowGetCurrentWeather_HTTPError(t *testing.T) {
 			return nil, assert.AnError
 		},
 	}
-	repo := weathr.NewTomorrowAPIRepo("dummy-api-key", "http://dummy-url.com", client)
+	repo := weathr.NewTomorrowAPI("dummy-api-key", "http://dummy-url.com", client)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -114,7 +114,7 @@ func TestTomorrowGetCurrentWeather_BadJSON(t *testing.T) {
 			}, nil
 		},
 	}
-	repo := weathr.NewTomorrowAPIRepo("dummy-api-key", "http://dummy-url.com", client)
+	repo := weathr.NewTomorrowAPI("dummy-api-key", "http://dummy-url.com", client)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")

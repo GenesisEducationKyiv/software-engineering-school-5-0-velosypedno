@@ -12,7 +12,7 @@ import (
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
 )
 
-type VisualCrossingAPIRepo struct {
+type VisualCrossingAPI struct {
 	apiKey string
 	apiURL string
 	client HTTPClient
@@ -26,15 +26,15 @@ type visualCrossingAPIResponse struct {
 	} `json:"currentConditions"`
 }
 
-func NewVisualCrossingAPIRepo(apiKey, apiURL string, client HTTPClient) *VisualCrossingAPIRepo {
-	return &VisualCrossingAPIRepo{
+func NewVisualCrossingAPI(apiKey, apiURL string, client HTTPClient) *VisualCrossingAPI {
+	return &VisualCrossingAPI{
 		apiKey: apiKey,
 		apiURL: apiURL,
 		client: client,
 	}
 }
 
-func (r *VisualCrossingAPIRepo) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
+func (r *VisualCrossingAPI) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
 	// step 1: format request
 	q := url.QueryEscape(city)
 	url := fmt.Sprintf("%s/%s/today?key=%s&include=current&unitGroup=metric", r.apiURL, q, r.apiKey)

@@ -29,7 +29,7 @@ func TestVisualCrossingGetCurrentWeather_Success(t *testing.T) {
 			}, nil
 		},
 	}
-	repo := weathr.NewVisualCrossingAPIRepo("dummy-api-key", "http://dummy-url.com", client)
+	repo := weathr.NewVisualCrossingAPI("dummy-api-key", "http://dummy-url.com", client)
 
 	// Act
 	weather, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -52,7 +52,7 @@ func TestVisualCrossingGetCurrentWeather_CityNotFound(t *testing.T) {
 			}, nil
 		},
 	}
-	repo := weathr.NewVisualCrossingAPIRepo("dummy-api-key", "http://dummy-url.com", client)
+	repo := weathr.NewVisualCrossingAPI("dummy-api-key", "http://dummy-url.com", client)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "InvalidCity")
@@ -71,7 +71,7 @@ func TestVisualCrossingGetCurrentWeather_APIKeyInvalid(t *testing.T) {
 			}, nil
 		},
 	}
-	repo := weathr.NewVisualCrossingAPIRepo("invalid-api-key", "http://dummy-url.com", client)
+	repo := weathr.NewVisualCrossingAPI("invalid-api-key", "http://dummy-url.com", client)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -88,7 +88,7 @@ func TestVisualCrossingGetCurrentWeather_HTTPError(t *testing.T) {
 			return nil, assert.AnError
 		},
 	}
-	repo := weathr.NewVisualCrossingAPIRepo("dummy-api-key", "http://dummy-url.com", client)
+	repo := weathr.NewVisualCrossingAPI("dummy-api-key", "http://dummy-url.com", client)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -108,7 +108,7 @@ func TestVisualCrossingGetCurrentWeather_BadJSON(t *testing.T) {
 			}, nil
 		},
 	}
-	repo := weathr.NewVisualCrossingAPIRepo("dummy-api-key", "http://dummy-url.com", client)
+	repo := weathr.NewVisualCrossingAPI("dummy-api-key", "http://dummy-url.com", client)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")

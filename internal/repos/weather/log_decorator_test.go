@@ -30,7 +30,7 @@ func TestLoggingWeatherRepo_Success(t *testing.T) {
 		Response: domain.Weather{Temperature: 25.0, Humidity: 60.0, Description: "Clear"},
 		Err:      nil,
 	}
-	repo := weathr.NewLoggingWeatherRepo(mock, "MockRepo", logger)
+	repo := weathr.NewLogDecorator(mock, "MockRepo", logger)
 
 	// Act
 	result, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -52,7 +52,7 @@ func TestLoggingWeatherRepo_Error(t *testing.T) {
 		Response: domain.Weather{},
 		Err:      domain.ErrInternal,
 	}
-	repo := weathr.NewLoggingWeatherRepo(mock, "MockRepo", logger)
+	repo := weathr.NewLogDecorator(mock, "MockRepo", logger)
 
 	// Act
 	result, err := repo.GetCurrent(context.Background(), "kmaTop")
