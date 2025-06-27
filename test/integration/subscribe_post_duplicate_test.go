@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestSubscribeDuplicateFlow(t *testing.T) {
@@ -22,34 +24,25 @@ func TestSubscribeDuplicateFlow(t *testing.T) {
         "city": "Kyiv"
     }`, toEmail)
 	t.Log("Sending first subscription request...")
-	resp, err := http.Post(apiURL+"/api/subscribe", "application/json", strings.NewReader(payload))
-	if err != nil {
-		t.Fatalf("Failed to send first POST request: %v", err)
-	}
+	endpoint := "/api/subscribe"
+	resp, err := http.Post(apiURL+endpoint, "application/json", strings.NewReader(payload))
+	require.NoError(t, err, "Failed to send POST: %v", err)
 	resp.Body.Close()
 
 	// Step 3: Send the second (duplicate) subscription request
 	t.Log("Sending duplicate subscription request...")
-	resp, err = http.Post(apiURL+"/api/subscribe", "application/json", strings.NewReader(payload))
-	if err != nil {
-		t.Fatalf("Failed to send duplicate POST request: %v", err)
-	}
+	resp, err = http.Post(apiURL+endpoint, "application/json", strings.NewReader(payload))
+	require.NoError(t, err, "Failed to send duplicate POST: %v", err)
 	defer resp.Body.Close()
 
 	t.Logf("Received response with status code: %d", resp.StatusCode)
-	if resp.StatusCode != http.StatusConflict {
-		t.Errorf("Expected status 409 Conflict for duplicate subscription, got %d", resp.StatusCode)
-	}
+	require.Equal(t, http.StatusConflict, resp.StatusCode, "Expected status 409 Conflict for duplicate subscription, got %d", resp.StatusCode)
 
 	// Step 4: Check that only one subscription exists in the database
 	t.Log("Verifying that only one subscription is stored in the database...")
 	var count int
 	err = DB.QueryRow("SELECT COUNT(*) FROM subscriptions WHERE email = $1", toEmail).Scan(&count)
-	if err != nil {
-		t.Fatalf("Failed to query subscription count: %v", err)
-	}
+	require.NoError(t, err, "Failed to get subscription count from DB: %v", err)
 	t.Logf("Found %d subscription(s) in the database for email %s", count, toEmail)
-	if count != 1 {
-		t.Errorf("Expected 1 subscription in database, got %d", count)
-	}
+	require.Equal(t, 1, count, "Expected 1 subscription in database, got %d", count)
 }

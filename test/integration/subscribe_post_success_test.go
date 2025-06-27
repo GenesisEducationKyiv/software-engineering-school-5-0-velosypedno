@@ -9,6 +9,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
 )
 
 func TestSubscribeSuccessFlow(t *testing.T) {
@@ -25,15 +27,11 @@ func TestSubscribeSuccessFlow(t *testing.T) {
     }`, toEmail)
 	t.Logf("Sending subscription request for email: %s", toEmail)
 	resp, err := http.Post(apiURL+"/api/subscribe", "application/json", strings.NewReader(payload))
-	if err != nil {
-		t.Fatalf("Failed to send POST request: %v", err)
-	}
+	require.NoError(t, err, "Failed to send POST: %v", err)
 	defer resp.Body.Close()
 
 	t.Logf("Received response with status code: %d", resp.StatusCode)
-	if resp.StatusCode != http.StatusOK {
-		t.Errorf("Expected status 200 OK, got %d", resp.StatusCode)
-	}
+	require.Equal(t, http.StatusOK, resp.StatusCode, "Expected status 200 OK, got %d", resp.StatusCode)
 
 	// Step 3: Wait for the email to appear in MailHog
 	t.Log("Waiting for confirmation email to appear in MailHog...")
@@ -51,26 +49,19 @@ func TestSubscribeSuccessFlow(t *testing.T) {
 	for {
 		t.Logf("Checking MailHog API: %s", searchUrl)
 		resp, err := http.Get(searchUrl)
-		if err != nil {
-			t.Fatalf("Failed to query MailHog API: %v", err)
-		}
+		require.NoError(t, err, "Failed to query MailHog API: %v", err)
 
 		var result smtpAPISearchResult
 		err = json.NewDecoder(resp.Body).Decode(&result)
 		resp.Body.Close()
-		if err != nil {
-			t.Fatalf("Failed to parse MailHog API response: %v", err)
-		}
+		require.NoError(t, err, "Failed to parse MailHog API response: %v", err)
 
 		if result.Total >= 1 {
 			t.Logf("Found %d email(s) in MailHog", result.Total)
 			break
 		}
 
-		if time.Since(start) > timeout {
-			t.Errorf("Expected 1 email in MailHog, got %d after %v", result.Total, timeout)
-			break
-		}
+		require.Less(t, time.Since(start), timeout, "Timeout reached")
 
 		t.Log("No email found yet, retrying...")
 		time.Sleep(interval)
@@ -80,21 +71,13 @@ func TestSubscribeSuccessFlow(t *testing.T) {
 	t.Log("Checking subscription entry in the database...")
 	var count int
 	err = DB.QueryRow("SELECT COUNT(*) FROM subscriptions WHERE email = $1", toEmail).Scan(&count)
-	if err != nil {
-		t.Fatalf("Failed to query subscription count: %v", err)
-	}
+	require.NoError(t, err, "Failed to query subscription count: %v", err)
 	t.Logf("Found %d subscription(s) in the database for email %s", count, toEmail)
-	if count != 1 {
-		t.Errorf("Expected 1 subscription in database, got %d", count)
-	}
+	require.Equal(t, count, 1, "Expected 1 subscription in database, got %d", count)
 
 	var activated bool
 	err = DB.QueryRow("SELECT activated FROM subscriptions WHERE email = $1", toEmail).Scan(&activated)
-	if err != nil {
-		t.Fatalf("Failed to query subscription activation status: %v", err)
-	}
+	require.NoError(t, err, "Failed to query subscription activation status: %v", err)
 	t.Logf("Subscription activated status: %v", activated)
-	if activated {
-		t.Errorf("Expected subscription to be not activated, got activated = true")
-	}
+	require.False(t, activated, "Expected subscription to be not activated, got activated = true")
 }

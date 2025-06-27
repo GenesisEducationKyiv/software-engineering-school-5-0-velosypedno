@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
 )
 
 func TestSubscribeConfirmFlow(t *testing.T) {
@@ -24,9 +25,8 @@ func TestSubscribeConfirmFlow(t *testing.T) {
 		INSERT INTO subscriptions (id, email, frequency, city, activated, token)
 		VALUES ($1, $2, $3, $4, false, $5)
 	`, uuid.New(), email, frequency, city, token)
-	if err != nil {
-		t.Fatalf("Failed to insert test subscription: %v", err)
-	}
+
+	require.NoError(t, err, "Failed to insert test subscription")
 	t.Logf("Inserted subscription with token: %s", token)
 
 	// Step 2: Make GET request to /api/confirm/:token
@@ -34,24 +34,17 @@ func TestSubscribeConfirmFlow(t *testing.T) {
 	t.Logf("Sending GET request to: %s", url)
 
 	resp, err := http.Get(url)
-	if err != nil {
-		t.Fatalf("Failed to send GET request to confirm subscription: %v", err)
-	}
+	require.NoError(t, err, "Failed to send GET request to confirm subscription")
 	defer resp.Body.Close()
 
 	t.Logf("Response status code: %d", resp.StatusCode)
-	if resp.StatusCode != 200 {
-		t.Errorf("Expected status 200 OK, got %d", resp.StatusCode)
-	}
+	require.Equal(t, http.StatusOK, resp.StatusCode, "Expected status 200 OK, got %d", resp.StatusCode)
 
 	// Step 3: Verify that subscription is now activated
 	var activated bool
 	err = DB.QueryRow("SELECT activated FROM subscriptions WHERE token = $1", token).Scan(&activated)
-	if err != nil {
-		t.Fatalf("Failed to query activation status: %v", err)
-	}
+	require.NoError(t, err, "Failed to query activation status: %v", err)
+
+	require.True(t, activated, "Expected subscription to be activated, but it was not")
 	t.Logf("Activated status in DB: %v", activated)
-	if !activated {
-		t.Errorf("Expected subscription to be activated, but it was not")
-	}
 }
