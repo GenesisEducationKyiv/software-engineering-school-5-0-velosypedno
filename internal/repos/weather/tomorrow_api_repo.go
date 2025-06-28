@@ -69,7 +69,7 @@ func (r *TomorrowAPI) GetCurrent(ctx context.Context, city string) (domain.Weath
 	// step 3: handle response
 	if resp.StatusCode == http.StatusUnauthorized {
 		log.Println("tomorrow weather repo: api key is invalid")
-		return domain.Weather{}, fmt.Errorf("weather repo: %w", domain.ErrWeatherUnavailable)
+		return domain.Weather{}, fmt.Errorf("tomorrow weather repo: %w", domain.ErrWeatherUnavailable)
 	}
 	if resp.StatusCode != http.StatusOK {
 		var errResp tomorrowAPIErrorResponse
@@ -78,17 +78,17 @@ func (r *TomorrowAPI) GetCurrent(ctx context.Context, city string) (domain.Weath
 				return domain.Weather{}, domain.ErrCityNotFound
 			}
 			log.Printf("tomorrow weather repo: api error: %s\n", errResp.Message)
-			return domain.Weather{}, fmt.Errorf("weather repo: %w", domain.ErrInternal)
+			return domain.Weather{}, fmt.Errorf("tomorrow weather repo: %w", domain.ErrInternal)
 		}
 		log.Printf("tomorrow weather repo: unexpected error %d\n", resp.StatusCode)
-		return domain.Weather{}, fmt.Errorf("weather repo: %w", domain.ErrInternal)
+		return domain.Weather{}, fmt.Errorf("tomorrow weather repo: %w", domain.ErrInternal)
 	}
 
 	// step 4: parse response body
 	var responseData tomorrowAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
 		log.Printf("tomorrow weather repo: failed to decode weather data: %v\n", err)
-		return domain.Weather{}, fmt.Errorf("weather repo: %w", domain.ErrInternal)
+		return domain.Weather{}, fmt.Errorf("tomorrow weather repo: %w", domain.ErrInternal)
 	}
 
 	description := fmt.Sprintf("Cloud cover: %.2f%%", responseData.Data.Values.CloudCover)

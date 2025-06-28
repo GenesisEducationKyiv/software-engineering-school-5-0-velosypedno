@@ -54,15 +54,15 @@ func (r *FreeWeatherAPI) GetCurrent(ctx context.Context, city string) (domain.We
 	url := fmt.Sprintf("%s/current.json?key=%s&q=%s", r.apiURL, r.apiKey, q)
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
-		log.Printf("weather repo: failed to format request for %s, err:%v\n", city, err)
-		return domain.Weather{}, fmt.Errorf("weather repo: %w", domain.ErrInternal)
+		log.Printf("free weather repo: failed to format request for %s, err:%v\n", city, err)
+		return domain.Weather{}, fmt.Errorf("free weather repo: %w", domain.ErrInternal)
 	}
 
 	// step 2: send request
 	resp, err := r.client.Do(req)
 	if err != nil {
-		log.Printf("weather repo: failed to get weather for %s, err:%v\n", city, err)
-		return domain.Weather{}, fmt.Errorf("weather repo: %w", domain.ErrWeatherUnavailable)
+		log.Printf("free weather repo: failed to get weather for %s, err:%v\n", city, err)
+		return domain.Weather{}, fmt.Errorf("free weather repo: %w", domain.ErrWeatherUnavailable)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
@@ -72,8 +72,8 @@ func (r *FreeWeatherAPI) GetCurrent(ctx context.Context, city string) (domain.We
 
 	// step 3: handle response
 	if resp.StatusCode == http.StatusForbidden {
-		log.Println("weather repo: api key is invalid")
-		return domain.Weather{}, fmt.Errorf("weather repo: %w", domain.ErrWeatherUnavailable)
+		log.Println("free weather repo: api key is invalid")
+		return domain.Weather{}, fmt.Errorf("free weather repo: %w", domain.ErrWeatherUnavailable)
 	}
 	if resp.StatusCode != http.StatusOK {
 		var errResp freeWeatherAPIErrorResponse
@@ -81,18 +81,18 @@ func (r *FreeWeatherAPI) GetCurrent(ctx context.Context, city string) (domain.We
 			if errResp.Error.Code == noMatchingLocationFoundCode {
 				return domain.Weather{}, domain.ErrCityNotFound
 			}
-			log.Printf("weather repo: api error: %s\n", errResp.Error.Message)
-			return domain.Weather{}, fmt.Errorf("weather repo: %w", domain.ErrInternal)
+			log.Printf("free weather repo: api error: %s\n", errResp.Error.Message)
+			return domain.Weather{}, fmt.Errorf("free weather repo: %w", domain.ErrInternal)
 		}
-		log.Printf("weather repo: unexpected error %d\n", resp.StatusCode)
-		return domain.Weather{}, fmt.Errorf("weather repo: %w", domain.ErrInternal)
+		log.Printf("free weather repo: unexpected error %d\n", resp.StatusCode)
+		return domain.Weather{}, fmt.Errorf("free weather repo: %w", domain.ErrInternal)
 	}
 
 	// step 4: parse response body
 	var responseData freeWeatherAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
-		log.Printf("weather repo: failed to decode weather data: %v\n", err)
-		return domain.Weather{}, fmt.Errorf("weather repo: %w", domain.ErrInternal)
+		log.Printf("free weather repo: failed to decode weather data: %v\n", err)
+		return domain.Weather{}, fmt.Errorf("free weather repo: %w", domain.ErrInternal)
 	}
 
 	return domain.Weather{

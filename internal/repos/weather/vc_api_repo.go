@@ -41,14 +41,14 @@ func (r *VisualCrossingAPI) GetCurrent(ctx context.Context, city string) (domain
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		log.Printf("visual crossing repo: failed to format request for %s, err:%v\n", city, err)
-		return domain.Weather{}, fmt.Errorf("tomorrow weather repo: %w", domain.ErrInternal)
+		return domain.Weather{}, fmt.Errorf("visual crossing repo: %w", domain.ErrInternal)
 	}
 
 	// step 2: send request
 	resp, err := r.client.Do(req)
 	if err != nil {
 		log.Printf("visual crossing repo: failed to get weather for %s, err:%v\n", city, err)
-		return domain.Weather{}, fmt.Errorf("tomorrow weather repo: %w", domain.ErrWeatherUnavailable)
+		return domain.Weather{}, fmt.Errorf("visual crossing repo: %w", domain.ErrWeatherUnavailable)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
