@@ -14,9 +14,11 @@ type Config struct {
 	DbPass   string `envconfig:"DB_PASSWORD" required:"true"`
 	DbName   string `envconfig:"DB_NAME" required:"true"`
 
-	Port string `envconfig:"PORT" required:"true"`
+	Port         string `envconfig:"PORT" required:"true"`
+	TemplatesDir string `envconfig:"TEMPLATES_DIR" required:"true"`
 
-	WeatherAPIKey string `envconfig:"WEATHER_API_KEY" required:"true"`
+	WeatherAPIKey     string `envconfig:"WEATHER_API_KEY" required:"true"`
+	WeatherAPIBaseURL string `envconfig:"WEATHER_API_BASE_URL" required:"true"`
 
 	SMTPHost  string `envconfig:"SMTP_HOST" required:"true"`
 	SMTPPort  string `envconfig:"SMTP_PORT" required:"true"`

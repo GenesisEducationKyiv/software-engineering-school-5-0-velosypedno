@@ -25,7 +25,7 @@ tasks:
     cmds:
       - cp .env.sample .env
     silent: false
-
+    
   lint:
     desc: Run local linter config 
     cmds:
@@ -48,9 +48,34 @@ tasks:
       - go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.16.2
 
   test:
-    desc: Run tests
+    desc: Run all tests
     cmds:
-      - go test ./... -v
+      - task: test:unit
+      - task: test:integration
+  
+  test:unit:
+    desc: Run unit tests
+    cmds:
+      - go test ./... -v -tags=unit
+
+  test:integration:
+    desc: Run integration tests
+    dotenv: [".env.sample"]
+    env:
+      PORT: 8081
+      DB_PORT: 5433
+      DB_HOST: localhost
+      SMTP_HOST: localhost
+      SMTP_PORT: 1025
+      EMAIL_FROM: testuser@example.com
+      TEMPLATES_DIR: ../../internal/templates
+    cmds:
+      - task: copy:env:optional
+      - docker compose -f docker-compose.test.yml up -d
+      - migrate -database "${DB_DRIVER}://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable" -path db/migrations up
+      - go test ./... -v -tags=integration
+      - docker compose -f docker-compose.test.yml down
+
 
   migrate:up:
     desc: Run migrations
@@ -64,3 +89,14 @@ tasks:
       DB_HOST: localhost
     cmds:
       - go run cmd/api/main.go
+
+  copy:env:optional:
+     desc: Ensure .env exists
+     cmds:
+      - |
+        if [ ! -f .env ]; then
+          echo ".env not found, copying from .env.sample"
+          cp .env.sample .env
+        else
+          echo ".env already exists"
+        fi

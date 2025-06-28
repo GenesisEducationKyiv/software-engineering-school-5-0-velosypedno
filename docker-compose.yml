@@ -13,6 +13,12 @@ x-smtp-env: &smtp-env
   SMTP_PASS: ${SMTP_PASS}
   EMAIL_FROM: ${EMAIL_FROM}
 
+x-app-env: &app-env
+  PORT: ${PORT}
+  WEATHER_API_KEY: ${WEATHER_API_KEY}
+  TEMPLATES_DIR: ${TEMPLATES_DIR}
+  WEATHER_API_BASE_URL: ${WEATHER_API_BASE_URL}
+
 services:
   postgres-weather:
     image: postgres:17.5
@@ -45,9 +51,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      <<: [*db-env, *smtp-env]
-      PORT: ${PORT}
-      WEATHER_API_KEY: ${WEATHER_API_KEY}
+      <<: [*db-env, *smtp-env, *app-env]
     depends_on:
       migrator:
         condition: service_completed_successfully

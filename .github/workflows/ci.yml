@@ -19,8 +19,8 @@ jobs:
     - name: Run linter
       run: task lint
   
-  test:
-    name: Test
+  unit-tests:
+    name: Unit tests
     runs-on: ubuntu-latest
     steps:
     - name: Checkout
@@ -32,7 +32,24 @@ jobs:
         go-version-file: './go.mod'
     
     - name: Run tests
-      run: task test
+      run: task test:unit
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Install go and go-task
+      uses: ./.github/actions/setup
+      with:
+        go-version-file: './go.mod'
+        install-migrator: 'true'
+    
+    - name: Run tests
+      run: task test:integration
+
 
   migrations:
     name: Migrations
