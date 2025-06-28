@@ -7,14 +7,14 @@ import (
 	"net/http/httptest"
 )
 
-const CityFreeWeatherDoesNotExist = "InvalidCity"
+const CityDoesNotExist = "InvalidCity"
 
 func NewFreeWeatherAPI() *httptest.Server {
 	handler := http.NewServeMux()
 
 	handler.HandleFunc("/current.json", func(w http.ResponseWriter, r *http.Request) {
 		city := r.URL.Query().Get("q")
-		if city == CityFreeWeatherDoesNotExist {
+		if city == CityDoesNotExist {
 			http.Error(w, `{"error": {"code": 1006, "message": "No matching location found."}}`,
 				http.StatusBadRequest)
 			return

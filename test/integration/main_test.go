@@ -21,16 +21,22 @@ const apiURL = "http://127.0.0.1:8081"
 var DB *sql.DB
 
 func TestMain(m *testing.M) {
-	// setup fake free weather API
-	testWeatherAPI := mock.NewFreeWeatherAPI()
-	defer testWeatherAPI.Close()
+	// setup fake weather APIs
+	freeWeatherAPI := mock.NewFreeWeatherAPI()
+	defer freeWeatherAPI.Close()
+	tomorrowAPI := mock.NewTomorrowAPI()
+	defer tomorrowAPI.Close()
+	vcAPI := mock.NewVisualCrossingAPI()
+	defer vcAPI.Close()
 
 	// setup config
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatal(err)
 	}
-	cfg.FreeWeather.URL = testWeatherAPI.URL
+	cfg.FreeWeather.URL = freeWeatherAPI.URL
+	cfg.TomorrowWeather.URL = tomorrowAPI.URL
+	cfg.VisualCrossing.URL = vcAPI.URL
 	fmt.Println(cfg)
 
 	// setup DB

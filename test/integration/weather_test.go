@@ -19,9 +19,7 @@ func TestGetWeatherSuccess(t *testing.T) {
 }
 
 func TestGetWeatherInvalidCity(t *testing.T) {
-	t.Skip("Mock APIs are not implemented yet")
-
-	resp, err := http.Get(apiURL + "/api/weather?city=" + mock.CityFreeWeatherDoesNotExist)
+	resp, err := http.Get(apiURL + "/api/weather?city=" + mock.CityDoesNotExist)
 	require.NoError(t, err, "Failed to send GET request: %v", err)
 	defer resp.Body.Close()
 	require.Equal(t, http.StatusNotFound, resp.StatusCode, "Expected status 404 Not Found, got %d", resp.StatusCode)
