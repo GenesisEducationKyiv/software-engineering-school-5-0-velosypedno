@@ -65,6 +65,20 @@ Ensure you have the following installed:
     go-task test
     ```
 
+- **Run unit tests**:
+
+    ```bash
+    go-task test:unit
+    ```
+
+- **Run integration tests**:
+
+    ```bash
+    go-task test:integration
+    ```
+
+    Integration tests use `.env.test`, start required Docker services, run migrations, then execute tests with `integration` tag.
+
 ## Setup Git hook
 
 - **To install the pre-commit Git hook that runs linter automatically before each commit:**

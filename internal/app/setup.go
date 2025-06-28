@@ -2,6 +2,8 @@ package app
 
 import (
 	"net/http"
+	"path/filepath"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/robfig/cron/v3"
@@ -21,6 +23,9 @@ const (
 	freeWeathRName      = "weatherapi.com"
 	tomorrowWeathRName  = "tomorrow.io"
 	visualCrossingRName = "visualcrossing.com"
+
+	confirmSubTmplName = "confirm_sub.html"
+	weatherTimeout     = 5 * time.Second
 )
 
 func (a *App) setupWeatherRepoChain() *weathr.Chain {
@@ -49,12 +54,13 @@ func (a *App) setupRouter() *gin.Engine {
 	weatherService := weathsvc.NewWeatherService(weatherRepoChain)
 
 	subRepo := subr.NewDBRepo(a.db)
-	subMailer := mailers.NewSubscriptionMailer(smtpEmailBackend)
+	confirmTmplPath := filepath.Join(a.cfg.Srv.TemplatesDir, confirmSubTmplName)
+	subMailer := mailers.NewSubscriptionMailer(smtpEmailBackend, confirmTmplPath)
 	subService := subsvc.NewSubscriptionService(subRepo, subMailer)
 
 	api := router.Group("/api")
 	{
-		api.GET("/weather", weathh.NewWeatherGETHandler(weatherService))
+		api.GET("/weather", weathh.NewWeatherGETHandler(weatherService, weatherTimeout))
 		api.POST("/subscribe", subh.NewSubscribePOSTHandler(subService))
 		api.GET("/confirm/:token", subh.NewConfirmGETHandler(subService))
 		api.GET("/unsubscribe/:token", subh.NewUnsubscribeGETHandler(subService))

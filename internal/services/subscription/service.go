@@ -50,10 +50,16 @@ func (s *SubscriptionService) Subscribe(subInput SubscriptionInput) error {
 
 func (s *SubscriptionService) Activate(token uuid.UUID) error {
 	err := s.repo.Activate(token)
-	return fmt.Errorf("subscription service: %w", err)
+	if err != nil {
+		return fmt.Errorf("subscription service: %w", err)
+	}
+	return nil
 }
 
 func (s *SubscriptionService) Unsubscribe(token uuid.UUID) error {
 	err := s.repo.DeleteByToken(token)
-	return fmt.Errorf("subscription service: %w", err)
+	if err != nil {
+		return fmt.Errorf("subscription service: %w", err)
+	}
+	return nil
 }

@@ -7,8 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/signal"
-	"syscall"
 	"time"
 
 	"github.com/robfig/cron/v3"
@@ -34,10 +32,7 @@ func New(cfg *config.Config) *App {
 	}
 }
 
-func (a *App) Run() error {
-	shutdownCtx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
-	defer stop()
-
+func (a *App) Run(ctx context.Context) error {
 	var err error
 
 	f, err := os.OpenFile(logFilepath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, logPerm)
@@ -75,10 +70,12 @@ func (a *App) Run() error {
 	}()
 	log.Printf("APIServer started on port %s", a.cfg.Srv.Port)
 
-	<-shutdownCtx.Done()
+	// wait on shutdown signal
+	<-ctx.Done()
+
+	// shutdown
 	timeoutCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
-
 	err = a.shutdown(timeoutCtx)
 	return err
 }

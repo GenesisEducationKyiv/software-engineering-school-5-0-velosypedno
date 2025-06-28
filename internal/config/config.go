@@ -38,7 +38,8 @@ type VisualCrossingConfig struct {
 	URL string `envconfig:"VISUAL_CROSSING_API_BASE_URL" required:"true"`
 }
 type SrvConfig struct {
-	Port string `envconfig:"API_PORT" required:"true"`
+	Port         string `envconfig:"API_PORT" required:"true"`
+	TemplatesDir string `envconfig:"TEMPLATES_DIR" required:"true"`
 }
 
 type Config struct {
