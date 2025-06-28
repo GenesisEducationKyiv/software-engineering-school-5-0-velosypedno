@@ -16,9 +16,9 @@ type weatherService interface {
 }
 
 type weatherResp struct {
-	temperature float64
-	humidity    float64
-	description string
+	Temperature float64 `json:"temperature"`
+	Humidity    float64 `json:"humidity"`
+	Description string  `json:"description"`
 }
 
 func NewWeatherGETHandler(service weatherService, requestTimeout time.Duration) gin.HandlerFunc {
@@ -39,15 +39,19 @@ func NewWeatherGETHandler(service weatherService, requestTimeout time.Duration) 
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get weather for given city"})
 			return
 		}
+		if errors.Is(err, domain.ErrWeatherUnavailable) {
+			c.JSON(http.StatusServiceUnavailable, gin.H{"error": "sources are unavailable"})
+			return
+		}
 		if err != nil {
 			log.Println(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get weather for given city"})
 			return
 		}
 		weatherResp := weatherResp{
-			temperature: weatherEnt.Temperature,
-			humidity:    weatherEnt.Humidity,
-			description: weatherEnt.Description,
+			Temperature: weatherEnt.Temperature,
+			Humidity:    weatherEnt.Humidity,
+			Description: weatherEnt.Description,
 		}
 		c.JSON(http.StatusOK, weatherResp)
 	}
