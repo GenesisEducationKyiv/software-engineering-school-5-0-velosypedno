@@ -7,6 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/robfig/cron/v3"
+	"github.com/velosypedno/genesis-weather-api/internal/cache"
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
 	"github.com/velosypedno/genesis-weather-api/internal/email"
 	subh "github.com/velosypedno/genesis-weather-api/internal/handlers/subscription"
@@ -28,9 +29,10 @@ const (
 
 	confirmSubTmplName = "confirm_sub.html"
 	weatherTimeout     = 5 * time.Second
+	cacheTTL           = 5 * time.Minute
 )
 
-func (a *App) setupWeatherRepoChain() *weathchain.FirstFromChain {
+func (a *App) setupWeatherRepoChain() *weathdecorator.CacheDecorator {
 	freeWeathR := weathprovider.NewFreeWeatherAPI(a.cfg.FreeWeather.Key,
 		a.cfg.FreeWeather.URL, &http.Client{})
 	tomorrowWeathR := weathprovider.NewTomorrowAPI(a.cfg.TomorrowWeather.Key,
@@ -43,7 +45,9 @@ func (a *App) setupWeatherRepoChain() *weathchain.FirstFromChain {
 	logVcWeathR := weathdecorator.NewLogDecorator(vcWeathR, visualCrossingRName, a.reposLogger)
 
 	weatherRepoChain := weathchain.NewFirstFromChain(logFreeWeathR, logTomorrowWeathR, logVcWeathR)
-	return weatherRepoChain
+	redisBackend := cache.NewRedisBackend[domain.Weather](a.redisClient)
+	cachedRepoChain := weathdecorator.NewCacheDecorator(weatherRepoChain, cacheTTL, redisBackend)
+	return cachedRepoChain
 }
 
 func (a *App) setupRouter() *gin.Engine {

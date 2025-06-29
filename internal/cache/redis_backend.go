@@ -8,17 +8,17 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type RedisBackend struct {
+type RedisBackend[T any] struct {
 	client *redis.Client
 }
 
-func NewRedisBackend(client *redis.Client) *RedisBackend {
-	return &RedisBackend{
+func NewRedisBackend[T any](client *redis.Client) *RedisBackend[T] {
+	return &RedisBackend[T]{
 		client: client,
 	}
 }
 
-func (r *RedisBackend) SetStruct(ctx context.Context, key string, value any, ttl time.Duration) error {
+func (r *RedisBackend[T]) SetStruct(ctx context.Context, key string, value T, ttl time.Duration) error {
 	data, err := json.Marshal(value)
 	if err != nil {
 		return err
@@ -26,7 +26,7 @@ func (r *RedisBackend) SetStruct(ctx context.Context, key string, value any, ttl
 	return r.client.Set(ctx, key, data, ttl).Err()
 }
 
-func (r *RedisBackend) GetStruct(ctx context.Context, key string, value any) error {
+func (r *RedisBackend[T]) GetStruct(ctx context.Context, key string, value *T) error {
 	data, err := r.client.Get(ctx, key).Bytes()
 	if err != nil {
 		return err
