@@ -14,7 +14,7 @@ import (
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
-	"github.com/velosypedno/genesis-weather-api/internal/repos"
+	subr "github.com/velosypedno/genesis-weather-api/internal/repos/subscription"
 )
 
 const (
@@ -33,7 +33,7 @@ func TestCreateSubscription_Success(t *testing.T) {
 	assert.NoError(t, err)
 	defer closeDB(mock, db, t)
 
-	repo := repos.NewSubscriptionDBRepo(db)
+	repo := subr.NewDBRepo(db)
 
 	sub := domain.Subscription{
 		ID:        uuid.New(),
@@ -62,7 +62,7 @@ func TestCreateSubscription_EmailExists(t *testing.T) {
 	assert.NoError(t, err)
 	defer closeDB(mock, db, t)
 
-	repo := repos.NewSubscriptionDBRepo(db)
+	repo := subr.NewDBRepo(db)
 
 	sub := domain.Subscription{
 		ID:        uuid.New(),
@@ -94,7 +94,7 @@ func TestActivateSubscription_Success(t *testing.T) {
 	assert.NoError(t, err)
 	defer closeDB(mock, db, t)
 
-	repo := repos.NewSubscriptionDBRepo(db)
+	repo := subr.NewDBRepo(db)
 	token := uuid.New()
 
 	mock.ExpectExec(regexp.QuoteMeta(`UPDATE subscriptions SET activated = true WHERE token = $1`)).
@@ -113,7 +113,7 @@ func TestActivateSubscription_TokenNotFound(t *testing.T) {
 	}
 	defer closeDB(mock, db, t)
 
-	repo := repos.NewSubscriptionDBRepo(db)
+	repo := subr.NewDBRepo(db)
 	token := uuid.New()
 
 	mock.ExpectExec(regexp.QuoteMeta(`UPDATE subscriptions SET activated = true WHERE token = $1`)).
@@ -130,7 +130,7 @@ func TestDeleteSubscriptionByToken_Success(t *testing.T) {
 	assert.NoError(t, err)
 	defer closeDB(mock, db, t)
 
-	repo := repos.NewSubscriptionDBRepo(db)
+	repo := subr.NewDBRepo(db)
 	token := uuid.New()
 
 	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM subscriptions WHERE token = $1`)).
@@ -147,7 +147,7 @@ func TestDeleteSubscriptionByToken_TokenNotFound(t *testing.T) {
 	assert.NoError(t, err)
 	defer closeDB(mock, db, t)
 
-	repo := repos.NewSubscriptionDBRepo(db)
+	repo := subr.NewDBRepo(db)
 	token := uuid.New()
 
 	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM subscriptions WHERE token = $1`)).
@@ -164,7 +164,7 @@ func TestGetActivatedSubscriptionsByFreq_Success(t *testing.T) {
 	assert.NoError(t, err)
 	defer closeDB(mock, db, t)
 
-	repo := repos.NewSubscriptionDBRepo(db)
+	repo := subr.NewDBRepo(db)
 
 	freq := domain.FreqDaily
 
@@ -188,7 +188,7 @@ func TestGetActivatedSubscriptionsByFreq_QueryError(t *testing.T) {
 	assert.NoError(t, err)
 	defer closeDB(mock, db, t)
 
-	repo := repos.NewSubscriptionDBRepo(db)
+	repo := subr.NewDBRepo(db)
 
 	freq := domain.FreqDaily
 

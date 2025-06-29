@@ -1,6 +1,6 @@
 //go:build unit
 
-package repos_test
+package provider_test
 
 import (
 	"bytes"
@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
-	"github.com/velosypedno/genesis-weather-api/internal/repos"
+	weathprovider "github.com/velosypedno/genesis-weather-api/internal/repos/weather/provider"
 )
 
 type mockHTTPClient struct {
@@ -22,7 +22,8 @@ func (m *mockHTTPClient) Do(req *http.Request) (*http.Response, error) {
 	return m.doFunc(req)
 }
 
-func TestGetCurrentWeather_Success(t *testing.T) {
+func TestFreeApiGetCurrentWeather_Success(t *testing.T) {
+	// Arrange
 	mockRespBody := `{
 		"current": {
 			"temp_c": 10000.0,
@@ -32,7 +33,6 @@ func TestGetCurrentWeather_Success(t *testing.T) {
 			}
 		}
 	}`
-
 	client := &mockHTTPClient{
 		doFunc: func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
@@ -41,24 +41,26 @@ func TestGetCurrentWeather_Success(t *testing.T) {
 			}, nil
 		},
 	}
+	repo := weathprovider.NewFreeWeatherAPI("dummy-api-key", "http://dummy-url.com", client)
 
-	repo := repos.NewWeatherAPIRepo("dummy-api-key", "http://dummy-url", client)
+	// Act
 	weather, err := repo.GetCurrent(context.Background(), "Kyiv")
 
+	// Assert
 	assert.NoError(t, err)
 	assert.Equal(t, 10000.0, weather.Temperature)
 	assert.Equal(t, 100.0, weather.Humidity)
 	assert.Equal(t, "H_E_L_L", weather.Description)
 }
 
-func TestGetCurrentWeather_CityNotFound(t *testing.T) {
+func TestFreeApiGetCurrentWeather_CityNotFound(t *testing.T) {
+	// Arrange
 	mockRespBody := `{
 		"error": {
 			"code": 1006,
 			"message": "No matching location found."
 		}
 	}`
-
 	client := &mockHTTPClient{
 		doFunc: func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
@@ -67,14 +69,17 @@ func TestGetCurrentWeather_CityNotFound(t *testing.T) {
 			}, nil
 		},
 	}
+	repo := weathprovider.NewFreeWeatherAPI("dummy-api-key", "http://dummy-url.com", client)
 
-	repo := repos.NewWeatherAPIRepo("dummy-api-key", "http://dummy-url", client)
+	// Act
 	_, err := repo.GetCurrent(context.Background(), "InvalidCity")
 
+	// Assert
 	assert.ErrorIs(t, err, domain.ErrCityNotFound)
 }
 
-func TestGetCurrentWeather_APIKeyInvalid(t *testing.T) {
+func TestFreeApiGetCurrentWeather_APIKeyInvalid(t *testing.T) {
+	// Arrange
 	client := &mockHTTPClient{
 		doFunc: func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
@@ -83,29 +88,35 @@ func TestGetCurrentWeather_APIKeyInvalid(t *testing.T) {
 			}, nil
 		},
 	}
+	repo := weathprovider.NewFreeWeatherAPI("invalid-api-key", "http://dummy-url.com", client)
 
-	repo := repos.NewWeatherAPIRepo("invalid-api-key", "http://dummy-url", client)
+	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
 
+	// Assert
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, domain.ErrInternal)
+	assert.ErrorIs(t, err, domain.ErrWeatherUnavailable)
 }
 
-func TestGetCurrentWeather_HTTPError(t *testing.T) {
+func TestFreeApiGetCurrentWeather_HTTPError(t *testing.T) {
+	// Arrange
 	client := &mockHTTPClient{
 		doFunc: func(req *http.Request) (*http.Response, error) {
 			return nil, assert.AnError
 		},
 	}
+	repo := weathprovider.NewFreeWeatherAPI("dummy-api-key", "http://dummy-url.com", client)
 
-	repo := repos.NewWeatherAPIRepo("dummy-api-key", "http://dummy-url", client)
+	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
 
+	// Assert
 	assert.Error(t, err)
-	assert.ErrorIs(t, err, domain.ErrInternal)
+	assert.ErrorIs(t, err, domain.ErrWeatherUnavailable)
 }
 
-func TestGetCurrentWeather_BadJSON(t *testing.T) {
+func TestFreeApiGetCurrentWeather_BadJSON(t *testing.T) {
+	// Arrange
 	client := &mockHTTPClient{
 		doFunc: func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
@@ -114,10 +125,12 @@ func TestGetCurrentWeather_BadJSON(t *testing.T) {
 			}, nil
 		},
 	}
+	repo := weathprovider.NewFreeWeatherAPI("dummy-api-key", "http://dummy-url.com", client)
 
-	repo := repos.NewWeatherAPIRepo("dummy-api-key", "http://dummy-url", client)
+	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
 
+	// Assert
 	assert.Error(t, err)
 	assert.ErrorIs(t, err, domain.ErrInternal)
 }
