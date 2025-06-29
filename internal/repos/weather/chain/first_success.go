@@ -1,4 +1,4 @@
-package repos
+package chain
 
 import (
 	"context"
@@ -12,15 +12,15 @@ type weatherRepo interface {
 	GetCurrent(ctx context.Context, city string) (domain.Weather, error)
 }
 
-type Chain struct {
+type FirstFromChain struct {
 	Repos []weatherRepo
 }
 
-func NewChain(repos ...weatherRepo) *Chain {
-	return &Chain{Repos: repos}
+func NewFirstFromChain(repos ...weatherRepo) *FirstFromChain {
+	return &FirstFromChain{Repos: repos}
 }
 
-func (c *Chain) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
+func (c *FirstFromChain) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
 	var lastError error
 	for _, repo := range c.Repos {
 		weather, err := repo.GetCurrent(ctx, city)

@@ -13,7 +13,9 @@ import (
 	weathh "github.com/velosypedno/genesis-weather-api/internal/handlers/weather"
 	"github.com/velosypedno/genesis-weather-api/internal/mailers"
 	subr "github.com/velosypedno/genesis-weather-api/internal/repos/subscription"
-	weathr "github.com/velosypedno/genesis-weather-api/internal/repos/weather"
+	weathchain "github.com/velosypedno/genesis-weather-api/internal/repos/weather/chain"
+	weathdecorator "github.com/velosypedno/genesis-weather-api/internal/repos/weather/decorator"
+	weathprovider "github.com/velosypedno/genesis-weather-api/internal/repos/weather/provider"
 	subsvc "github.com/velosypedno/genesis-weather-api/internal/services/subscription"
 	weathsvc "github.com/velosypedno/genesis-weather-api/internal/services/weather"
 	weathnotsvc "github.com/velosypedno/genesis-weather-api/internal/services/weather_notification"
@@ -28,19 +30,19 @@ const (
 	weatherTimeout     = 5 * time.Second
 )
 
-func (a *App) setupWeatherRepoChain() *weathr.Chain {
-	freeWeathR := weathr.NewFreeWeatherAPI(a.cfg.FreeWeather.Key,
+func (a *App) setupWeatherRepoChain() *weathchain.FirstFromChain {
+	freeWeathR := weathprovider.NewFreeWeatherAPI(a.cfg.FreeWeather.Key,
 		a.cfg.FreeWeather.URL, &http.Client{})
-	tomorrowWeathR := weathr.NewTomorrowAPI(a.cfg.TomorrowWeather.Key,
+	tomorrowWeathR := weathprovider.NewTomorrowAPI(a.cfg.TomorrowWeather.Key,
 		a.cfg.TomorrowWeather.URL, &http.Client{})
-	vcWeathR := weathr.NewVisualCrossingAPI(a.cfg.VisualCrossing.Key,
+	vcWeathR := weathprovider.NewVisualCrossingAPI(a.cfg.VisualCrossing.Key,
 		a.cfg.VisualCrossing.URL, &http.Client{})
 
-	logFreeWeathR := weathr.NewLogDecorator(freeWeathR, freeWeathRName, a.reposLogger)
-	logTomorrowWeathR := weathr.NewLogDecorator(tomorrowWeathR, tomorrowWeathRName, a.reposLogger)
-	logVcWeathR := weathr.NewLogDecorator(vcWeathR, visualCrossingRName, a.reposLogger)
+	logFreeWeathR := weathdecorator.NewLogDecorator(freeWeathR, freeWeathRName, a.reposLogger)
+	logTomorrowWeathR := weathdecorator.NewLogDecorator(tomorrowWeathR, tomorrowWeathRName, a.reposLogger)
+	logVcWeathR := weathdecorator.NewLogDecorator(vcWeathR, visualCrossingRName, a.reposLogger)
 
-	weatherRepoChain := weathr.NewChain(logFreeWeathR, logTomorrowWeathR, logVcWeathR)
+	weatherRepoChain := weathchain.NewFirstFromChain(logFreeWeathR, logTomorrowWeathR, logVcWeathR)
 	return weatherRepoChain
 }
 

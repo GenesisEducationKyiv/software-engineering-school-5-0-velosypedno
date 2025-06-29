@@ -1,4 +1,4 @@
-package repos
+package decorator
 
 import (
 	"context"
@@ -6,6 +6,10 @@ import (
 
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
 )
+
+type weatherRepo interface {
+	GetCurrent(ctx context.Context, city string) (domain.Weather, error)
+}
 
 type LogDecorator struct {
 	Inner    weatherRepo

@@ -1,6 +1,6 @@
 //go:build unit
 
-package repos_test
+package decorator_test
 
 import (
 	"bytes"
@@ -10,7 +10,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
-	weathr "github.com/velosypedno/genesis-weather-api/internal/repos/weather"
+	weathdecorator "github.com/velosypedno/genesis-weather-api/internal/repos/weather/decorator"
 )
 
 type mockWeatherRepo struct {
@@ -32,7 +32,7 @@ func TestLoggingWeatherRepo_Success(t *testing.T) {
 		Response: domain.Weather{Temperature: 25.0, Humidity: 60.0, Description: "Clear"},
 		Err:      nil,
 	}
-	repo := weathr.NewLogDecorator(mock, "MockRepo", logger)
+	repo := weathdecorator.NewLogDecorator(mock, "MockRepo", logger)
 
 	// Act
 	result, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -54,7 +54,7 @@ func TestLoggingWeatherRepo_Error(t *testing.T) {
 		Response: domain.Weather{},
 		Err:      domain.ErrInternal,
 	}
-	repo := weathr.NewLogDecorator(mock, "MockRepo", logger)
+	repo := weathdecorator.NewLogDecorator(mock, "MockRepo", logger)
 
 	// Act
 	result, err := repo.GetCurrent(context.Background(), "kmaTop")

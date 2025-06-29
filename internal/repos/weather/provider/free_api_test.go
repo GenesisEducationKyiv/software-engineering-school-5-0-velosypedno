@@ -1,6 +1,6 @@
 //go:build unit
 
-package repos_test
+package provider_test
 
 import (
 	"bytes"
@@ -11,16 +11,26 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
-	weathr "github.com/velosypedno/genesis-weather-api/internal/repos/weather"
+	weathprovider "github.com/velosypedno/genesis-weather-api/internal/repos/weather/provider"
 )
 
-func TestVisualCrossingGetCurrentWeather_Success(t *testing.T) {
+type mockHTTPClient struct {
+	doFunc func(req *http.Request) (*http.Response, error)
+}
+
+func (m *mockHTTPClient) Do(req *http.Request) (*http.Response, error) {
+	return m.doFunc(req)
+}
+
+func TestFreeApiGetCurrentWeather_Success(t *testing.T) {
 	// Arrange
 	mockRespBody := `{
-		"currentConditions": {
-			"temp": 10000.0,
+		"current": {
+			"temp_c": 10000.0,
 			"humidity": 100.0,
-			"conditions": "H_E_L_L"
+			"condition": {
+				"text": "H_E_L_L"
+			}
 		}
 	}`
 	client := &mockHTTPClient{
@@ -31,7 +41,7 @@ func TestVisualCrossingGetCurrentWeather_Success(t *testing.T) {
 			}, nil
 		},
 	}
-	repo := weathr.NewVisualCrossingAPI("dummy-api-key", "http://dummy-url.com", client)
+	repo := weathprovider.NewFreeWeatherAPI("dummy-api-key", "http://dummy-url.com", client)
 
 	// Act
 	weather, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -43,9 +53,14 @@ func TestVisualCrossingGetCurrentWeather_Success(t *testing.T) {
 	assert.Equal(t, "H_E_L_L", weather.Description)
 }
 
-func TestVisualCrossingGetCurrentWeather_CityNotFound(t *testing.T) {
+func TestFreeApiGetCurrentWeather_CityNotFound(t *testing.T) {
 	// Arrange
-	mockRespBody := `NOt found`
+	mockRespBody := `{
+		"error": {
+			"code": 1006,
+			"message": "No matching location found."
+		}
+	}`
 	client := &mockHTTPClient{
 		doFunc: func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
@@ -54,7 +69,7 @@ func TestVisualCrossingGetCurrentWeather_CityNotFound(t *testing.T) {
 			}, nil
 		},
 	}
-	repo := weathr.NewVisualCrossingAPI("dummy-api-key", "http://dummy-url.com", client)
+	repo := weathprovider.NewFreeWeatherAPI("dummy-api-key", "http://dummy-url.com", client)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "InvalidCity")
@@ -63,17 +78,17 @@ func TestVisualCrossingGetCurrentWeather_CityNotFound(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrCityNotFound)
 }
 
-func TestVisualCrossingGetCurrentWeather_APIKeyInvalid(t *testing.T) {
+func TestFreeApiGetCurrentWeather_APIKeyInvalid(t *testing.T) {
 	// Arrange
 	client := &mockHTTPClient{
 		doFunc: func(req *http.Request) (*http.Response, error) {
 			return &http.Response{
-				StatusCode: http.StatusUnauthorized,
+				StatusCode: http.StatusForbidden,
 				Body:       io.NopCloser(bytes.NewBufferString("")),
 			}, nil
 		},
 	}
-	repo := weathr.NewVisualCrossingAPI("invalid-api-key", "http://dummy-url.com", client)
+	repo := weathprovider.NewFreeWeatherAPI("invalid-api-key", "http://dummy-url.com", client)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -83,14 +98,14 @@ func TestVisualCrossingGetCurrentWeather_APIKeyInvalid(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrWeatherUnavailable)
 }
 
-func TestVisualCrossingGetCurrentWeather_HTTPError(t *testing.T) {
+func TestFreeApiGetCurrentWeather_HTTPError(t *testing.T) {
 	// Arrange
 	client := &mockHTTPClient{
 		doFunc: func(req *http.Request) (*http.Response, error) {
 			return nil, assert.AnError
 		},
 	}
-	repo := weathr.NewVisualCrossingAPI("dummy-api-key", "http://dummy-url.com", client)
+	repo := weathprovider.NewFreeWeatherAPI("dummy-api-key", "http://dummy-url.com", client)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -100,7 +115,7 @@ func TestVisualCrossingGetCurrentWeather_HTTPError(t *testing.T) {
 	assert.ErrorIs(t, err, domain.ErrWeatherUnavailable)
 }
 
-func TestVisualCrossingGetCurrentWeather_BadJSON(t *testing.T) {
+func TestFreeApiGetCurrentWeather_BadJSON(t *testing.T) {
 	// Arrange
 	client := &mockHTTPClient{
 		doFunc: func(req *http.Request) (*http.Response, error) {
@@ -110,7 +125,7 @@ func TestVisualCrossingGetCurrentWeather_BadJSON(t *testing.T) {
 			}, nil
 		},
 	}
-	repo := weathr.NewVisualCrossingAPI("dummy-api-key", "http://dummy-url.com", client)
+	repo := weathprovider.NewFreeWeatherAPI("dummy-api-key", "http://dummy-url.com", client)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")

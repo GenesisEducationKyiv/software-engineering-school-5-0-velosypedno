@@ -1,6 +1,6 @@
 //go:build unit
 
-package repos_test
+package chain_test
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
-	weathr "github.com/velosypedno/genesis-weather-api/internal/repos/weather"
+	weathchain "github.com/velosypedno/genesis-weather-api/internal/repos/weather/chain"
 )
 
 type mockRepo struct {
@@ -32,7 +32,7 @@ func TestWeatherRepoChain_FirstSuccess(t *testing.T) {
 	second := &mockRepo{
 		err: errors.New("should not be called"),
 	}
-	chain := weathr.NewChain(first, second)
+	chain := weathchain.NewFirstFromChain(first, second)
 
 	// Act
 	weather, err := chain.GetCurrent(context.Background(), "Kyiv")
@@ -53,7 +53,7 @@ func TestWeatherRepoChain_SecondSuccess(t *testing.T) {
 		resp: domain.Weather{Temperature: 10, Humidity: 80, Description: "Rain"},
 		err:  nil,
 	}
-	chain := weathr.NewChain(first, second)
+	chain := weathchain.NewFirstFromChain(first, second)
 
 	// Act
 	weather, err := chain.GetCurrent(context.Background(), "Lviv")
@@ -69,7 +69,7 @@ func TestWeatherRepoChain_AllFail(t *testing.T) {
 	// Arrange
 	first := &mockRepo{err: errors.New("first fail")}
 	second := &mockRepo{err: errors.New("second fail")}
-	chain := weathr.NewChain(first, second)
+	chain := weathchain.NewFirstFromChain(first, second)
 
 	// Act
 	weather, err := chain.GetCurrent(context.Background(), "Tsrcuny")
