@@ -9,6 +9,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/redis/go-redis/v9"
 	"github.com/robfig/cron/v3"
 	"github.com/velosypedno/genesis-weather-api/internal/config"
 )
@@ -21,6 +22,7 @@ const logPerm os.FileMode = 0644
 type App struct {
 	cfg         *config.Config
 	db          *sql.DB
+	redisClient *redis.Client
 	cron        *cron.Cron
 	apiSrv      *http.Server
 	reposLogger *log.Logger
@@ -47,6 +49,13 @@ func (a *App) Run(ctx context.Context) error {
 		return err
 	}
 	log.Println("DB connected")
+
+	// redis
+	a.redisClient = redis.NewClient(&redis.Options{
+		Addr:     a.cfg.Redis.Addr(),
+		Password: a.cfg.Redis.Pass,
+	})
+	log.Println("Redis connected")
 
 	// cron
 	err = a.setupCron()
@@ -107,6 +116,19 @@ func (a *App) shutdown(timeoutCtx context.Context) error {
 			if shutdownErr == nil {
 				shutdownErr = wrapped
 			}
+		}
+	}
+
+	// redis
+	if a.redisClient != nil {
+		if err := a.redisClient.Close(); err != nil {
+			wrapped := fmt.Errorf("shutdown redis: %w", err)
+			log.Println(wrapped)
+			if shutdownErr == nil {
+				shutdownErr = wrapped
+			}
+		} else {
+			log.Println("Redis closed")
 		}
 	}
 
