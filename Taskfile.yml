@@ -64,9 +64,11 @@ tasks:
     env:
       API_PORT: 8081
       DB_PORT: 5433
+      REDIS_PORT: 6380
+      SMTP_PORT: 1025
       DB_HOST: localhost
       SMTP_HOST: localhost
-      SMTP_PORT: 1025
+      REDIS_HOST: localhost
       EMAIL_FROM: testuser@example.com
       TEMPLATES_DIR: ../../internal/templates
     cmds:
