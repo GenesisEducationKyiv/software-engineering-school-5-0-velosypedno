@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
 	weathr "github.com/velosypedno/genesis-weather-api/internal/repos/weather"
 )
@@ -40,7 +41,7 @@ func TestTomorrowGetCurrentWeather_Success(t *testing.T) {
 	weather, err := repo.GetCurrent(context.Background(), "Kyiv")
 
 	// Assert
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, 10000.0, weather.Temperature)
 	assert.Equal(t, 100.0, weather.Humidity)
 }
@@ -85,7 +86,7 @@ func TestTomorrowGetCurrentWeather_APIKeyInvalid(t *testing.T) {
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
 
 	// Assert
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.ErrorIs(t, err, domain.ErrWeatherUnavailable)
 }
 
@@ -102,7 +103,7 @@ func TestTomorrowGetCurrentWeather_HTTPError(t *testing.T) {
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
 
 	// Assert
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.ErrorIs(t, err, domain.ErrWeatherUnavailable)
 }
 
@@ -122,6 +123,6 @@ func TestTomorrowGetCurrentWeather_BadJSON(t *testing.T) {
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
 
 	// Assert
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.ErrorIs(t, err, domain.ErrInternal)
 }

@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
 	weathr "github.com/velosypedno/genesis-weather-api/internal/repos/weather"
 )
@@ -38,10 +39,10 @@ func TestLoggingWeatherRepo_Success(t *testing.T) {
 	result, err := repo.GetCurrent(context.Background(), "Kyiv")
 
 	// Assert
-	assert.NoError(t, err)
-	assert.Equal(t, 25.0, result.Temperature)
-	assert.True(t, mock.Called)
 	logOutput := buf.String()
+	require.NoError(t, err)
+	require.True(t, mock.Called)
+	assert.Equal(t, 25.0, result.Temperature)
 	assert.Contains(t, logOutput, "MockRepo")
 	assert.Contains(t, logOutput, "Kyiv")
 }
@@ -60,10 +61,10 @@ func TestLoggingWeatherRepo_Error(t *testing.T) {
 	result, err := repo.GetCurrent(context.Background(), "kmaTop")
 
 	// Assert
-	assert.Error(t, err)
-	assert.Equal(t, domain.Weather{}, result)
-	assert.True(t, mock.Called)
 	logOutput := buf.String()
+	require.Error(t, err)
+	require.True(t, mock.Called)
+	assert.Equal(t, domain.Weather{}, result)
 	assert.Contains(t, logOutput, "MockRepo")
 	assert.Contains(t, logOutput, "kmaTop")
 	assert.Contains(t, logOutput, domain.ErrInternal.Error())

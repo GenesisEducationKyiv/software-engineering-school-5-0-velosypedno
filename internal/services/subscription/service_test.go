@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
 	subsvc "github.com/velosypedno/genesis-weather-api/internal/services/subscription"
 )
@@ -49,19 +50,20 @@ func TestSubscriptionService_Subscribe(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Arrange
 			repo := &mockSubscriptionRepo{createErr: tt.repoErr}
 			mailer := &mockMailer{sendErr: tt.mailerErr}
 			service := subsvc.NewSubscriptionService(repo, mailer)
 
+			// Act
 			err := service.Subscribe(subsvc.SubscriptionInput{
 				Email:     "test@example.com",
 				Frequency: "daily",
 				City:      "Kyiv",
 			})
 
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Subscribe() error = %v, wantErr %v", err, tt.wantErr)
-			}
+			// Assert
+			assert.Equal(t, tt.wantErr, err != nil, "Subscribe() error = %v, wantErr %v", err, tt.wantErr)
 		})
 	}
 }

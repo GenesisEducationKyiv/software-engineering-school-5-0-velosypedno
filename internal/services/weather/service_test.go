@@ -9,6 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
 	services "github.com/velosypedno/genesis-weather-api/internal/services/weather"
 )
@@ -27,41 +28,44 @@ func (m *mockWeatherRepo) GetCurrent(ctx context.Context, city string) (domain.W
 }
 
 func TestWeatherService_GetCurrent_Success(t *testing.T) {
+	// Arrange
 	mockRepo := new(mockWeatherRepo)
 	service := services.NewWeatherService(mockRepo)
-
 	expected := domain.Weather{
 		Temperature: 20.0,
 		Humidity:    80.0,
 		Description: "Sunny",
 	}
-
 	mockRepo.
 		On("GetCurrent", mock.Anything, "Kyiv").
 		Return(expected, nil)
 
+	// Act
 	ctx := context.Background()
 	actual, err := service.GetCurrent(ctx, "Kyiv")
 
-	assert.NoError(t, err)
+	// Assert
+	mockRepo.AssertExpectations(t)
+	require.NoError(t, err)
 	assert.Equal(t, expected, actual)
 
-	mockRepo.AssertExpectations(t)
 }
 
 func TestWeatherService_GetCurrent_Error(t *testing.T) {
+	// Arrange
 	mockRepo := new(mockWeatherRepo)
 	service := services.NewWeatherService(mockRepo)
-
 	mockRepo.
 		On("GetCurrent", mock.Anything, "ZUUUBR").
 		Return(domain.Weather{}, domain.ErrCityNotFound)
 
+	// Act
 	ctx := context.Background()
 	_, err := service.GetCurrent(ctx, "ZUUUBR")
 
-	assert.Error(t, err)
+	// Assert
+	mockRepo.AssertExpectations(t)
+	require.Error(t, err)
 	assert.ErrorIs(t, err, domain.ErrCityNotFound)
 
-	mockRepo.AssertExpectations(t)
 }

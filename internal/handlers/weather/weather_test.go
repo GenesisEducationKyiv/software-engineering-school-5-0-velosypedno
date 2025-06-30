@@ -47,28 +47,28 @@ func TestWeatherHandler(t *testing.T) {
 		expectedStatus int
 	}{
 		{
-			name:           "missing city parameter",
+			name:           "MissParam",
 			city:           "",
 			mockReturn:     domain.Weather{},
 			mockError:      nil,
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
-			name:           "city not found",
+			name:           "NotFound",
 			city:           "Bagatkino",
 			mockReturn:     domain.Weather{},
 			mockError:      domain.ErrCityNotFound,
 			expectedStatus: http.StatusNotFound,
 		},
 		{
-			name:           "internal error",
+			name:           "ErrInternal",
 			city:           "Kyiv",
 			mockReturn:     domain.Weather{},
 			mockError:      domain.ErrInternal,
 			expectedStatus: http.StatusInternalServerError,
 		},
 		{
-			name:           "successful weather fetch",
+			name:           "Success",
 			city:           "Kyiv",
 			mockReturn:     mockWeather,
 			mockError:      nil,
@@ -79,19 +79,22 @@ func TestWeatherHandler(t *testing.T) {
 	var requestTimeout = 5 * time.Second
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Arrange
 			mockRepo := new(mockWeatherRepo)
-
 			if tt.city != "" {
 				mockRepo.
 					On("GetCurrent", mock.Anything, tt.city).
 					Return(tt.mockReturn, tt.mockError)
 			}
-
 			router := gin.New()
 			router.GET("/weather", weathh.NewWeatherGETHandler(mockRepo, requestTimeout))
+
+			// Act
 			req := httptest.NewRequest(http.MethodGet, "/weather?city="+tt.city, nil)
 			resp := httptest.NewRecorder()
 			router.ServeHTTP(resp, req)
+
+			// Assert
 			assert.Equal(t, tt.expectedStatus, resp.Code)
 			mockRepo.AssertExpectations(t)
 		})
@@ -111,10 +114,15 @@ func (t *timeoutErrRepo) GetCurrent(ctx context.Context, city string) (domain.We
 }
 
 func TestWeatherHandler_Timeout(t *testing.T) {
+	// Arrange
 	router := gin.New()
 	router.GET("/weather", weathh.NewWeatherGETHandler(&timeoutErrRepo{}, time.Millisecond))
+
+	// Act
 	req := httptest.NewRequest(http.MethodGet, "/weather?city=Kyiv", nil)
 	resp := httptest.NewRecorder()
 	router.ServeHTTP(resp, req)
+
+	// Assert
 	assert.Equal(t, http.StatusInternalServerError, resp.Code)
 }
