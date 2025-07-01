@@ -14,101 +14,118 @@ import (
 func TestCircuitBreaker(main *testing.T) {
 	main.Run("ClosedOnStartup", func(t *testing.T) {
 		// Arrange
-		cb := cb.NewCircuitBreaker(time.Minute*6, 10)
+		breaker := cb.NewCircuitBreaker(time.Minute*6, 10, 1)
 
 		// Assert
-		assert.True(t, cb.IsClosed())
+		require.Equal(t, breaker.State(), cb.Closed)
+		assert.True(t, breaker.Allowed())
 	})
 
 	main.Run("ClosedBeforeLimit", func(t *testing.T) {
 		// Arrange
-		cb := cb.NewCircuitBreaker(time.Minute*6, 10)
+		breaker := cb.NewCircuitBreaker(time.Minute*6, 10, 1)
 
 		// Act
 		for i := 0; i < 9; i++ {
-			cb.Fail()
+			breaker.Fail()
 		}
 
 		// Assert
-		assert.True(t, cb.IsClosed())
+		require.Equal(t, breaker.State(), cb.Closed)
+		assert.True(t, breaker.Allowed())
 	})
 
 	main.Run("OpenAfterLimit", func(t *testing.T) {
 		// Arrange
-		cb := cb.NewCircuitBreaker(time.Minute*6, 10)
+		breaker := cb.NewCircuitBreaker(time.Minute*6, 10, 1)
 
 		// Act
 		for i := 0; i < 10; i++ {
-			cb.Fail()
+			breaker.Fail()
 		}
 
 		// Assert
-		assert.False(t, cb.IsClosed())
+		require.Equal(t, breaker.State(), cb.Open)
+		assert.False(t, breaker.Allowed())
 	})
 
-	main.Run("ClosedAfterTimeout", func(t *testing.T) {
+	main.Run("HalfOpenAfterTimeout", func(t *testing.T) {
 		// Arrange
 		currentTime := time.Now()
-		cb := cb.NewCircuitBreaker(time.Minute*6, 10)
-		cb.Now = func() time.Time {
+		breaker := cb.NewCircuitBreaker(time.Minute*6, 10, 1)
+		breaker.Now = func() time.Time {
 			return currentTime
 		}
 		currentTime = currentTime.Add(time.Second * 7)
 
 		// Act
 		for i := 0; i < 10; i++ {
-			cb.Fail()
+			breaker.Fail()
 		}
-		require.False(t, cb.IsClosed())
+		require.False(t, breaker.Allowed())
+		require.Equal(t, breaker.State(), cb.Open)
+		currentTime = currentTime.Add(time.Minute * 7)
+		require.Equal(t, breaker.State(), cb.HalfOpen)
+		for i := 0; i < 9; i++ {
+			currentTime = currentTime.Add(time.Second * 1)
+			breaker.Fail()
+			currentTime = currentTime.Add(time.Second * 1)
+			require.Equal(t, breaker.State(), cb.Open)
+		}
 		currentTime = currentTime.Add(time.Minute * 7)
 
 		// Assert
-		assert.True(t, cb.IsClosed())
+		require.Equal(t, cb.HalfOpen, breaker.State())
+		require.True(t, breaker.Allowed())
 	})
 
-	main.Run("RestCounterAfterTimeout", func(t *testing.T) {
+	main.Run("RecoverAfterSuccess", func(t *testing.T) {
 		// Arrange
 		currentTime := time.Now()
-		cb := cb.NewCircuitBreaker(time.Minute*6, 10)
-		cb.Now = func() time.Time {
+		breaker := cb.NewCircuitBreaker(time.Minute*6, 10, 3)
+		breaker.Now = func() time.Time {
 			return currentTime
 		}
 		currentTime = currentTime.Add(time.Second * 7)
 
 		// Act
 		for i := 0; i < 10; i++ {
-			cb.Fail()
+			breaker.Fail()
 		}
-		require.False(t, cb.IsClosed())
+		require.Equal(t, breaker.State(), cb.Open)
+		require.False(t, breaker.Allowed())
 		currentTime = currentTime.Add(time.Minute * 7)
-		for i := 0; i < 9; i++ {
-			cb.Fail()
+		for i := 0; i < 3; i++ {
+			breaker.Success()
 		}
 
 		// Assert
-		require.True(t, cb.IsClosed())
+		require.Equal(t, breaker.State(), cb.Closed)
+		assert.True(t, breaker.Allowed())
 	})
 
-	main.Run("ResetCounterIfNotFailed", func(t *testing.T) {
+	main.Run("OpenAgainDueToFailure", func(t *testing.T) {
 		// Arrange
 		currentTime := time.Now()
-		cb := cb.NewCircuitBreaker(time.Minute*6, 10)
-		cb.Now = func() time.Time {
+		breaker := cb.NewCircuitBreaker(time.Minute*6, 10, 3)
+		breaker.Now = func() time.Time {
 			return currentTime
 		}
 		currentTime = currentTime.Add(time.Second * 7)
 
 		// Act
-		for i := 0; i < 9; i++ {
-			cb.Fail()
+		for i := 0; i < 10; i++ {
+			breaker.Fail()
 		}
-		require.True(t, cb.IsClosed())
+		require.Equal(t, breaker.State(), cb.Open)
+		require.False(t, breaker.Allowed())
 		currentTime = currentTime.Add(time.Minute * 7)
-		for i := 0; i < 9; i++ {
-			cb.Fail()
-		}
+		require.Equal(t, breaker.State(), cb.HalfOpen)
+		require.True(t, breaker.Allowed())
+		breaker.Fail()
 
 		// Assert
-		assert.True(t, cb.IsClosed())
+		require.Equal(t, breaker.State(), cb.Open)
+		assert.False(t, breaker.Allowed())
 	})
 }

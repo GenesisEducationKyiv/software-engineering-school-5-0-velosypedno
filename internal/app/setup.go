@@ -28,8 +28,10 @@ const (
 	confirmSubTmplName    = "confirm_sub.html"
 	weatherRequestTimeout = 5 * time.Second
 
-	weatherCircuitBreakerTimeout = 5 * time.Minute
-	weatherCircuitBreakerLimit   = 10
+	// CB = CircuitBreaker
+	weatherCBTimeout = 5 * time.Minute
+	weatherCBLimit   = 10
+	weatherCBRecover = 5
 )
 
 func (a *App) setupWeatherRepoChain() *weathr.Chain {
@@ -45,11 +47,11 @@ func (a *App) setupWeatherRepoChain() *weathr.Chain {
 	logVcWeathR := weathr.NewLogDecorator(vcWeathR, visualCrossingRName, a.reposLogger)
 
 	breakerFreeWeathR := weathr.NewBreakerDecorator(logFreeWeathR,
-		cb.NewCircuitBreaker(weatherCircuitBreakerTimeout, weatherCircuitBreakerLimit))
+		cb.NewCircuitBreaker(weatherCBTimeout, weatherCBLimit, weatherCBRecover))
 	breakerTomorrowWeathR := weathr.NewBreakerDecorator(logTomorrowWeathR,
-		cb.NewCircuitBreaker(weatherCircuitBreakerTimeout, weatherCircuitBreakerLimit))
+		cb.NewCircuitBreaker(weatherCBTimeout, weatherCBLimit, weatherCBRecover))
 	breakerVcWeathR := weathr.NewBreakerDecorator(logVcWeathR,
-		cb.NewCircuitBreaker(weatherCircuitBreakerTimeout, weatherCircuitBreakerLimit))
+		cb.NewCircuitBreaker(weatherCBTimeout, weatherCBLimit, weatherCBRecover))
 
 	weatherRepoChain := weathr.NewChain(breakerFreeWeathR, breakerTomorrowWeathR, breakerVcWeathR)
 	return weatherRepoChain

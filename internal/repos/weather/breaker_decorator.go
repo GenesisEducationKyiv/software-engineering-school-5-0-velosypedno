@@ -19,7 +19,7 @@ func NewBreakerDecorator(inner weatherRepo, breaker *cb.CircuitBreaker) *Breaker
 }
 
 func (d *BreakerDecorator) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
-	if !d.Breaker.IsClosed() {
+	if !d.Breaker.Allowed() {
 		return domain.Weather{}, fmt.Errorf("circuit breaker: %w", domain.ErrProviderUnreliable)
 	}
 
@@ -30,5 +30,7 @@ func (d *BreakerDecorator) GetCurrent(ctx context.Context, city string) (domain.
 	if err != nil {
 		return domain.Weather{}, err
 	}
+
+	d.Breaker.Success()
 	return weather, nil
 }
