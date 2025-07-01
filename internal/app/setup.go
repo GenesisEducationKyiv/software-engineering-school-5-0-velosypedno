@@ -17,6 +17,7 @@ import (
 	subsvc "github.com/velosypedno/genesis-weather-api/internal/services/subscription"
 	weathsvc "github.com/velosypedno/genesis-weather-api/internal/services/weather"
 	weathnotsvc "github.com/velosypedno/genesis-weather-api/internal/services/weather_notification"
+	"github.com/velosypedno/genesis-weather-api/pkg/cb"
 )
 
 const (
@@ -24,8 +25,11 @@ const (
 	tomorrowWeathRName  = "tomorrow.io"
 	visualCrossingRName = "visualcrossing.com"
 
-	confirmSubTmplName = "confirm_sub.html"
-	weatherTimeout     = 5 * time.Second
+	confirmSubTmplName    = "confirm_sub.html"
+	weatherRequestTimeout = 5 * time.Second
+
+	weatherCircuitBreakerTimeout = 5 * time.Minute
+	weatherCircuitBreakerLimit   = 10
 )
 
 func (a *App) setupWeatherRepoChain() *weathr.Chain {
@@ -40,7 +44,14 @@ func (a *App) setupWeatherRepoChain() *weathr.Chain {
 	logTomorrowWeathR := weathr.NewLogDecorator(tomorrowWeathR, tomorrowWeathRName, a.reposLogger)
 	logVcWeathR := weathr.NewLogDecorator(vcWeathR, visualCrossingRName, a.reposLogger)
 
-	weatherRepoChain := weathr.NewChain(logFreeWeathR, logTomorrowWeathR, logVcWeathR)
+	breakerFreeWeathR := weathr.NewBreakerDecorator(logFreeWeathR,
+		cb.NewCircuitBreaker(weatherCircuitBreakerTimeout, weatherCircuitBreakerLimit))
+	breakerTomorrowWeathR := weathr.NewBreakerDecorator(logTomorrowWeathR,
+		cb.NewCircuitBreaker(weatherCircuitBreakerTimeout, weatherCircuitBreakerLimit))
+	breakerVcWeathR := weathr.NewBreakerDecorator(logVcWeathR,
+		cb.NewCircuitBreaker(weatherCircuitBreakerTimeout, weatherCircuitBreakerLimit))
+
+	weatherRepoChain := weathr.NewChain(breakerFreeWeathR, breakerTomorrowWeathR, breakerVcWeathR)
 	return weatherRepoChain
 }
 
@@ -60,7 +71,7 @@ func (a *App) setupRouter() *gin.Engine {
 
 	api := router.Group("/api")
 	{
-		api.GET("/weather", weathh.NewWeatherGETHandler(weatherService, weatherTimeout))
+		api.GET("/weather", weathh.NewWeatherGETHandler(weatherService, weatherRequestTimeout))
 		api.POST("/subscribe", subh.NewSubscribePOSTHandler(subService))
 		api.GET("/confirm/:token", subh.NewConfirmGETHandler(subService))
 		api.GET("/unsubscribe/:token", subh.NewUnsubscribeGETHandler(subService))

@@ -1,3 +1,5 @@
+//go:build unit
+
 package cb_test
 
 import (
