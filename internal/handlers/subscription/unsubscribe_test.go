@@ -38,33 +38,38 @@ func TestUnsubscribeGETHandler(t *testing.T) {
 		expectedStatus int
 	}{
 		{
-			name:           "invalid UUID token",
-			token:          invalidUUIDStr,
-			mockErr:        nil,
+			name:    "InvalidToken",
+			token:   invalidUUIDStr,
+			mockErr: nil,
+
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
-			name:           "token not found",
-			token:          validUUID.String(),
-			mockErr:        domain.ErrSubNotFound,
+			name:    "TokenNotFound",
+			token:   validUUID.String(),
+			mockErr: domain.ErrSubNotFound,
+
 			expectedStatus: http.StatusNotFound,
 		},
 		{
-			name:           "internal error during unsubscribe",
-			token:          validUUID.String(),
-			mockErr:        errors.New("internal error"),
+			name:    "ErrInternal",
+			token:   validUUID.String(),
+			mockErr: errors.New("internal error"),
+
 			expectedStatus: http.StatusInternalServerError,
 		},
 		{
-			name:           "successful unsubscribe",
-			token:          validUUID.String(),
-			mockErr:        nil,
+			name:    "Success",
+			token:   validUUID.String(),
+			mockErr: nil,
+
 			expectedStatus: http.StatusOK,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Arrange
 			mockService := new(mockSubscriptionDeactivator)
 			if tt.mockErr != nil || tt.expectedStatus != http.StatusBadRequest {
 				tokenUUID, err := uuid.Parse(tt.token)
@@ -72,12 +77,15 @@ func TestUnsubscribeGETHandler(t *testing.T) {
 					mockService.On("Unsubscribe", tokenUUID).Return(tt.mockErr)
 				}
 			}
-
 			route := gin.New()
 			route.GET("/unsubscribe/:token", subh.NewUnsubscribeGETHandler(mockService))
+
+			// Act
 			req := httptest.NewRequest(http.MethodGet, "/unsubscribe/"+tt.token, nil)
 			resp := httptest.NewRecorder()
 			route.ServeHTTP(resp, req)
+
+			// Assert
 			assert.Equal(t, tt.expectedStatus, resp.Code)
 		})
 	}

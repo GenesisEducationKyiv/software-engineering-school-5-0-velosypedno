@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
 	weathchain "github.com/velosypedno/genesis-weather-api/internal/repos/weather/chain"
 )
@@ -38,7 +39,7 @@ func TestWeatherRepoChain_FirstSuccess(t *testing.T) {
 	weather, err := chain.GetCurrent(context.Background(), "Kyiv")
 
 	// Assert
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, 20.0, weather.Temperature)
 	assert.True(t, first.called)
 	assert.False(t, second.called)
@@ -59,7 +60,7 @@ func TestWeatherRepoChain_SecondSuccess(t *testing.T) {
 	weather, err := chain.GetCurrent(context.Background(), "Lviv")
 
 	// Assert
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, 10.0, weather.Temperature)
 	assert.True(t, first.called)
 	assert.True(t, second.called)
@@ -75,7 +76,7 @@ func TestWeatherRepoChain_AllFail(t *testing.T) {
 	weather, err := chain.GetCurrent(context.Background(), "Tsrcuny")
 
 	// Assert
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Contains(t, err.Error(), "chain:")
 	assert.Equal(t, domain.Weather{}, weather)
 	assert.True(t, first.called)

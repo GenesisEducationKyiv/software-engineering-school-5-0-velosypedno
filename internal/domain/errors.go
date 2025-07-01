@@ -9,4 +9,5 @@ var (
 	ErrSubAlreadyExists   = errors.New("subscription already exists")
 	ErrSendEmail          = errors.New("failed to send email")
 	ErrWeatherUnavailable = errors.New("weather api is unavailable")
+	ErrProviderUnreliable = errors.New("weather provider is unreliable")
 )

@@ -75,7 +75,8 @@ func (r *TomorrowAPI) GetCurrent(ctx context.Context, city string) (domain.Weath
 		var errResp tomorrowAPIErrorResponse
 		if err := json.NewDecoder(resp.Body).Decode(&errResp); err == nil {
 			if errResp.Code == tomorrowCityNotFoundCode {
-				return domain.Weather{}, domain.ErrCityNotFound
+				log.Printf("tomorrow weather repo: city %s not found\n", city)
+				return domain.Weather{}, fmt.Errorf("tomorrow weather repo: %w", domain.ErrCityNotFound)
 			}
 			log.Printf("tomorrow weather repo: api error: %s\n", errResp.Message)
 			return domain.Weather{}, fmt.Errorf("tomorrow weather repo: %w", domain.ErrInternal)

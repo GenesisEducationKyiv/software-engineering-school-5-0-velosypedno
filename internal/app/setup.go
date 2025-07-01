@@ -20,16 +20,22 @@ import (
 	subsvc "github.com/velosypedno/genesis-weather-api/internal/services/subscription"
 	weathsvc "github.com/velosypedno/genesis-weather-api/internal/services/weather"
 	weathnotsvc "github.com/velosypedno/genesis-weather-api/internal/services/weather_notification"
+	"github.com/velosypedno/genesis-weather-api/pkg/cb"
 )
 
 const (
 	freeWeathRName      = "weatherapi.com"
-	tomorrowWeathRName  = "tomorrow.io"
+	tomorrowRName       = "tomorrow.io"
 	visualCrossingRName = "visualcrossing.com"
 
-	confirmSubTmplName = "confirm_sub.html"
-	weatherTimeout     = 5 * time.Second
-	cacheTTL           = 5 * time.Minute
+	confirmSubTmplName    = "confirm_sub.html"
+	weatherRequestTimeout = 5 * time.Second
+	cacheTTL              = 5 * time.Minute
+
+	// CB = CircuitBreaker
+	weatherCBTimeout = 5 * time.Minute
+	weatherCBLimit   = 10
+	weatherCBRecover = 5
 )
 
 func (a *App) setupWeatherRepoChain() *weathdecorator.CacheDecorator {
@@ -41,10 +47,18 @@ func (a *App) setupWeatherRepoChain() *weathdecorator.CacheDecorator {
 		a.cfg.VisualCrossing.URL, &http.Client{})
 
 	logFreeWeathR := weathdecorator.NewLogDecorator(freeWeathR, freeWeathRName, a.reposLogger)
-	logTomorrowWeathR := weathdecorator.NewLogDecorator(tomorrowWeathR, tomorrowWeathRName, a.reposLogger)
+	logTomorrowR := weathdecorator.NewLogDecorator(tomorrowWeathR, tomorrowRName, a.reposLogger)
 	logVcWeathR := weathdecorator.NewLogDecorator(vcWeathR, visualCrossingRName, a.reposLogger)
 
-	weatherRepoChain := weathchain.NewFirstFromChain(logFreeWeathR, logTomorrowWeathR, logVcWeathR)
+	breakerFreeWeathR := weathdecorator.NewBreakerDecorator(logFreeWeathR,
+		cb.NewCircuitBreaker(weatherCBTimeout, weatherCBLimit, weatherCBRecover))
+	breakerTomorrowR := weathdecorator.NewBreakerDecorator(logTomorrowR,
+		cb.NewCircuitBreaker(weatherCBTimeout, weatherCBLimit, weatherCBRecover))
+	breakerVcWeathR := weathdecorator.NewBreakerDecorator(logVcWeathR,
+		cb.NewCircuitBreaker(weatherCBTimeout, weatherCBLimit, weatherCBRecover))
+
+	weatherRepoChain := weathchain.NewFirstFromChain(breakerFreeWeathR, breakerTomorrowR, breakerVcWeathR)
+
 	redisBackend := cache.NewRedisBackend[domain.Weather](a.redisClient)
 	cachedRepoChain := weathdecorator.NewCacheDecorator(weatherRepoChain, cacheTTL, redisBackend)
 	return cachedRepoChain
@@ -66,7 +80,7 @@ func (a *App) setupRouter() *gin.Engine {
 
 	api := router.Group("/api")
 	{
-		api.GET("/weather", weathh.NewWeatherGETHandler(weatherService, weatherTimeout))
+		api.GET("/weather", weathh.NewWeatherGETHandler(weatherService, weatherRequestTimeout))
 		api.POST("/subscribe", subh.NewSubscribePOSTHandler(subService))
 		api.GET("/confirm/:token", subh.NewConfirmGETHandler(subService))
 		api.GET("/unsubscribe/:token", subh.NewUnsubscribeGETHandler(subService))

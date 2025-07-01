@@ -79,7 +79,8 @@ func (r *FreeWeatherAPI) GetCurrent(ctx context.Context, city string) (domain.We
 		var errResp freeWeatherAPIErrorResponse
 		if err := json.NewDecoder(resp.Body).Decode(&errResp); err == nil {
 			if errResp.Error.Code == noMatchingLocationFoundCode {
-				return domain.Weather{}, domain.ErrCityNotFound
+				log.Printf("free weather repo: city %s not found\n", city)
+				return domain.Weather{}, fmt.Errorf("free weather repo: %w", domain.ErrCityNotFound)
 			}
 			log.Printf("free weather repo: api error: %s\n", errResp.Error.Message)
 			return domain.Weather{}, fmt.Errorf("free weather repo: %w", domain.ErrInternal)

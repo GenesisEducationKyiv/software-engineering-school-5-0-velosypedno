@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
 	weathdecorator "github.com/velosypedno/genesis-weather-api/internal/repos/weather/decorator"
 )
@@ -38,7 +39,7 @@ func TestLoggingWeatherRepo_Success(t *testing.T) {
 	result, err := repo.GetCurrent(context.Background(), "Kyiv")
 
 	// Assert
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, 25.0, result.Temperature)
 	assert.True(t, mock.Called)
 	logOutput := buf.String()
@@ -60,7 +61,7 @@ func TestLoggingWeatherRepo_Error(t *testing.T) {
 	result, err := repo.GetCurrent(context.Background(), "kmaTop")
 
 	// Assert
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Equal(t, domain.Weather{}, result)
 	assert.True(t, mock.Called)
 	logOutput := buf.String()
