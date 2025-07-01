@@ -47,41 +47,46 @@ func TestSubscribePOSTHandler(t *testing.T) {
 		expectedStatus int
 	}{
 		{
-			name:           "invalid json (missing fields)",
-			body:           `{"email": "test@example.com"}`,
-			mockSrvErr:     nil,
+			name:       "InvalidJson",
+			body:       `{"email": "test@example.com"}`,
+			mockSrvErr: nil,
+
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
-			name:           "invalid email",
-			body:           `{"email": "invalid", "frequency": "daily", "city": "Kyiv"}`,
-			mockSrvErr:     nil,
+			name:       "InvalidEmail",
+			body:       `{"email": "invalid", "frequency": "daily", "city": "Kyiv"}`,
+			mockSrvErr: nil,
+
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
-			name:           "conflict - email already exists",
-			body:           `{"email": "test@example.com", "frequency": "daily", "city": "Kyiv"}`,
-			mockSrvErr:     domain.ErrSubAlreadyExists,
+			name:       "AlreadyExists",
+			body:       `{"email": "test@example.com", "frequency": "daily", "city": "Kyiv"}`,
+			mockSrvErr: domain.ErrSubAlreadyExists,
+
 			expectedStatus: http.StatusConflict,
 		},
 		{
-			name:           "internal error during subscribe",
-			body:           `{"email": "test@example.com", "frequency": "daily", "city": "Kyiv"}`,
-			mockSrvErr:     errors.New("db failure"),
+			name:       "ErrInternal",
+			body:       `{"email": "test@example.com", "frequency": "daily", "city": "Kyiv"}`,
+			mockSrvErr: errors.New("db failure"),
+
 			expectedStatus: http.StatusInternalServerError,
 		},
 		{
-			name:           "successful subscription",
-			body:           `{"email": "test@example.com", "frequency": "hourly", "city": "Lviv"}`,
-			mockSrvErr:     nil,
+			name:       "Success",
+			body:       `{"email": "test@example.com", "frequency": "hourly", "city": "Lviv"}`,
+			mockSrvErr: nil,
+
 			expectedStatus: http.StatusOK,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Arrange
 			mockService := new(mockSubscriber)
-
 			if tt.expectedStatus != http.StatusBadRequest {
 				input := subsrv.SubscriptionInput{
 					Email:     extractField(tt.body, "email"),
@@ -90,13 +95,16 @@ func TestSubscribePOSTHandler(t *testing.T) {
 				}
 				mockService.On("Subscribe", input).Return(tt.mockSrvErr)
 			}
-
 			route := gin.New()
 			route.POST("/subscribe", subh.NewSubscribePOSTHandler(mockService))
+
+			// Act
 			req := httptest.NewRequest(http.MethodPost, "/subscribe", bytes.NewBuffer([]byte(tt.body)))
 			req.Header.Set("Content-Type", "application/json")
 			resp := httptest.NewRecorder()
 			route.ServeHTTP(resp, req)
+
+			// Assert
 			assert.Equal(t, tt.expectedStatus, resp.Code)
 			mockService.AssertExpectations(t)
 		})

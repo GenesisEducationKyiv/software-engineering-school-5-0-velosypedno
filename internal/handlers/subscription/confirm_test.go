@@ -32,39 +32,45 @@ func TestConfirmGETHandler(t *testing.T) {
 	invalidUUIDStr := "not-a-uuid"
 
 	tests := []struct {
-		name           string
-		token          string
-		mockErr        error
+		name    string
+		token   string
+		mockErr error
+
 		expectedStatus int
 	}{
 		{
-			name:           "invalid UUID token",
-			token:          invalidUUIDStr,
-			mockErr:        nil,
+			name:    "InvalidToken",
+			token:   invalidUUIDStr,
+			mockErr: nil,
+
 			expectedStatus: http.StatusBadRequest,
 		},
 		{
-			name:           "token not found",
-			token:          validUUID.String(),
-			mockErr:        domain.ErrSubNotFound,
+			name:    "TokenNotFound",
+			token:   validUUID.String(),
+			mockErr: domain.ErrSubNotFound,
+
 			expectedStatus: http.StatusNotFound,
 		},
 		{
-			name:           "internal error on activation",
-			token:          validUUID.String(),
-			mockErr:        errors.New("some internal error"),
+			name:    "ErrInternal",
+			token:   validUUID.String(),
+			mockErr: errors.New("some internal error"),
+
 			expectedStatus: http.StatusInternalServerError,
 		},
 		{
-			name:           "successful activation",
-			token:          validUUID.String(),
-			mockErr:        nil,
+			name:    "Success",
+			token:   validUUID.String(),
+			mockErr: nil,
+
 			expectedStatus: http.StatusOK,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			// Arrange
 			mockService := new(mockSubscriptionActivator)
 			if tt.mockErr != nil || tt.expectedStatus != http.StatusBadRequest {
 				tokenUUID, err := uuid.Parse(tt.token)
@@ -72,12 +78,15 @@ func TestConfirmGETHandler(t *testing.T) {
 					mockService.On("Activate", tokenUUID).Return(tt.mockErr)
 				}
 			}
-
 			route := gin.New()
 			route.GET("/confirm/:token", subh.NewConfirmGETHandler(mockService))
+
+			// Act
 			req := httptest.NewRequest(http.MethodGet, "/confirm/"+tt.token, nil)
 			resp := httptest.NewRecorder()
 			route.ServeHTTP(resp, req)
+
+			// Assert
 			assert.Equal(t, tt.expectedStatus, resp.Code)
 			mockService.AssertExpectations(t)
 		})

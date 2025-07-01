@@ -62,7 +62,7 @@ tasks:
     desc: Run integration tests
     dotenv: [".env.sample"]
     env:
-      PORT: 8081
+      API_PORT: 8081
       DB_PORT: 5433
       DB_HOST: localhost
       SMTP_HOST: localhost
@@ -72,9 +72,10 @@ tasks:
     cmds:
       - task: copy:env:optional
       - docker compose -f docker-compose.test.yml up -d
+      - defer: docker compose -f docker-compose.test.yml down
       - migrate -database "${DB_DRIVER}://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable" -path db/migrations up
       - go test ./... -v -tags=integration
-      - docker compose -f docker-compose.test.yml down
+
 
 
   migrate:up:

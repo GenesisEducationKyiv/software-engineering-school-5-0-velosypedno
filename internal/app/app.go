@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/robfig/cron/v3"
@@ -14,12 +15,15 @@ import (
 
 const readTimeout = 15 * time.Second
 const shutdownTimeout = 20 * time.Second
+const logFilepath = "log.log"
+const logPerm os.FileMode = 0644
 
 type App struct {
-	cfg    *config.Config
-	db     *sql.DB
-	cron   *cron.Cron
-	apiSrv *http.Server
+	cfg         *config.Config
+	db          *sql.DB
+	cron        *cron.Cron
+	apiSrv      *http.Server
+	reposLogger *log.Logger
 }
 
 func New(cfg *config.Config) *App {
@@ -31,8 +35,14 @@ func New(cfg *config.Config) *App {
 func (a *App) Run(ctx context.Context) error {
 	var err error
 
+	f, err := os.OpenFile(logFilepath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, logPerm)
+	if err != nil {
+		return err
+	}
+	a.reposLogger = log.New(f, "", log.LstdFlags)
+
 	// db
-	a.db, err = sql.Open(a.cfg.DbDriver, a.cfg.DSN())
+	a.db, err = sql.Open(a.cfg.DB.Driver, a.cfg.DB.DSN())
 	if err != nil {
 		return err
 	}
@@ -49,7 +59,7 @@ func (a *App) Run(ctx context.Context) error {
 	// api
 	router := a.setupRouter()
 	a.apiSrv = &http.Server{
-		Addr:        ":" + a.cfg.Port,
+		Addr:        ":" + a.cfg.Srv.Port,
 		Handler:     router,
 		ReadTimeout: readTimeout,
 	}
@@ -58,7 +68,7 @@ func (a *App) Run(ctx context.Context) error {
 			log.Printf("api server: %v", err)
 		}
 	}()
-	log.Printf("APIServer started on port %s", a.cfg.Port)
+	log.Printf("APIServer started on port %s", a.cfg.Srv.Port)
 
 	// wait on shutdown signal
 	<-ctx.Done()
