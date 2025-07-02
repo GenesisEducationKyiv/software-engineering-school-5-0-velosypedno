@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/redis/go-redis/v9"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/velosypedno/genesis-weather-api/internal/cache"
 	"github.com/velosypedno/genesis-weather-api/internal/config"
@@ -15,11 +16,15 @@ import (
 	"github.com/velosypedno/genesis-weather-api/internal/repos/weather/decorator"
 )
 
-type weathMetrics struct{}
+type weathMetrics struct {
+	CacheHitCalled           bool
+	CacheMissCalled          bool
+	CacheAccessLatencyCalled bool
+}
 
-func (m *weathMetrics) CacheHit()                           {}
-func (m *weathMetrics) CacheMiss()                          {}
-func (m *weathMetrics) CacheAccessLatency(duration float64) {}
+func (m *weathMetrics) CacheHit()                           { m.CacheHitCalled = true }
+func (m *weathMetrics) CacheMiss()                          { m.CacheMissCalled = true }
+func (m *weathMetrics) CacheAccessLatency(duration float64) { m.CacheAccessLatencyCalled = true }
 
 type weatherRepo struct {
 	called  bool
@@ -43,6 +48,7 @@ type mocks struct {
 	repo      *weatherRepo
 	weather   domain.Weather
 	cacheBack *cache.RedisBackend[domain.Weather]
+	metrics   *weathMetrics
 }
 
 func TestCacheWeatherDecorator(main *testing.T) {
@@ -62,60 +68,67 @@ func TestCacheWeatherDecorator(main *testing.T) {
 		err = redisClient.FlushDB(context.Background()).Err()
 		require.NoError(main, err)
 		repo.Clear()
-		return &mocks{repo: repo, weather: mockWeather, cacheBack: cacheBackend}
+		return &mocks{repo: repo, weather: mockWeather, cacheBack: cacheBackend, metrics: &weathMetrics{}}
 	}
 
-	main.Run("CacheMiss", func(main *testing.T) {
+	main.Run("CacheMiss", func(t *testing.T) {
 		// Arrange
 		mocks := setup()
 		ttl := time.Duration(0)
-		require.False(main, mocks.repo.called)
-		decoratedRepo := decorator.NewCacheDecorator(mocks.repo, ttl, mocks.cacheBack, &weathMetrics{})
+		require.False(t, mocks.repo.called)
+		decoratedRepo := decorator.NewCacheDecorator(mocks.repo, ttl, mocks.cacheBack, mocks.metrics)
 		city := "Kyiv"
 
 		// Acr
 		weather, err := decoratedRepo.GetCurrent(context.Background(), city)
 
 		// Assert
-		require.NoError(main, err)
-		require.True(main, repo.called)
-		require.Equal(main, mocks.weather, weather)
+		assert.True(t, mocks.metrics.CacheMissCalled, "Cache miss should be called")
+		assert.True(t, mocks.metrics.CacheAccessLatencyCalled, "Cache access latency should be called")
+		require.NoError(t, err, "Failed to get weather: %v", err)
+		require.True(t, repo.called, "Repo GetCurrent method should be called")
+		assert.Equal(t, mocks.weather, weather, "Expected weather %v, got %v", mocks.weather, weather)
 	})
 
-	main.Run("CacheHit", func(main *testing.T) {
+	main.Run("CacheHit", func(t *testing.T) {
 		// Arrange
 		mocks := setup()
 		ttl := time.Duration(0)
-		require.False(main, mocks.repo.called)
+		require.False(t, mocks.repo.called)
 		city := "Kyiv"
 		mocks.cacheBack.SetStruct(context.Background(), city, mocks.weather, ttl)
-		decoratedRepo := decorator.NewCacheDecorator(mocks.repo, ttl, mocks.cacheBack, &weathMetrics{})
+		decoratedRepo := decorator.NewCacheDecorator(mocks.repo, ttl, mocks.cacheBack, mocks.metrics)
 
 		// Act
 		weather, err := decoratedRepo.GetCurrent(context.Background(), "Kyiv")
 
 		// Assert
-		require.NoError(main, err)
-		require.False(main, repo.called)
-		require.Equal(main, mockWeather, weather)
+		assert.False(t, mocks.metrics.CacheMissCalled, "Cache miss should not be called")
+		assert.True(t, mocks.metrics.CacheHitCalled, "Cache hit should be called")
+		assert.True(t, mocks.metrics.CacheAccessLatencyCalled, "Cache access latency should be called")
+		require.NoError(t, err, "Failed to get weather: %v", err)
+		require.True(t, repo.called, "Repo GetCurrent method should be called")
+		assert.Equal(t, mocks.weather, weather, "Expected weather %v, got %v", mocks.weather, weather)
 	})
 
-	main.Run("CacheExpired", func(main *testing.T) {
+	main.Run("CacheExpired", func(t *testing.T) {
 		// Arrange
 		mocks := setup()
 		ttl := 1 * time.Millisecond
-		require.False(main, mocks.repo.called)
+		require.False(t, mocks.repo.called)
 		city := "Kyiv"
 		mocks.cacheBack.SetStruct(context.Background(), city, mocks.weather, ttl)
-		decoratedRepo := decorator.NewCacheDecorator(mocks.repo, ttl, mocks.cacheBack, &weathMetrics{})
+		decoratedRepo := decorator.NewCacheDecorator(mocks.repo, ttl, mocks.cacheBack, mocks.metrics)
 
 		// Act
 		<-time.After(ttl * 2)
 		weather, err := decoratedRepo.GetCurrent(context.Background(), "Kyiv")
 
 		// Assert
-		require.NoError(main, err)
-		require.True(main, repo.called)
-		require.Equal(main, mockWeather, weather)
+		assert.True(t, mocks.metrics.CacheMissCalled, "Cache miss should be called")
+		assert.True(t, mocks.metrics.CacheAccessLatencyCalled, "Cache access latency should be called")
+		require.NoError(t, err, "Failed to get weather: %v", err)
+		require.True(t, repo.called, "Repo GetCurrent method should be called")
+		require.Equal(t, mockWeather, weather, "Expected weather %v, got %v", mockWeather, weather)
 	})
 }
