@@ -82,6 +82,19 @@ services:
         condition: service_healthy
     entrypoint: ["/app/bin/api"]
     restart: unless-stopped
+
   
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+    restart: unless-stopped
+
 volumes:
   postgres-data:
+  prometheus-data:
