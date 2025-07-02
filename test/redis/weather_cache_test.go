@@ -107,7 +107,7 @@ func TestCacheWeatherDecorator(main *testing.T) {
 		assert.True(t, mocks.metrics.CacheHitCalled, "Cache hit should be called")
 		assert.True(t, mocks.metrics.CacheAccessLatencyCalled, "Cache access latency should be called")
 		require.NoError(t, err, "Failed to get weather: %v", err)
-		require.True(t, repo.called, "Repo GetCurrent method should be called")
+		require.False(t, repo.called, "Repo GetCurrent method should not be called")
 		assert.Equal(t, mocks.weather, weather, "Expected weather %v, got %v", mocks.weather, weather)
 	})
 
