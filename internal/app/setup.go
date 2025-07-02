@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/robfig/cron/v3"
 	"github.com/velosypedno/genesis-weather-api/internal/cache"
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
@@ -38,7 +39,7 @@ const (
 	weatherCBRecover = 5
 )
 
-func (a *App) setupWeatherRepoChain() *weathdecorator.CacheDecorator {
+func (a *App) setupWeatherRepo() *weathdecorator.CacheDecorator {
 	freeWeathR := weathprovider.NewFreeWeatherAPI(a.cfg.FreeWeather.Key,
 		a.cfg.FreeWeather.URL, &http.Client{})
 	tomorrowWeathR := weathprovider.NewTomorrowAPI(a.cfg.TomorrowWeather.Key,
@@ -57,10 +58,10 @@ func (a *App) setupWeatherRepoChain() *weathdecorator.CacheDecorator {
 	breakerVcWeathR := weathdecorator.NewBreakerDecorator(logVcWeathR,
 		cb.NewCircuitBreaker(weatherCBTimeout, weatherCBLimit, weatherCBRecover))
 
-	weatherRepoChain := weathchain.NewFirstFromChain(breakerFreeWeathR, breakerTomorrowR, breakerVcWeathR)
+	weathChain := weathchain.NewFirstFromChain(breakerFreeWeathR, breakerTomorrowR, breakerVcWeathR)
 
 	redisBackend := cache.NewRedisBackend[domain.Weather](a.redisClient)
-	cachedRepoChain := weathdecorator.NewCacheDecorator(weatherRepoChain, cacheTTL, redisBackend)
+	cachedRepoChain := weathdecorator.NewCacheDecorator(weathChain, cacheTTL, redisBackend, a.metrics.weather)
 	return cachedRepoChain
 }
 
@@ -70,8 +71,8 @@ func (a *App) setupRouter() *gin.Engine {
 	smtpEmailBackend := email.NewSMTPBackend(a.cfg.SMTP.Host, a.cfg.SMTP.Port, a.cfg.SMTP.User,
 		a.cfg.SMTP.Pass, a.cfg.SMTP.EmailFrom)
 
-	weatherRepoChain := a.setupWeatherRepoChain()
-	weatherService := weathsvc.NewWeatherService(weatherRepoChain)
+	weatherRepo := a.setupWeatherRepo()
+	weatherService := weathsvc.NewWeatherService(weatherRepo)
 
 	subRepo := subr.NewDBRepo(a.db)
 	confirmTmplPath := filepath.Join(a.cfg.Srv.TemplatesDir, confirmSubTmplName)
@@ -85,13 +86,15 @@ func (a *App) setupRouter() *gin.Engine {
 		api.GET("/confirm/:token", subh.NewConfirmGETHandler(subService))
 		api.GET("/unsubscribe/:token", subh.NewUnsubscribeGETHandler(subService))
 	}
+
+	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	return router
 }
 
 func (a *App) setupCron() error {
 	a.cron = cron.New()
 	subRepo := subr.NewDBRepo(a.db)
-	weatherRepoChain := a.setupWeatherRepoChain()
+	weatherRepoChain := a.setupWeatherRepo()
 	stdoutEmailBackend := email.NewStdoutBackend()
 	weatherMailer := mailers.NewWeatherMailer(stdoutEmailBackend)
 	weatherMailerSrv := weathnotsvc.NewWeatherNotificationService(subRepo, weatherMailer, weatherRepoChain)
