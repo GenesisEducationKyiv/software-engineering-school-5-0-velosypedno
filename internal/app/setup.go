@@ -40,12 +40,21 @@ const (
 )
 
 func (a *App) setupWeatherRepo() *weathdecorator.CacheDecorator {
-	freeWeathR := weathprovider.NewFreeWeatherAPI(a.cfg.FreeWeather.Key,
-		a.cfg.FreeWeather.URL, &http.Client{})
-	tomorrowWeathR := weathprovider.NewTomorrowAPI(a.cfg.TomorrowWeather.Key,
-		a.cfg.TomorrowWeather.URL, &http.Client{})
-	vcWeathR := weathprovider.NewVisualCrossingAPI(a.cfg.VisualCrossing.Key,
-		a.cfg.VisualCrossing.URL, &http.Client{})
+	freeWeathR := weathprovider.NewFreeWeatherAPI(
+		a.cfg.FreeWeather.Key,
+		a.cfg.FreeWeather.URL,
+		&http.Client{},
+	)
+	tomorrowWeathR := weathprovider.NewTomorrowAPI(
+		a.cfg.TomorrowWeather.Key,
+		a.cfg.TomorrowWeather.URL,
+		&http.Client{},
+	)
+	vcWeathR := weathprovider.NewVisualCrossingAPI(
+		a.cfg.VisualCrossing.Key,
+		a.cfg.VisualCrossing.URL,
+		&http.Client{},
+	)
 
 	logFreeWeathR := weathdecorator.NewLogDecorator(freeWeathR, freeWeathRName, a.reposLogger)
 	logTomorrowR := weathdecorator.NewLogDecorator(tomorrowWeathR, tomorrowRName, a.reposLogger)

@@ -15,6 +15,12 @@ import (
 	"github.com/velosypedno/genesis-weather-api/internal/repos/weather/decorator"
 )
 
+type weathMetrics struct{}
+
+func (m *weathMetrics) CacheHit()                           {}
+func (m *weathMetrics) CacheMiss()                          {}
+func (m *weathMetrics) CacheAccessLatency(duration float64) {}
+
 type weatherRepo struct {
 	called  bool
 	weather domain.Weather
@@ -64,7 +70,7 @@ func TestCacheWeatherDecorator(main *testing.T) {
 		mocks := setup()
 		ttl := time.Duration(0)
 		require.False(main, mocks.repo.called)
-		decoratedRepo := decorator.NewCacheDecorator(mocks.repo, ttl, mocks.cacheBack)
+		decoratedRepo := decorator.NewCacheDecorator(mocks.repo, ttl, mocks.cacheBack, &weathMetrics{})
 		city := "Kyiv"
 
 		// Acr
@@ -83,7 +89,7 @@ func TestCacheWeatherDecorator(main *testing.T) {
 		require.False(main, mocks.repo.called)
 		city := "Kyiv"
 		mocks.cacheBack.SetStruct(context.Background(), city, mocks.weather, ttl)
-		decoratedRepo := decorator.NewCacheDecorator(mocks.repo, ttl, mocks.cacheBack)
+		decoratedRepo := decorator.NewCacheDecorator(mocks.repo, ttl, mocks.cacheBack, &weathMetrics{})
 
 		// Act
 		weather, err := decoratedRepo.GetCurrent(context.Background(), "Kyiv")
@@ -101,7 +107,7 @@ func TestCacheWeatherDecorator(main *testing.T) {
 		require.False(main, mocks.repo.called)
 		city := "Kyiv"
 		mocks.cacheBack.SetStruct(context.Background(), city, mocks.weather, ttl)
-		decoratedRepo := decorator.NewCacheDecorator(mocks.repo, ttl, mocks.cacheBack)
+		decoratedRepo := decorator.NewCacheDecorator(mocks.repo, ttl, mocks.cacheBack, &weathMetrics{})
 
 		// Act
 		<-time.After(ttl * 2)
