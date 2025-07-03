@@ -71,51 +71,10 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
-	var dbCfg DBConfig
-	if err := envconfig.Process("", &dbCfg); err != nil {
+	var сfg Config
+	if err := envconfig.Process("", &сfg); err != nil {
 		return nil, err
 	}
 
-	var smtpCfg SMTPConfig
-	if err := envconfig.Process("", &smtpCfg); err != nil {
-		return nil, err
-	}
-
-	var redisCfg RedisConfig
-	if err := envconfig.Process("", &redisCfg); err != nil {
-		return nil, err
-	}
-
-	var srvCfg SrvConfig
-	if err := envconfig.Process("", &srvCfg); err != nil {
-		return nil, err
-	}
-
-	var tomorrowWeatherCfg TomorrowWeatherConfig
-	if err := envconfig.Process("", &tomorrowWeatherCfg); err != nil {
-		return nil, err
-	}
-
-	var freeWeatherCfg FreeWeatherConfig
-	if err := envconfig.Process("", &freeWeatherCfg); err != nil {
-		return nil, err
-	}
-
-	var visualCrossingCfg VisualCrossingConfig
-	if err := envconfig.Process("", &visualCrossingCfg); err != nil {
-		return nil, err
-	}
-
-	cfg := Config{
-		DB:    dbCfg,
-		SMTP:  smtpCfg,
-		Redis: redisCfg,
-		Srv:   srvCfg,
-
-		TomorrowWeather: tomorrowWeatherCfg,
-		FreeWeather:     freeWeatherCfg,
-		VisualCrossing:  visualCrossingCfg,
-	}
-
-	return &cfg, nil
+	return &сfg, nil
 }
