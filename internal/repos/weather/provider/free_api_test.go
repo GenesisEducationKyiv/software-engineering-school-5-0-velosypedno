@@ -1,6 +1,6 @@
 //go:build unit
 
-package repos_test
+package provider_test
 
 import (
 	"bytes"
@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
-	weathr "github.com/velosypedno/genesis-weather-api/internal/repos/weather"
+	weathprovider "github.com/velosypedno/genesis-weather-api/internal/repos/weather/provider"
 )
 
 type mockHTTPClient struct {
@@ -42,7 +42,7 @@ func TestFreeApiGetCurrentWeather_Success(t *testing.T) {
 			}, nil
 		},
 	}
-	repo := weathr.NewFreeWeatherAPI("dummy-api-key", "http://dummy-url.com", client)
+	repo := weathprovider.NewFreeWeatherAPI("dummy-api-key", "http://dummy-url.com", client)
 
 	// Act
 	weather, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -70,7 +70,7 @@ func TestFreeApiGetCurrentWeather_CityNotFound(t *testing.T) {
 			}, nil
 		},
 	}
-	repo := weathr.NewFreeWeatherAPI("dummy-api-key", "http://dummy-url.com", client)
+	repo := weathprovider.NewFreeWeatherAPI("dummy-api-key", "http://dummy-url.com", client)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "InvalidCity")
@@ -89,7 +89,7 @@ func TestFreeApiGetCurrentWeather_APIKeyInvalid(t *testing.T) {
 			}, nil
 		},
 	}
-	repo := weathr.NewFreeWeatherAPI("invalid-api-key", "http://dummy-url.com", client)
+	repo := weathprovider.NewFreeWeatherAPI("invalid-api-key", "http://dummy-url.com", client)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -106,7 +106,7 @@ func TestFreeApiGetCurrentWeather_HTTPError(t *testing.T) {
 			return nil, assert.AnError
 		},
 	}
-	repo := weathr.NewFreeWeatherAPI("dummy-api-key", "http://dummy-url.com", client)
+	repo := weathprovider.NewFreeWeatherAPI("dummy-api-key", "http://dummy-url.com", client)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -126,7 +126,7 @@ func TestFreeApiGetCurrentWeather_BadJSON(t *testing.T) {
 			}, nil
 		},
 	}
-	repo := weathr.NewFreeWeatherAPI("dummy-api-key", "http://dummy-url.com", client)
+	repo := weathprovider.NewFreeWeatherAPI("dummy-api-key", "http://dummy-url.com", client)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
