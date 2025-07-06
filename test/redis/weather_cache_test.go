@@ -47,7 +47,7 @@ func (r *weatherRepo) GetCurrent(ctx context.Context, city string) (domain.Weath
 type mocks struct {
 	repo      *weatherRepo
 	weather   domain.Weather
-	cacheBack *cache.RedisBackend[domain.Weather]
+	cacheBack *cache.RedisCacheClient[domain.Weather]
 	metrics   *weathMetrics
 }
 
@@ -58,7 +58,7 @@ func TestCacheWeatherDecorator(main *testing.T) {
 		Addr:     cfg.Redis.Addr(),
 		Password: cfg.Redis.Pass,
 	})
-	cacheBackend := cache.NewRedisBackend[domain.Weather](redisClient)
+	cacheBackend := cache.NewRedisCacheClient[domain.Weather](redisClient, time.Duration(0))
 	temp := 20.0
 	humidity := 50.0
 	mockWeather := domain.Weather{Temperature: temp, Humidity: humidity, Description: "Sunny"}
@@ -74,9 +74,8 @@ func TestCacheWeatherDecorator(main *testing.T) {
 	main.Run("CacheMiss", func(t *testing.T) {
 		// Arrange
 		mocks := setup()
-		ttl := time.Duration(0)
 		require.False(t, mocks.repo.called)
-		decoratedRepo := decorator.NewCacheDecorator(mocks.repo, ttl, mocks.cacheBack, mocks.metrics)
+		decoratedRepo := decorator.NewCacheDecorator(mocks.repo, mocks.cacheBack, mocks.metrics)
 		city := "Kyiv"
 
 		// Acr
@@ -93,11 +92,10 @@ func TestCacheWeatherDecorator(main *testing.T) {
 	main.Run("CacheHit", func(t *testing.T) {
 		// Arrange
 		mocks := setup()
-		ttl := time.Duration(0)
 		require.False(t, mocks.repo.called)
 		city := "Kyiv"
-		mocks.cacheBack.SetStruct(context.Background(), city, mocks.weather, ttl)
-		decoratedRepo := decorator.NewCacheDecorator(mocks.repo, ttl, mocks.cacheBack, mocks.metrics)
+		mocks.cacheBack.Set(context.Background(), city, mocks.weather)
+		decoratedRepo := decorator.NewCacheDecorator(mocks.repo, mocks.cacheBack, mocks.metrics)
 
 		// Act
 		weather, err := decoratedRepo.GetCurrent(context.Background(), "Kyiv")
@@ -115,10 +113,11 @@ func TestCacheWeatherDecorator(main *testing.T) {
 		// Arrange
 		mocks := setup()
 		ttl := 1 * time.Millisecond
+		cacheBackend := cache.NewRedisCacheClient[domain.Weather](redisClient, ttl)
 		require.False(t, mocks.repo.called)
 		city := "Kyiv"
-		mocks.cacheBack.SetStruct(context.Background(), city, mocks.weather, ttl)
-		decoratedRepo := decorator.NewCacheDecorator(mocks.repo, ttl, mocks.cacheBack, mocks.metrics)
+		cacheBackend.Set(context.Background(), city, mocks.weather)
+		decoratedRepo := decorator.NewCacheDecorator(mocks.repo, cacheBackend, mocks.metrics)
 
 		// Act
 		<-time.After(ttl * 2)

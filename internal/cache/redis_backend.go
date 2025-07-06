@@ -8,25 +8,27 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-type RedisBackend[T any] struct {
+type RedisCacheClient[T any] struct {
 	client *redis.Client
+	ttl    time.Duration
 }
 
-func NewRedisBackend[T any](client *redis.Client) *RedisBackend[T] {
-	return &RedisBackend[T]{
+func NewRedisCacheClient[T any](client *redis.Client, ttl time.Duration) *RedisCacheClient[T] {
+	return &RedisCacheClient[T]{
 		client: client,
+		ttl:    ttl,
 	}
 }
 
-func (r *RedisBackend[T]) SetStruct(ctx context.Context, key string, value T, ttl time.Duration) error {
+func (r *RedisCacheClient[T]) Set(ctx context.Context, key string, value T) error {
 	data, err := json.Marshal(value)
 	if err != nil {
 		return err
 	}
-	return r.client.Set(ctx, key, data, ttl).Err()
+	return r.client.Set(ctx, key, data, r.ttl).Err()
 }
 
-func (r *RedisBackend[T]) GetStruct(ctx context.Context, key string, value *T) error {
+func (r *RedisCacheClient[T]) Get(ctx context.Context, key string, value *T) error {
 	data, err := r.client.Get(ctx, key).Bytes()
 	if err != nil {
 		return err

@@ -69,8 +69,8 @@ func (a *App) setupWeatherRepo() *weathdecorator.CacheDecorator {
 
 	weathChain := weathchain.NewProvidersFallbackChain(breakerFreeWeathR, breakerTomorrowR, breakerVcWeathR)
 
-	redisBackend := cache.NewRedisBackend[domain.Weather](a.redisClient)
-	cachedRepoChain := weathdecorator.NewCacheDecorator(weathChain, cacheTTL, redisBackend, a.metrics.weather)
+	redisBackend := cache.NewRedisCacheClient[domain.Weather](a.redisClient, cacheTTL)
+	cachedRepoChain := weathdecorator.NewCacheDecorator(weathChain, redisBackend, a.metrics.weather)
 	return cachedRepoChain
 }
 

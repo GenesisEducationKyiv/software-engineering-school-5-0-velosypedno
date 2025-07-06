@@ -8,9 +8,9 @@ import (
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
 )
 
-type cacheBackend interface {
-	GetStruct(ctx context.Context, key string, value *domain.Weather) error
-	SetStruct(ctx context.Context, key string, value domain.Weather, ttl time.Duration) error
+type cacheClient interface {
+	Get(ctx context.Context, key string, value *domain.Weather) error
+	Set(ctx context.Context, key string, value domain.Weather) error
 }
 
 type weathMetrics interface {
@@ -19,22 +19,20 @@ type weathMetrics interface {
 	CacheAccessLatency(duration float64)
 }
 type CacheDecorator struct {
-	Inner        weatherRepo
-	TimeToLive   time.Duration
-	CacheBack    cacheBackend
+	inner        weatherRepo
+	cacheClient  cacheClient
 	weathMetrics weathMetrics
 }
 
-func NewCacheDecorator(inner weatherRepo, ttl time.Duration,
-	cacheBack cacheBackend, weathMetrics weathMetrics) *CacheDecorator {
-	return &CacheDecorator{Inner: inner, TimeToLive: ttl, CacheBack: cacheBack, weathMetrics: weathMetrics}
+func NewCacheDecorator(inner weatherRepo, cacheBack cacheClient, weathMetrics weathMetrics) *CacheDecorator {
+	return &CacheDecorator{inner: inner, cacheClient: cacheBack, weathMetrics: weathMetrics}
 }
 
 func (d *CacheDecorator) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
 	var weather domain.Weather
 
 	now := time.Now()
-	if err := d.CacheBack.GetStruct(ctx, city, &weather); err == nil {
+	if err := d.cacheClient.Get(ctx, city, &weather); err == nil {
 		d.weathMetrics.CacheHit()
 		d.weathMetrics.CacheAccessLatency(time.Since(now).Seconds())
 		log.Println("cache hit")
@@ -46,11 +44,11 @@ func (d *CacheDecorator) GetCurrent(ctx context.Context, city string) (domain.We
 	d.weathMetrics.CacheAccessLatency(time.Since(now).Seconds())
 	log.Println("cache miss")
 
-	weather, err := d.Inner.GetCurrent(ctx, city)
+	weather, err := d.inner.GetCurrent(ctx, city)
 	if err != nil {
 		return weather, err
 	}
-	err = d.CacheBack.SetStruct(ctx, city, weather, d.TimeToLive)
+	err = d.cacheClient.Set(ctx, city, weather)
 	if err != nil {
 		log.Println("cache error:", err)
 	} else {
