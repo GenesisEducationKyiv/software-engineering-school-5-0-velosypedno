@@ -42,7 +42,8 @@ func TestFreeApiGetCurrentWeather_Success(t *testing.T) {
 			}, nil
 		},
 	}
-	repo := weathprovider.NewFreeWeatherAPI("dummy-api-key", "http://dummy-url.com", client)
+	cfg := weathprovider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
+	repo := weathprovider.NewFreeWeatherAPI(cfg, client)
 
 	// Act
 	weather, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -70,7 +71,8 @@ func TestFreeApiGetCurrentWeather_CityNotFound(t *testing.T) {
 			}, nil
 		},
 	}
-	repo := weathprovider.NewFreeWeatherAPI("dummy-api-key", "http://dummy-url.com", client)
+	cfg := weathprovider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
+	repo := weathprovider.NewFreeWeatherAPI(cfg, client)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "InvalidCity")
@@ -89,7 +91,8 @@ func TestFreeApiGetCurrentWeather_APIKeyInvalid(t *testing.T) {
 			}, nil
 		},
 	}
-	repo := weathprovider.NewFreeWeatherAPI("invalid-api-key", "http://dummy-url.com", client)
+	cfg := weathprovider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
+	repo := weathprovider.NewFreeWeatherAPI(cfg, client)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -106,7 +109,8 @@ func TestFreeApiGetCurrentWeather_HTTPError(t *testing.T) {
 			return nil, assert.AnError
 		},
 	}
-	repo := weathprovider.NewFreeWeatherAPI("dummy-api-key", "http://dummy-url.com", client)
+	cfg := weathprovider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
+	repo := weathprovider.NewFreeWeatherAPI(cfg, client)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -126,7 +130,8 @@ func TestFreeApiGetCurrentWeather_BadJSON(t *testing.T) {
 			}, nil
 		},
 	}
-	repo := weathprovider.NewFreeWeatherAPI("dummy-api-key", "http://dummy-url.com", client)
+	cfg := weathprovider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
+	repo := weathprovider.NewFreeWeatherAPI(cfg, client)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")

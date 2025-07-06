@@ -13,20 +13,22 @@ import (
 
 const noMatchingLocationFoundCode = 1006
 
+type APICfg struct {
+	APIKey string
+	APIURL string
+}
 type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
 type FreeWeatherAPI struct {
-	apiKey string
-	apiURL string
+	cfg    APICfg
 	client HTTPClient
 }
 
-func NewFreeWeatherAPI(apiKey, apiURL string, client HTTPClient) *FreeWeatherAPI {
+func NewFreeWeatherAPI(cfg APICfg, client HTTPClient) *FreeWeatherAPI {
 	return &FreeWeatherAPI{
-		apiKey: apiKey,
-		apiURL: apiURL,
+		cfg:    cfg,
 		client: client,
 	}
 }
@@ -51,7 +53,7 @@ type freeWeatherAPIErrorResponse struct {
 func (r *FreeWeatherAPI) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
 	// step 1: format request
 	q := url.QueryEscape(city)
-	url := fmt.Sprintf("%s/current.json?key=%s&q=%s", r.apiURL, r.apiKey, q)
+	url := fmt.Sprintf("%s/current.json?key=%s&q=%s", r.cfg.APIURL, r.cfg.APIKey, q)
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		log.Printf("free weather repo: failed to format request for %s, err:%v\n", city, err)

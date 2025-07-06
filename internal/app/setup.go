@@ -41,18 +41,15 @@ const (
 
 func (a *App) setupWeatherRepo() *weathdecorator.CacheDecorator {
 	freeWeathR := weathprovider.NewFreeWeatherAPI(
-		a.cfg.FreeWeather.Key,
-		a.cfg.FreeWeather.URL,
+		weathprovider.APICfg{APIKey: a.cfg.FreeWeather.Key, APIURL: a.cfg.FreeWeather.URL},
 		&http.Client{},
 	)
 	tomorrowWeathR := weathprovider.NewTomorrowAPI(
-		a.cfg.TomorrowWeather.Key,
-		a.cfg.TomorrowWeather.URL,
+		weathprovider.APICfg{APIKey: a.cfg.TomorrowWeather.Key, APIURL: a.cfg.TomorrowWeather.URL},
 		&http.Client{},
 	)
 	vcWeathR := weathprovider.NewVisualCrossingAPI(
-		a.cfg.VisualCrossing.Key,
-		a.cfg.VisualCrossing.URL,
+		weathprovider.APICfg{APIKey: a.cfg.VisualCrossing.Key, APIURL: a.cfg.VisualCrossing.URL},
 		&http.Client{},
 	)
 

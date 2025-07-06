@@ -32,7 +32,8 @@ func TestVisualCrossingGetCurrentWeather_Success(t *testing.T) {
 			}, nil
 		},
 	}
-	repo := weathprovider.NewVisualCrossingAPI("dummy-api-key", "http://dummy-url.com", client)
+	cfg := weathprovider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
+	repo := weathprovider.NewVisualCrossingAPI(cfg, client)
 
 	// Act
 	weather, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -55,7 +56,8 @@ func TestVisualCrossingGetCurrentWeather_CityNotFound(t *testing.T) {
 			}, nil
 		},
 	}
-	repo := weathprovider.NewVisualCrossingAPI("dummy-api-key", "http://dummy-url.com", client)
+	cfg := weathprovider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
+	repo := weathprovider.NewVisualCrossingAPI(cfg, client)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "InvalidCity")
@@ -74,7 +76,8 @@ func TestVisualCrossingGetCurrentWeather_APIKeyInvalid(t *testing.T) {
 			}, nil
 		},
 	}
-	repo := weathprovider.NewVisualCrossingAPI("invalid-api-key", "http://dummy-url.com", client)
+	cfg := weathprovider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
+	repo := weathprovider.NewVisualCrossingAPI(cfg, client)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -91,7 +94,8 @@ func TestVisualCrossingGetCurrentWeather_HTTPError(t *testing.T) {
 			return nil, assert.AnError
 		},
 	}
-	repo := weathprovider.NewVisualCrossingAPI("dummy-api-key", "http://dummy-url.com", client)
+	cfg := weathprovider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
+	repo := weathprovider.NewVisualCrossingAPI(cfg, client)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -111,7 +115,8 @@ func TestVisualCrossingGetCurrentWeather_BadJSON(t *testing.T) {
 			}, nil
 		},
 	}
-	repo := weathprovider.NewVisualCrossingAPI("dummy-api-key", "http://dummy-url.com", client)
+	cfg := weathprovider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
+	repo := weathprovider.NewVisualCrossingAPI(cfg, client)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
