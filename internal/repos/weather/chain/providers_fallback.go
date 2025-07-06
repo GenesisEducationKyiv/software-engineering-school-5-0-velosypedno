@@ -1,4 +1,4 @@
-package repos
+package chain
 
 import (
 	"context"
@@ -8,19 +8,19 @@ import (
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
 )
 
-type weatherRepo interface {
+type weatherProvider interface {
 	GetCurrent(ctx context.Context, city string) (domain.Weather, error)
 }
 
-type Chain struct {
-	Repos []weatherRepo
+type ProvidersFallbackChain struct {
+	Repos []weatherProvider
 }
 
-func NewChain(repos ...weatherRepo) *Chain {
-	return &Chain{Repos: repos}
+func NewProvidersFallbackChain(repos ...weatherProvider) *ProvidersFallbackChain {
+	return &ProvidersFallbackChain{Repos: repos}
 }
 
-func (c *Chain) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
+func (c *ProvidersFallbackChain) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
 	var lastError error
 	for _, repo := range c.Repos {
 		weather, err := repo.GetCurrent(ctx, city)

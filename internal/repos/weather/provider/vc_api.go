@@ -1,4 +1,4 @@
-package repos
+package provider
 
 import (
 	"context"
@@ -13,8 +13,7 @@ import (
 )
 
 type VisualCrossingAPI struct {
-	apiKey string
-	apiURL string
+	cfg    APICfg
 	client HTTPClient
 }
 
@@ -26,10 +25,9 @@ type visualCrossingAPIResponse struct {
 	} `json:"currentConditions"`
 }
 
-func NewVisualCrossingAPI(apiKey, apiURL string, client HTTPClient) *VisualCrossingAPI {
+func NewVisualCrossingAPI(cfg APICfg, client HTTPClient) *VisualCrossingAPI {
 	return &VisualCrossingAPI{
-		apiKey: apiKey,
-		apiURL: apiURL,
+		cfg:    cfg,
 		client: client,
 	}
 }
@@ -37,7 +35,7 @@ func NewVisualCrossingAPI(apiKey, apiURL string, client HTTPClient) *VisualCross
 func (r *VisualCrossingAPI) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
 	// step 1: format request
 	q := url.QueryEscape(city)
-	url := fmt.Sprintf("%s/%s/today?key=%s&include=current&unitGroup=metric", r.apiURL, q, r.apiKey)
+	url := fmt.Sprintf("%s/%s/today?key=%s&include=current&unitGroup=metric", r.cfg.APIURL, q, r.cfg.APIKey)
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		log.Printf("visual crossing repo: failed to format request for %s, err:%v\n", city, err)

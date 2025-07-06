@@ -1,4 +1,4 @@
-package repos
+package decorator
 
 import (
 	"context"
@@ -6,6 +6,10 @@ import (
 
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
 )
+
+type weatherRepo interface {
+	GetCurrent(ctx context.Context, city string) (domain.Weather, error)
+}
 
 type LogDecorator struct {
 	Inner    weatherRepo
@@ -17,12 +21,12 @@ func NewLogDecorator(inner weatherRepo, repoName string, logger *log.Logger) *Lo
 	return &LogDecorator{Inner: inner, RepoName: repoName, Logger: logger}
 }
 
-func (f *LogDecorator) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
-	weather, err := f.Inner.GetCurrent(ctx, city)
+func (d *LogDecorator) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
+	weather, err := d.Inner.GetCurrent(ctx, city)
 	if err != nil {
-		f.Logger.Printf("%s - error for %s: %v\n", f.RepoName, city, err)
+		d.Logger.Printf("%s - error for %s: %v\n", d.RepoName, city, err)
 		return domain.Weather{}, err
 	}
-	f.Logger.Printf("%s - success for %s: %v\n", f.RepoName, city, weather)
+	d.Logger.Printf("%s - success for %s: %v\n", d.RepoName, city, weather)
 	return weather, nil
 }

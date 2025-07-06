@@ -1,6 +1,6 @@
 //go:build integration
 
-package integration_test
+package api_test
 
 import (
 	"net/http"

@@ -15,12 +15,29 @@ type DBConfig struct {
 	Name   string `envconfig:"DB_NAME" required:"true"`
 }
 
+func (c DBConfig) DSN() string {
+	return fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		c.Host, c.Port, c.User, c.Pass, c.Name,
+	)
+}
+
 type SMTPConfig struct {
 	Host      string `envconfig:"SMTP_HOST" required:"true"`
 	Port      string `envconfig:"SMTP_PORT" required:"true"`
 	User      string `envconfig:"SMTP_USER" required:"true"`
 	Pass      string `envconfig:"SMTP_PASS" required:"true"`
 	EmailFrom string `envconfig:"EMAIL_FROM" required:"true"`
+}
+
+type RedisConfig struct {
+	Host string `envconfig:"REDIS_HOST" required:"true"`
+	Port string `envconfig:"REDIS_PORT" required:"true"`
+	Pass string `envconfig:"REDIS_PASSWORD" required:"true"`
+}
+
+func (c RedisConfig) Addr() string {
+	return fmt.Sprintf("%s:%s", c.Host, c.Port)
 }
 
 type TomorrowWeatherConfig struct {
@@ -43,60 +60,21 @@ type SrvConfig struct {
 }
 
 type Config struct {
-	DB              DBConfig
-	SMTP            SMTPConfig
-	Srv             SrvConfig
+	DB    DBConfig
+	SMTP  SMTPConfig
+	Srv   SrvConfig
+	Redis RedisConfig
+
 	TomorrowWeather TomorrowWeatherConfig
 	FreeWeather     FreeWeatherConfig
 	VisualCrossing  VisualCrossingConfig
 }
 
-func (c DBConfig) DSN() string {
-	return fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		c.Host, c.Port, c.User, c.Pass, c.Name,
-	)
-}
-
 func Load() (*Config, error) {
-	var dbCfg DBConfig
-	if err := envconfig.Process("", &dbCfg); err != nil {
+	var сfg Config
+	if err := envconfig.Process("", &сfg); err != nil {
 		return nil, err
 	}
 
-	var smtpCfg SMTPConfig
-	if err := envconfig.Process("", &smtpCfg); err != nil {
-		return nil, err
-	}
-
-	var srvCfg SrvConfig
-	if err := envconfig.Process("", &srvCfg); err != nil {
-		return nil, err
-	}
-
-	var tomorrowWeatherCfg TomorrowWeatherConfig
-	if err := envconfig.Process("", &tomorrowWeatherCfg); err != nil {
-		return nil, err
-	}
-
-	var freeWeatherCfg FreeWeatherConfig
-	if err := envconfig.Process("", &freeWeatherCfg); err != nil {
-		return nil, err
-	}
-
-	var visualCrossingCfg VisualCrossingConfig
-	if err := envconfig.Process("", &visualCrossingCfg); err != nil {
-		return nil, err
-	}
-
-	cfg := Config{
-		DB:              dbCfg,
-		SMTP:            smtpCfg,
-		Srv:             srvCfg,
-		TomorrowWeather: tomorrowWeatherCfg,
-		FreeWeather:     freeWeatherCfg,
-		VisualCrossing:  visualCrossingCfg,
-	}
-
-	return &cfg, nil
+	return &сfg, nil
 }

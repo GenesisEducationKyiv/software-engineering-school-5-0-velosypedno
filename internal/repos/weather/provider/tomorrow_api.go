@@ -1,4 +1,4 @@
-package repos
+package provider
 
 import (
 	"context"
@@ -14,15 +14,13 @@ import (
 const tomorrowCityNotFoundCode = 400001
 
 type TomorrowAPI struct {
-	apiKey string
-	apiURL string
+	cfg    APICfg
 	client HTTPClient
 }
 
-func NewTomorrowAPI(apiKey, apiURL string, client HTTPClient) *TomorrowAPI {
+func NewTomorrowAPI(cfg APICfg, client HTTPClient) *TomorrowAPI {
 	return &TomorrowAPI{
-		apiKey: apiKey,
-		apiURL: apiURL,
+		cfg:    cfg,
 		client: client,
 	}
 }
@@ -47,7 +45,7 @@ type tomorrowAPIErrorResponse struct {
 func (r *TomorrowAPI) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
 	// step 1: format request
 	q := url.QueryEscape(city)
-	url := fmt.Sprintf("%s/weather/realtime?location=%s&apikey=%s", r.apiURL, q, r.apiKey)
+	url := fmt.Sprintf("%s/weather/realtime?location=%s&apikey=%s", r.cfg.APIURL, q, r.cfg.APIKey)
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		log.Printf("tomorrow weather repo: failed to format request for %s, err:%v\n", city, err)

@@ -6,14 +6,18 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/robfig/cron/v3"
+	"github.com/velosypedno/genesis-weather-api/internal/cache"
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
 	"github.com/velosypedno/genesis-weather-api/internal/email"
 	subh "github.com/velosypedno/genesis-weather-api/internal/handlers/subscription"
 	weathh "github.com/velosypedno/genesis-weather-api/internal/handlers/weather"
 	"github.com/velosypedno/genesis-weather-api/internal/mailers"
 	subr "github.com/velosypedno/genesis-weather-api/internal/repos/subscription"
-	weathr "github.com/velosypedno/genesis-weather-api/internal/repos/weather"
+	weathchain "github.com/velosypedno/genesis-weather-api/internal/repos/weather/chain"
+	weathdecorator "github.com/velosypedno/genesis-weather-api/internal/repos/weather/decorator"
+	weathprovider "github.com/velosypedno/genesis-weather-api/internal/repos/weather/provider"
 	subsvc "github.com/velosypedno/genesis-weather-api/internal/services/subscription"
 	weathsvc "github.com/velosypedno/genesis-weather-api/internal/services/weather"
 	weathnotsvc "github.com/velosypedno/genesis-weather-api/internal/services/weather_notification"
@@ -21,12 +25,13 @@ import (
 )
 
 const (
-	freeWeathRName      = "weatherapi.com"
-	tomorrowWeathRName  = "tomorrow.io"
-	visualCrossingRName = "visualcrossing.com"
+	freeWeatherName    = "weatherapi.com"
+	tomorrowIOName     = "tomorrow.io"
+	visualCrossingName = "visualcrossing.com"
 
 	confirmSubTmplName    = "confirm_sub.html"
 	weatherRequestTimeout = 5 * time.Second
+	cacheTTL              = 5 * time.Minute
 
 	// CB = CircuitBreaker
 	weatherCBTimeout = 5 * time.Minute
@@ -34,27 +39,36 @@ const (
 	weatherCBRecover = 5
 )
 
-func (a *App) setupWeatherRepoChain() *weathr.Chain {
-	freeWeathR := weathr.NewFreeWeatherAPI(a.cfg.FreeWeather.Key,
-		a.cfg.FreeWeather.URL, &http.Client{})
-	tomorrowWeathR := weathr.NewTomorrowAPI(a.cfg.TomorrowWeather.Key,
-		a.cfg.TomorrowWeather.URL, &http.Client{})
-	vcWeathR := weathr.NewVisualCrossingAPI(a.cfg.VisualCrossing.Key,
-		a.cfg.VisualCrossing.URL, &http.Client{})
+func (a *App) setupWeatherRepo() *weathdecorator.CacheDecorator {
+	freeWeathR := weathprovider.NewFreeWeatherAPI(
+		weathprovider.APICfg{APIKey: a.cfg.FreeWeather.Key, APIURL: a.cfg.FreeWeather.URL},
+		&http.Client{},
+	)
+	tomorrowWeathR := weathprovider.NewTomorrowAPI(
+		weathprovider.APICfg{APIKey: a.cfg.TomorrowWeather.Key, APIURL: a.cfg.TomorrowWeather.URL},
+		&http.Client{},
+	)
+	vcWeathR := weathprovider.NewVisualCrossingAPI(
+		weathprovider.APICfg{APIKey: a.cfg.VisualCrossing.Key, APIURL: a.cfg.VisualCrossing.URL},
+		&http.Client{},
+	)
 
-	logFreeWeathR := weathr.NewLogDecorator(freeWeathR, freeWeathRName, a.reposLogger)
-	logTomorrowWeathR := weathr.NewLogDecorator(tomorrowWeathR, tomorrowWeathRName, a.reposLogger)
-	logVcWeathR := weathr.NewLogDecorator(vcWeathR, visualCrossingRName, a.reposLogger)
+	logFreeWeathR := weathdecorator.NewLogDecorator(freeWeathR, freeWeatherName, a.reposLogger)
+	logTomorrowR := weathdecorator.NewLogDecorator(tomorrowWeathR, tomorrowIOName, a.reposLogger)
+	logVcWeathR := weathdecorator.NewLogDecorator(vcWeathR, visualCrossingName, a.reposLogger)
 
-	breakerFreeWeathR := weathr.NewBreakerDecorator(logFreeWeathR,
+	breakerFreeWeathR := weathdecorator.NewBreakerDecorator(logFreeWeathR,
 		cb.NewCircuitBreaker(weatherCBTimeout, weatherCBLimit, weatherCBRecover))
-	breakerTomorrowWeathR := weathr.NewBreakerDecorator(logTomorrowWeathR,
+	breakerTomorrowR := weathdecorator.NewBreakerDecorator(logTomorrowR,
 		cb.NewCircuitBreaker(weatherCBTimeout, weatherCBLimit, weatherCBRecover))
-	breakerVcWeathR := weathr.NewBreakerDecorator(logVcWeathR,
+	breakerVcWeathR := weathdecorator.NewBreakerDecorator(logVcWeathR,
 		cb.NewCircuitBreaker(weatherCBTimeout, weatherCBLimit, weatherCBRecover))
 
-	weatherRepoChain := weathr.NewChain(breakerFreeWeathR, breakerTomorrowWeathR, breakerVcWeathR)
-	return weatherRepoChain
+	weathChain := weathchain.NewProvidersFallbackChain(breakerFreeWeathR, breakerTomorrowR, breakerVcWeathR)
+
+	redisBackend := cache.NewRedisCacheClient[domain.Weather](a.redisClient, cacheTTL)
+	cachedRepoChain := weathdecorator.NewCacheDecorator(weathChain, redisBackend, a.metrics.weather)
+	return cachedRepoChain
 }
 
 func (a *App) setupRouter() *gin.Engine {
@@ -63,8 +77,8 @@ func (a *App) setupRouter() *gin.Engine {
 	smtpEmailBackend := email.NewSMTPBackend(a.cfg.SMTP.Host, a.cfg.SMTP.Port, a.cfg.SMTP.User,
 		a.cfg.SMTP.Pass, a.cfg.SMTP.EmailFrom)
 
-	weatherRepoChain := a.setupWeatherRepoChain()
-	weatherService := weathsvc.NewWeatherService(weatherRepoChain)
+	weatherRepo := a.setupWeatherRepo()
+	weatherService := weathsvc.NewWeatherService(weatherRepo)
 
 	subRepo := subr.NewDBRepo(a.db)
 	confirmTmplPath := filepath.Join(a.cfg.Srv.TemplatesDir, confirmSubTmplName)
@@ -78,13 +92,15 @@ func (a *App) setupRouter() *gin.Engine {
 		api.GET("/confirm/:token", subh.NewConfirmGETHandler(subService))
 		api.GET("/unsubscribe/:token", subh.NewUnsubscribeGETHandler(subService))
 	}
+
+	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	return router
 }
 
 func (a *App) setupCron() error {
 	a.cron = cron.New()
 	subRepo := subr.NewDBRepo(a.db)
-	weatherRepoChain := a.setupWeatherRepoChain()
+	weatherRepoChain := a.setupWeatherRepo()
 	stdoutEmailBackend := email.NewStdoutBackend()
 	weatherMailer := mailers.NewWeatherMailer(stdoutEmailBackend)
 	weatherMailerSrv := weathnotsvc.NewWeatherNotificationService(subRepo, weatherMailer, weatherRepoChain)
