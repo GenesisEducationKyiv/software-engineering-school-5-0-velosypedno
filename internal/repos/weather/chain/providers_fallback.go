@@ -8,19 +8,19 @@ import (
 	"github.com/velosypedno/genesis-weather-api/internal/domain"
 )
 
-type weatherRepo interface {
+type weatherProvider interface {
 	GetCurrent(ctx context.Context, city string) (domain.Weather, error)
 }
 
-type FirstFromChain struct {
-	Repos []weatherRepo
+type ProvidersFallbackChain struct {
+	Repos []weatherProvider
 }
 
-func NewFirstFromChain(repos ...weatherRepo) *FirstFromChain {
-	return &FirstFromChain{Repos: repos}
+func NewProvidersFallbackChain(repos ...weatherProvider) *ProvidersFallbackChain {
+	return &ProvidersFallbackChain{Repos: repos}
 }
 
-func (c *FirstFromChain) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
+func (c *ProvidersFallbackChain) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
 	var lastError error
 	for _, repo := range c.Repos {
 		weather, err := repo.GetCurrent(ctx, city)

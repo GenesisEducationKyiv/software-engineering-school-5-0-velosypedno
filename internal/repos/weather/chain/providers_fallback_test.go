@@ -13,27 +13,27 @@ import (
 	weathchain "github.com/velosypedno/genesis-weather-api/internal/repos/weather/chain"
 )
 
-type mockRepo struct {
+type mockProvider struct {
 	resp   domain.Weather
 	err    error
 	called bool
 }
 
-func (m *mockRepo) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
+func (m *mockProvider) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
 	m.called = true
 	return m.resp, m.err
 }
 
 func TestWeatherRepoChain_FirstSuccess(t *testing.T) {
 	// Arrange
-	first := &mockRepo{
+	first := &mockProvider{
 		resp: domain.Weather{Temperature: 20, Humidity: 50, Description: "Sunny"},
 		err:  nil,
 	}
-	second := &mockRepo{
+	second := &mockProvider{
 		err: errors.New("should not be called"),
 	}
-	chain := weathchain.NewFirstFromChain(first, second)
+	chain := weathchain.NewProvidersFallbackChain(first, second)
 
 	// Act
 	weather, err := chain.GetCurrent(context.Background(), "Kyiv")
@@ -47,14 +47,14 @@ func TestWeatherRepoChain_FirstSuccess(t *testing.T) {
 
 func TestWeatherRepoChain_SecondSuccess(t *testing.T) {
 	// Arrange
-	first := &mockRepo{
+	first := &mockProvider{
 		err: errors.New("first failed"),
 	}
-	second := &mockRepo{
+	second := &mockProvider{
 		resp: domain.Weather{Temperature: 10, Humidity: 80, Description: "Rain"},
 		err:  nil,
 	}
-	chain := weathchain.NewFirstFromChain(first, second)
+	chain := weathchain.NewProvidersFallbackChain(first, second)
 
 	// Act
 	weather, err := chain.GetCurrent(context.Background(), "Lviv")
@@ -68,9 +68,9 @@ func TestWeatherRepoChain_SecondSuccess(t *testing.T) {
 
 func TestWeatherRepoChain_AllFail(t *testing.T) {
 	// Arrange
-	first := &mockRepo{err: errors.New("first fail")}
-	second := &mockRepo{err: errors.New("second fail")}
-	chain := weathchain.NewFirstFromChain(first, second)
+	first := &mockProvider{err: errors.New("first fail")}
+	second := &mockProvider{err: errors.New("second fail")}
+	chain := weathchain.NewProvidersFallbackChain(first, second)
 
 	// Act
 	weather, err := chain.GetCurrent(context.Background(), "Tsrcuny")
