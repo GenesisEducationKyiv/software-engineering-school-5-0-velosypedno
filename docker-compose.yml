@@ -31,7 +31,7 @@ x-app-env: &app-env
   VISUAL_CROSSING_API_KEY: ${VISUAL_CROSSING_API_KEY}
   VISUAL_CROSSING_API_BASE_URL: ${VISUAL_CROSSING_API_BASE_URL}
 services:
-  postgres-weather:
+  postgres:
     image: postgres:17.5
     ports:
       - "5432:5432"
@@ -48,7 +48,7 @@ services:
       retries: 4
     restart: unless-stopped
   
-  redis-weather:
+  redis:
     image: redis:alpine
     ports:
       - "6379:6379"
@@ -65,11 +65,11 @@ services:
     environment:
       <<: *db-env
     depends_on:
-      postgres-weather:
+      postgres:
         condition: service_healthy
     entrypoint: ["task", "migrate:up"]
     restart: "no"
-  api-weather:
+  api:
     build: .
     ports:
       - "8080:8080"
@@ -78,7 +78,7 @@ services:
     depends_on:
       migrator:
         condition: service_completed_successfully
-      redis-weather:
+      redis:
         condition: service_healthy
     entrypoint: ["/app/bin/api"]
     restart: unless-stopped
