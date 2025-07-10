@@ -37,6 +37,5 @@ Loop:
 
 func (a *App) shutdown(timeoutCtx context.Context) error {
 	var shutdownErr error
-
 	return shutdownErr
 }
