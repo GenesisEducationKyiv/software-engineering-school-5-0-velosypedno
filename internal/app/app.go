@@ -9,11 +9,11 @@ import (
 	"os"
 	"time"
 
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/config"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
 	"github.com/robfig/cron/v3"
-	"github.com/velosypedno/genesis-weather-api/internal/config"
-	"github.com/velosypedno/genesis-weather-api/internal/metrics"
 )
 
 const (

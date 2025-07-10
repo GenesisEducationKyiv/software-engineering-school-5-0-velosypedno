@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/velosypedno/genesis-weather-api/internal/domain"
-	"github.com/velosypedno/genesis-weather-api/pkg/cb"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/domain"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/cb"
 )
 
 type BreakerDecorator struct {

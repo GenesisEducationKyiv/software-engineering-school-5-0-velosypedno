@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package sub.v1alpha1;
 
-option go_package = "github.com/velosypedno/genesis-weather-api/proto/sub/v1alpha1;subv1alpha1";
+option go_package = "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/sub/v1alpha1;subv1alpha1";
 
 service SubscriptionService {
     rpc Subscribe(sub.v1alpha1.SubscribeRequest) returns (sub.v1alpha1.SubscribeResponse);

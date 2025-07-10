@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"github.com/velosypedno/genesis-weather-api/internal/domain"
-	services "github.com/velosypedno/genesis-weather-api/internal/services/weather"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/domain"
+	services "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/services/weather"
 )
 
 type mockWeatherRepo struct {

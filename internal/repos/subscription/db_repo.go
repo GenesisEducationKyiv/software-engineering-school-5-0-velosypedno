@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/domain"
 	"github.com/google/uuid"
 	"github.com/lib/pq"
-	"github.com/velosypedno/genesis-weather-api/internal/domain"
 )
 
 const (

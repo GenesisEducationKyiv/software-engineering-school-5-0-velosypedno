@@ -11,8 +11,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/velosypedno/genesis-weather-api/internal/domain"
-	weathprovider "github.com/velosypedno/genesis-weather-api/internal/repos/weather/provider"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/domain"
+	weathprovider "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/repos/weather/provider"
 )
 
 type mockHTTPClient struct {

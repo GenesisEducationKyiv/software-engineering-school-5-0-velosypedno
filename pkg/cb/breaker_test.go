@@ -8,7 +8,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/velosypedno/genesis-weather-api/pkg/cb"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/cb"
 )
 
 func TestCircuitBreaker(main *testing.T) {

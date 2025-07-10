@@ -12,8 +12,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/velosypedno/genesis-weather-api/internal/domain"
-	subh "github.com/velosypedno/genesis-weather-api/internal/handlers/subscription"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/domain"
+	subh "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/handlers/subscription"
 )
 
 type mockSubscriptionDeactivator struct {

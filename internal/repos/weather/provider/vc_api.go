@@ -9,7 +9,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/velosypedno/genesis-weather-api/internal/domain"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/domain"
 )
 
 type VisualCrossingAPI struct {

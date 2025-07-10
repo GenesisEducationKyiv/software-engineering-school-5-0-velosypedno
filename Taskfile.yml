@@ -25,8 +25,13 @@ tasks:
     cmds:
       - cp .env.sample .env
     silent: false
-    
+
   lint:
+    desc: Run local linter config 
+    cmds:
+      - golangci-lint run
+    
+  lint:remote:
     desc: Run local linter config 
     cmds:
       - golangci-lint run --config <(curl -sSfL https://raw.githubusercontent.com/fabl3ss/genesis-se-school-linter/refs/heads/main/.golangci.yaml)

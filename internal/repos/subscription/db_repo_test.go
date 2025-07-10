@@ -14,8 +14,8 @@ import (
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/velosypedno/genesis-weather-api/internal/domain"
-	subr "github.com/velosypedno/genesis-weather-api/internal/repos/subscription"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/domain"
+	subr "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/repos/subscription"
 )
 
 const (

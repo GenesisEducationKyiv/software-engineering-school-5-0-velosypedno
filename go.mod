@@ -1,4 +1,4 @@
-module github.com/velosypedno/genesis-weather-api
+module github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno
 
 go 1.23.5
 

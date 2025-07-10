@@ -13,8 +13,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/velosypedno/genesis-weather-api/internal/domain"
-	weathh "github.com/velosypedno/genesis-weather-api/internal/handlers/weather"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/domain"
+	weathh "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/handlers/weather"
 )
 
 type mockWeatherRepo struct {

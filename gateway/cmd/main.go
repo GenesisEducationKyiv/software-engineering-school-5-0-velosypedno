@@ -6,7 +6,7 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/velosypedno/genesis-weather-api/gateway/internal/app"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/gateway/internal/app"
 )
 
 func main() {

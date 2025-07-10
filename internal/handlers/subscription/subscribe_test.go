@@ -14,9 +14,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/velosypedno/genesis-weather-api/internal/domain"
-	subh "github.com/velosypedno/genesis-weather-api/internal/handlers/subscription"
-	subsrv "github.com/velosypedno/genesis-weather-api/internal/services/subscription"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/domain"
+	subh "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/handlers/subscription"
+	subsrv "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/services/subscription"
 )
 
 func extractField(jsonStr, field string) string {

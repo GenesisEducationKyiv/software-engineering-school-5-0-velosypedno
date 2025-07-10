@@ -5,8 +5,8 @@ import (
 	"log"
 	"net"
 
-	"github.com/velosypedno/genesis-weather-api/gateway/internal/server"
-	pb "github.com/velosypedno/genesis-weather-api/proto/sub/v1alpha1"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/gateway/internal/server"
+	pb "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/sub/v1alpha1"
 	"google.golang.org/grpc"
 )
 

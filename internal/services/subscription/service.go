@@ -3,8 +3,8 @@ package services
 import (
 	"fmt"
 
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/domain"
 	"github.com/google/uuid"
-	"github.com/velosypedno/genesis-weather-api/internal/domain"
 )
 
 type SubscriptionRepo interface {

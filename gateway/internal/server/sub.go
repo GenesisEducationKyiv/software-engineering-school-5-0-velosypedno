@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 
+	pb "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/sub/v1alpha1"
 	"github.com/google/uuid"
-	pb "github.com/velosypedno/genesis-weather-api/proto/sub/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

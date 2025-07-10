@@ -10,10 +10,10 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/velosypedno/genesis-weather-api/internal/cache"
-	"github.com/velosypedno/genesis-weather-api/internal/config"
-	"github.com/velosypedno/genesis-weather-api/internal/domain"
-	"github.com/velosypedno/genesis-weather-api/internal/repos/weather/decorator"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/cache"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/config"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/domain"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/repos/weather/decorator"
 )
 
 type weathMetrics struct {

@@ -436,7 +436,7 @@ const file_proto_sub_v1alpha1_sub_proto_rawDesc = "" +
 	"\vUnsubscribe\x12 .sub.v1alpha1.UnsubscribeRequest\x1a!.sub.v1alpha1.UnsubscribeResponse2a\n" +
 	"\x0eWeatherService\x12O\n" +
 	"\n" +
-	"GetCurrent\x12\x1f.sub.v1alpha1.GetCurrentRequest\x1a .sub.v1alpha1.GetCurrentResponseBKZIgithub.com/velosypedno/genesis-weather-api/proto/sub/v1alpha1;subv1alpha1b\x06proto3"
+	"GetCurrent\x12\x1f.sub.v1alpha1.GetCurrentRequest\x1a .sub.v1alpha1.GetCurrentResponseBlZjgithub.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/sub/v1alpha1;subv1alpha1b\x06proto3"
 
 var (
 	file_proto_sub_v1alpha1_sub_proto_rawDescOnce sync.Once

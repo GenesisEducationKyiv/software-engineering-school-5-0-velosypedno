@@ -9,8 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/velosypedno/genesis-weather-api/internal/domain"
-	weathchain "github.com/velosypedno/genesis-weather-api/internal/repos/weather/chain"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/domain"
+	weathchain "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/repos/weather/chain"
 )
 
 type mockProvider struct {

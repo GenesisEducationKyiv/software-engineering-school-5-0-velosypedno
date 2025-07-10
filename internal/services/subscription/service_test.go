@@ -8,8 +8,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
-	"github.com/velosypedno/genesis-weather-api/internal/domain"
-	subsvc "github.com/velosypedno/genesis-weather-api/internal/services/subscription"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/domain"
+	subsvc "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/services/subscription"
 )
 
 type mockSubscriptionRepo struct {

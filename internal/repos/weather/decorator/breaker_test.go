@@ -10,9 +10,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/velosypedno/genesis-weather-api/internal/domain"
-	weathdecorator "github.com/velosypedno/genesis-weather-api/internal/repos/weather/decorator"
-	"github.com/velosypedno/genesis-weather-api/pkg/cb"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/domain"
+	weathdecorator "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/repos/weather/decorator"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/cb"
 )
 
 func newTestBreaker() *cb.CircuitBreaker {

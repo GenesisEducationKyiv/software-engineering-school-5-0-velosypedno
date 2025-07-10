@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 
-	pb "github.com/velosypedno/genesis-weather-api/proto/sub/v1alpha1"
+	pb "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/sub/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
