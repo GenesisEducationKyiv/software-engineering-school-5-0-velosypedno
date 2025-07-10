@@ -1,0 +1,51 @@
+syntax = "proto3";
+
+package sub.v1alpha1;
+
+option go_package = "github.com/velosypedno/genesis-weather-api/proto/sub/v1alpha1;subv1alpha1";
+
+service SubscriptionService {
+    rpc Subscribe(sub.v1alpha1.SubscribeRequest) returns (sub.v1alpha1.SubscribeResponse);
+    rpc Confirm(sub.v1alpha1.ConfirmRequest) returns (sub.v1alpha1.ConfirmResponse);
+    rpc Unsubscribe(sub.v1alpha1.UnsubscribeRequest) returns (sub.v1alpha1.UnsubscribeResponse);
+}
+
+message SubscribeRequest {
+    string email = 1;
+    string frequency = 2;
+    string city = 3;
+}
+
+message SubscribeResponse {
+    string message = 1;
+}
+
+message ConfirmRequest {
+    string token = 1;
+}
+
+message ConfirmResponse {
+    string message = 1;
+}
+
+message UnsubscribeRequest {
+    string token = 1;
+}
+
+message UnsubscribeResponse {
+    string message = 1;
+}
+
+service WeatherService {
+    rpc GetCurrent(sub.v1alpha1.GetCurrentRequest) returns (sub.v1alpha1.GetCurrentResponse);
+}
+
+message GetCurrentRequest {
+    string city = 1;
+}
+
+message GetCurrentResponse {
+    float temperature = 1;
+    float humidity = 2;
+    string description = 3;
+}
