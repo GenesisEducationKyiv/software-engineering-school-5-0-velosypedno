@@ -1,0 +1,30 @@
+version: '3'
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - go-task --list-all
+
+  copy:env:
+    desc: Copy default env vars
+    cmds:
+      - cp .env.sample .env
+    silent: false
+
+  copy:env:optional:
+     desc: Ensure .env exists
+     cmds:
+      - |
+        if [ ! -f .env ]; then
+          echo ".env not found, copying from .env.sample"
+          cp .env.sample .env
+        else
+          echo ".env already exists"
+        fi
+
+  run:debug:
+    desc: Run API in debug mode
+    dotenv: [".env"]
+    cmds:
+      - go run cmd/main.go
