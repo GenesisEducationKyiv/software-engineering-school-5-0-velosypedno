@@ -1,4 +1,4 @@
-package grpc
+package handlers
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *SubGrpcServer) Confirm(_ context.Context, req *pb.ConfirmRequest) (
+func (s *SubGRPCServer) Confirm(_ context.Context, req *pb.ConfirmRequest) (
 	*pb.ConfirmResponse, error,
 ) {
 	parsedToken, err := uuid.Parse(req.Token)

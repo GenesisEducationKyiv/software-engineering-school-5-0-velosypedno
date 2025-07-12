@@ -1,4 +1,4 @@
-package grpc
+package handlers
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *SubGrpcServer) Unsubscribe(_ context.Context, req *pb.UnsubscribeRequest) (
+func (s *SubGRPCServer) Unsubscribe(_ context.Context, req *pb.UnsubscribeRequest) (
 	*pb.UnsubscribeResponse, error,
 ) {
 	parsedToken, err := uuid.Parse(req.Token)

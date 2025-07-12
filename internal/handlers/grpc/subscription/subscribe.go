@@ -1,4 +1,4 @@
-package grpc
+package handlers
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *SubGrpcServer) Subscribe(_ context.Context, req *pb.SubscribeRequest) (
+func (s *SubGRPCServer) Subscribe(_ context.Context, req *pb.SubscribeRequest) (
 	*pb.SubscribeResponse, error,
 ) {
 	err := validateSubscribeRequest(req)

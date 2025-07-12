@@ -1,6 +1,8 @@
 package app
 
 import (
+	"fmt"
+	"net"
 	"net/http"
 	"path/filepath"
 	"time"
@@ -8,8 +10,10 @@ import (
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/cache"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/domain"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/email"
-	subh "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/handlers/http/subscription"
-	weathh "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/handlers/http/weather"
+	subgrpc "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/handlers/grpc/subscription"
+	weathgrpc "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/handlers/grpc/weather"
+	subhttp "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/handlers/http/subscription"
+	weathhttp "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/handlers/http/weather"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/mailers"
 	subr "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/repos/subscription"
 	weathchain "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/repos/weather/chain"
@@ -19,9 +23,11 @@ import (
 	weathsvc "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/services/weather"
 	weathnotsvc "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/services/weather_notification"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/cb"
+	pb "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/sub/v1alpha1"
 	"github.com/gin-gonic/gin"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/robfig/cron/v3"
+	"google.golang.org/grpc"
 )
 
 const (
@@ -87,10 +93,10 @@ func (a *App) setupRouter() *gin.Engine {
 
 	api := router.Group("/api")
 	{
-		api.GET("/weather", weathh.NewWeatherGETHandler(weatherService, weatherRequestTimeout))
-		api.POST("/subscribe", subh.NewSubscribePOSTHandler(subService))
-		api.GET("/confirm/:token", subh.NewConfirmGETHandler(subService))
-		api.GET("/unsubscribe/:token", subh.NewUnsubscribeGETHandler(subService))
+		api.GET("/weather", weathhttp.NewWeatherGETHandler(weatherService, weatherRequestTimeout))
+		api.POST("/subscribe", subhttp.NewSubscribePOSTHandler(subService))
+		api.GET("/confirm/:token", subhttp.NewConfirmGETHandler(subService))
+		api.GET("/unsubscribe/:token", subhttp.NewUnsubscribeGETHandler(subService))
 	}
 
 	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
@@ -118,4 +124,30 @@ func (a *App) setupCron() error {
 		return err
 	}
 	return nil
+}
+
+func (a *App) setupGRPCListener() (net.Listener, error) {
+	const port = 50100
+	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
+	if err != nil {
+		return nil, err
+	}
+	return lis, nil
+}
+
+func (a *App) setupGRPCServer() *grpc.Server {
+	weatherRepo := a.setupWeatherRepo()
+	weatherService := weathsvc.NewWeatherService(weatherRepo)
+
+	smtpEmailBackend := email.NewSMTPBackend(a.cfg.SMTP.Host, a.cfg.SMTP.Port, a.cfg.SMTP.User,
+		a.cfg.SMTP.Pass, a.cfg.SMTP.EmailFrom)
+	subRepo := subr.NewDBRepo(a.db)
+	confirmTmplPath := filepath.Join(a.cfg.Srv.TemplatesDir, confirmSubTmplName)
+	subMailer := mailers.NewSubscriptionMailer(smtpEmailBackend, confirmTmplPath)
+	subService := subsvc.NewSubscriptionService(subRepo, subMailer)
+
+	grpcServer := grpc.NewServer()
+	pb.RegisterSubscriptionServiceServer(grpcServer, subgrpc.NewSubGRPCServer(subService))
+	pb.RegisterWeatherServiceServer(grpcServer, weathgrpc.NewWeatherGRPCServer(weatherService, weatherRequestTimeout))
+	return grpcServer
 }

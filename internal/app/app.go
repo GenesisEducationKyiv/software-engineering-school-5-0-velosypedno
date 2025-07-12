@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/config"
+
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
@@ -83,7 +84,7 @@ func (a *App) Run(ctx context.Context) error {
 	a.cron.Start()
 	log.Println("Cron tasks are scheduled")
 
-	// api
+	// http api
 	router := a.setupRouter()
 	a.apiSrv = &http.Server{
 		Addr:        ":" + a.cfg.Srv.Port,
@@ -92,10 +93,23 @@ func (a *App) Run(ctx context.Context) error {
 	}
 	go func() {
 		if err := a.apiSrv.ListenAndServe(); err != nil {
-			log.Printf("api server: %v", err)
+			log.Printf("http api: %v", err)
 		}
 	}()
 	log.Printf("APIServer started on port %s", a.cfg.Srv.Port)
+
+	// grpc api
+	lis, err := a.setupGRPCListener()
+	if err != nil {
+		return err
+	}
+	grpcServer := a.setupGRPCServer()
+	go func() {
+		err = grpcServer.Serve(lis)
+		if err != nil {
+			log.Printf("grpc api: %v", err)
+		}
+	}()
 
 	// wait on shutdown signal
 	<-ctx.Done()
@@ -110,7 +124,7 @@ func (a *App) Run(ctx context.Context) error {
 func (a *App) shutdown(timeoutCtx context.Context) error {
 	var shutdownErr error
 
-	// api
+	// http api
 	if a.apiSrv != nil {
 		if err := a.apiSrv.Shutdown(timeoutCtx); err != nil {
 			wrapped := fmt.Errorf("shutdown api server: %w", err)
