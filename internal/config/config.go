@@ -59,11 +59,17 @@ type SrvConfig struct {
 	TemplatesDir string `envconfig:"TEMPLATES_DIR" required:"true"`
 }
 
+type GRPCConfig struct {
+	Port string `envconfig:"GRPC_PORT" required:"true"`
+	Host string `envconfig:"GRPC_HOST" required:"true"`
+}
+
 type Config struct {
-	DB    DBConfig
-	SMTP  SMTPConfig
-	Srv   SrvConfig
-	Redis RedisConfig
+	DB      DBConfig
+	SMTP    SMTPConfig
+	Srv     SrvConfig
+	GRPCSrv GRPCConfig
+	Redis   RedisConfig
 
 	TomorrowWeather TomorrowWeatherConfig
 	FreeWeather     FreeWeatherConfig

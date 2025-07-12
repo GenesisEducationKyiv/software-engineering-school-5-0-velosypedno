@@ -2,45 +2,32 @@ package app
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/config"
+	"google.golang.org/grpc"
 
-	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/metrics"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/redis/go-redis/v9"
 	"github.com/robfig/cron/v3"
 )
 
 const (
 	readTimeout     = 15 * time.Second
 	shutdownTimeout = 20 * time.Second
-	logFilepath     = "log.log"
-
-	logPerm os.FileMode = 0644
 )
-
-var (
-	appMetricsRegister = prometheus.DefaultRegisterer
-)
-
-type appMetrics struct {
-	weather *metrics.WeatherMetrics
-}
 
 type App struct {
-	cfg         *config.Config
-	db          *sql.DB
-	redisClient *redis.Client
-	cron        *cron.Cron
-	apiSrv      *http.Server
-	reposLogger *log.Logger
-	metrics     appMetrics
+	cfg *config.Config
+
+	cron    *cron.Cron
+	httpAPI *http.Server
+	grpcAPI *grpc.Server
+
+	infra    *InfrastructureContainer
+	business *BusinessContainer
 }
 
 func New(cfg *config.Config) *App {
@@ -52,60 +39,44 @@ func New(cfg *config.Config) *App {
 func (a *App) Run(ctx context.Context) error {
 	var err error
 
-	// logger
-	f, err := os.OpenFile(logFilepath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, logPerm)
+	a.infra, err = NewInfrastructureContainer(*a.cfg)
 	if err != nil {
 		return err
 	}
-	a.reposLogger = log.New(f, "", log.LstdFlags)
-
-	// metrics
-	a.metrics.weather = metrics.NewWeatherMetrics(appMetricsRegister)
-
-	// db
-	a.db, err = sql.Open(a.cfg.DB.Driver, a.cfg.DB.DSN())
+	a.business, err = NewBusinessContainer(a.infra)
 	if err != nil {
 		return err
 	}
-	log.Println("DB connected")
-
-	// redis
-	a.redisClient = redis.NewClient(&redis.Options{
-		Addr:     a.cfg.Redis.Addr(),
-		Password: a.cfg.Redis.Pass,
-	})
-	log.Println("Redis connected")
+	presentation, err := NewPresentationContainer(a.business)
+	if err != nil {
+		return err
+	}
 
 	// cron
-	err = a.setupCron()
-	if err != nil {
-		return err
-	}
+	a.cron = presentation.Cron
 	a.cron.Start()
-	log.Println("Cron tasks are scheduled")
 
 	// http api
-	router := a.setupRouter()
-	a.apiSrv = &http.Server{
+	a.httpAPI = &http.Server{
 		Addr:        ":" + a.cfg.Srv.Port,
-		Handler:     router,
+		Handler:     presentation.HTTPHandler,
 		ReadTimeout: readTimeout,
 	}
 	go func() {
-		if err := a.apiSrv.ListenAndServe(); err != nil {
+		if err := a.httpAPI.ListenAndServe(); err != nil {
 			log.Printf("http api: %v", err)
 		}
 	}()
 	log.Printf("APIServer started on port %s", a.cfg.Srv.Port)
 
 	// grpc api
-	lis, err := a.setupGRPCListener()
+	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%s", a.cfg.GRPCSrv.Host, a.cfg.GRPCSrv.Port))
 	if err != nil {
 		return err
 	}
-	grpcServer := a.setupGRPCServer()
+	a.grpcAPI = presentation.GRPCSrv
 	go func() {
-		err = grpcServer.Serve(lis)
+		err = presentation.GRPCSrv.Serve(lis)
 		if err != nil {
 			log.Printf("grpc api: %v", err)
 		}
@@ -125,13 +96,28 @@ func (a *App) shutdown(timeoutCtx context.Context) error {
 	var shutdownErr error
 
 	// http api
-	if a.apiSrv != nil {
-		if err := a.apiSrv.Shutdown(timeoutCtx); err != nil {
+	if a.httpAPI != nil {
+		if err := a.httpAPI.Shutdown(timeoutCtx); err != nil {
 			wrapped := fmt.Errorf("shutdown api server: %w", err)
 			log.Println(wrapped)
 			shutdownErr = wrapped
 		} else {
 			log.Println("APIServer Shutdown successfully")
+		}
+	}
+
+	// grpc api
+	if a.grpcAPI != nil {
+		done := make(chan struct{})
+		go func() {
+			a.grpcAPI.GracefulStop()
+			close(done)
+		}()
+		select {
+		case <-timeoutCtx.Done():
+			log.Printf("shutdown grpc timeout: %v", timeoutCtx.Err())
+		case <-done:
+			log.Println("gRPC server stopped")
 		}
 	}
 
@@ -151,30 +137,16 @@ func (a *App) shutdown(timeoutCtx context.Context) error {
 		}
 	}
 
-	// redis
-	if a.redisClient != nil {
-		if err := a.redisClient.Close(); err != nil {
-			wrapped := fmt.Errorf("shutdown redis: %w", err)
+	// infrastructure
+	if a.infra != nil {
+		if err := a.infra.Shutdown(timeoutCtx); err != nil {
+			wrapped := fmt.Errorf("shutdown infrastructure: %w", err)
 			log.Println(wrapped)
 			if shutdownErr == nil {
 				shutdownErr = wrapped
 			}
-		} else {
-			log.Println("Redis closed")
 		}
 	}
 
-	// db
-	if a.db != nil {
-		if err := a.db.Close(); err != nil {
-			wrapped := fmt.Errorf("shutdown db: %w", err)
-			log.Println(wrapped)
-			if shutdownErr == nil {
-				shutdownErr = wrapped
-			}
-		} else {
-			log.Println("DB closed")
-		}
-	}
 	return shutdownErr
 }
