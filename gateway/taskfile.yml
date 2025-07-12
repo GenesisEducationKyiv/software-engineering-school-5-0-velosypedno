@@ -28,3 +28,13 @@ tasks:
     dotenv: [".env"]
     cmds:
       - go run cmd/main.go
+
+  test:
+    desc: Run all tests
+    cmds:
+      - task: test:unit
+  
+  test:unit:
+    desc: Run unit tests
+    cmds:
+      - go test ./... -v -tags=unit
