@@ -10,11 +10,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/domain"
+	weathh "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/handlers/http/weather"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/domain"
-	weathh "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/handlers/weather"
 )
 
 type mockWeatherRepo struct {
