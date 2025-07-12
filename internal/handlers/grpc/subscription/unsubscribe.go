@@ -21,7 +21,7 @@ func (s *SubGRPCServer) Unsubscribe(_ context.Context, req *pb.UnsubscribeReques
 		return nil, status.Errorf(codes.InvalidArgument, "invalid token")
 	}
 
-	err = s.subSvc.Activate(parsedToken)
+	err = s.subSvc.Unsubscribe(parsedToken)
 	if errors.Is(err, domain.ErrSubNotFound) {
 		log.Println(fmt.Errorf("unsubscribe subscription grpc handler: %v", err))
 		return nil, status.Errorf(codes.NotFound, "subscription with such token not found")
