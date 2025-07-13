@@ -83,8 +83,6 @@ tasks:
       - migrate -database "${DB_DRIVER}://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable" -path db/migrations up
       - go test ./... -v -tags=integration
 
-
-
   migrate:up:
     desc: Run migrations
     cmds:
@@ -109,3 +107,13 @@ tasks:
         else
           echo ".env already exists"
         fi
+        
+  protoc:
+    desc: Generate proto files
+    cmds:
+      - |
+        protoc --go_out=. --go_opt=paths=source_relative \
+          --go-grpc_out=. --go-grpc_opt=paths=source_relative \
+          {{.PATH}}
+    requires:
+      vars: [PATH]
