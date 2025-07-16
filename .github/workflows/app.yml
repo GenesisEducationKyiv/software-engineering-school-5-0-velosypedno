@@ -18,6 +18,7 @@ jobs:
       with:
         go-version-file: './go.mod'
         install-linter: 'true'
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Run linter
       run: task lint
@@ -36,6 +37,7 @@ jobs:
       uses: ./.github/actions/setup
       with:
         go-version-file: './go.mod'
+        token: ${{ secrets.GITHUB_TOKEN }}
     
     - name: Run tests
       run: task test:unit
@@ -55,6 +57,7 @@ jobs:
       with:
         go-version-file: './go.mod'
         install-migrator: 'true'
+        token: ${{ secrets.GITHUB_TOKEN }}
     
     - name: Run tests
       run: task test:integration
@@ -99,6 +102,7 @@ jobs:
       with:
         go-version-file: './go.mod'
         install-migrator: 'true'
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Wait for postgres
       run: |

@@ -17,6 +17,7 @@ jobs:
       with:
         go-version-file: './go.mod'
         install-linter: 'true'
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Run linter
       run: cd gateway && task lint
@@ -34,6 +35,7 @@ jobs:
       uses: ./.github/actions/setup
       with:
         go-version-file: './go.mod'
+        token: ${{ secrets.GITHUB_TOKEN }}
     
     - name: Run tests
       run: cd gateway && task test:unit
