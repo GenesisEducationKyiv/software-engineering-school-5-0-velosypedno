@@ -9,6 +9,9 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
 
     - name: Install go and go-task
       uses: ./.github/actions/setup
@@ -25,6 +28,9 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
 
     - name: Install go and go-task
       uses: ./.github/actions/setup
@@ -40,6 +46,9 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
 
     - name: Install go and go-task
       uses: ./.github/actions/setup
@@ -81,6 +90,9 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
 
     - name: Install go and go-task
       uses: ./.github/actions/setup
