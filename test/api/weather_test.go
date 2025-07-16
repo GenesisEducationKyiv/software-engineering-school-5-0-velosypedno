@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/velosypedno/genesis-weather-api/test/mock"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/test/mock"
 )
 
 func TestGetWeatherSuccess(t *testing.T) {

@@ -18,7 +18,15 @@ x-redis-env: &redis-env
   REDIS_PORT: ${REDIS_PORT}
   REDIS_PASSWORD: ${REDIS_PASSWORD}
 
-x-app-env: &app-env
+x-gateway-env: &gateway-env
+  GRPC_PORT: ${GRPC_PORT}
+  GRPC_HOST: ${GRPC_HOST}
+  API_GATEWAY_PORT: ${API_GATEWAY_PORT}
+
+x-sub-env: &sub-env
+  GRPC_PORT: ${GRPC_PORT}
+  GRPC_HOST: ${GRPC_HOST}
+
   API_PORT: ${API_PORT}
   TEMPLATES_DIR: ${TEMPLATES_DIR}
 
@@ -59,7 +67,6 @@ services:
       interval: 2s
       timeout: 2s
       retries: 4
-
   migrator:
     build: .
     environment:
@@ -69,12 +76,13 @@ services:
         condition: service_healthy
     entrypoint: ["task", "migrate:up"]
     restart: "no"
-  api:
+
+  sub:
     build: .
     ports:
-      - "8080:8080"
+      - "50100:50100"
     environment:
-      <<: [*db-env, *smtp-env, *app-env, *redis-env]
+      <<: [*db-env, *smtp-env, *sub-env, *redis-env]
     depends_on:
       migrator:
         condition: service_completed_successfully
@@ -83,6 +91,18 @@ services:
     entrypoint: ["/app/bin/api"]
     restart: unless-stopped
 
+  gateway:
+    build: 
+      context: .
+      dockerfile: gateway/Dockerfile
+    ports:
+      - "8080:8082"
+    environment:
+      <<: [*gateway-env]
+    entrypoint: ["/app/bin/gateway"]
+    restart: unless-stopped
+    depends_on:
+     - sub
   
   prometheus:
     image: prom/prometheus:v2.45.0

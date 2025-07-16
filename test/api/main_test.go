@@ -11,9 +11,9 @@ import (
 	"testing"
 
 	_ "github.com/lib/pq"
-	"github.com/velosypedno/genesis-weather-api/internal/app"
-	"github.com/velosypedno/genesis-weather-api/internal/config"
-	"github.com/velosypedno/genesis-weather-api/test/mock"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/app"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/config"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/test/mock"
 )
 
 const apiURL = "http://127.0.0.1:8081"

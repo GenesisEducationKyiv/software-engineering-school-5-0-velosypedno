@@ -5,9 +5,9 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/domain"
+	subsrv "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/services/subscription"
 	"github.com/gin-gonic/gin"
-	"github.com/velosypedno/genesis-weather-api/internal/domain"
-	subsrv "github.com/velosypedno/genesis-weather-api/internal/services/subscription"
 )
 
 type subReqBody struct {

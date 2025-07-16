@@ -1,0 +1,101 @@
+version: "2"
+
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+  concurrency: 4
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+
+linters:
+  exclusions:
+    paths:
+      - docs
+  enable:
+    - dupl
+    - errcheck
+    - govet
+    - ireturn
+    - misspell
+    - nolintlint
+    - predeclared
+    - revive
+    - staticcheck
+    - unused
+    - mnd
+    - unconvert
+    - gosec
+    - gocyclo
+    - unparam
+    - ineffassign
+    - gochecknoinits
+    - gocritic
+    - nakedret
+    - prealloc
+    - dogsled
+    - gocognit
+    - noctx
+
+  settings:
+    dupl:
+      threshold: 200
+
+    govet:
+      enable:
+        - nilness
+        - unusedwrite
+
+    misspell:
+      locale: US
+
+    revive:
+      confidence: 0.8
+      rules:
+        - name: comment-spacings
+        - name: empty-lines
+        - name: error-naming
+        - name: error-return
+        - name: error-strings
+        - name: errorf
+        - name: filename-format
+        - name: function-result-limit
+          arguments: [3]
+        - name: indent-error-flow
+        - name: increment-decrement
+        - name: line-length-limit
+          arguments: [140]
+        - name: receiver-naming
+        - name: redundant-import-alias
+        - name: redefines-builtin-id
+        - name: superfluous-else
+        - name: time-equal
+        - name: time-naming
+        - name: unexported-naming
+        - name: unexported-return
+        - name: unreachable-code
+        - name: use-errors-new
+        - name: var-naming
+
+    gocyclo:
+      min-complexity: 25
+
+    goconst:
+      min-len: 2
+      min-occurrences: 2
+
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+
+    mnd:
+      ignored-functions:
+        - '^math\.'
+        - '^http\.StatusText$'
+        - '^env\.Get'
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
