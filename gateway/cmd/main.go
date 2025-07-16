@@ -16,12 +16,11 @@ func main() {
 
 	cfg, err := config.Load()
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 	app := app.New(cfg)
 	err = app.Run(ctx)
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
-
 }
