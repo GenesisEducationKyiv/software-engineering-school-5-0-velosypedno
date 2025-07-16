@@ -5,9 +5,9 @@ package sub.v1alpha1;
 option go_package = "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/sub/v1alpha1;subv1alpha1";
 
 service SubscriptionService {
-    rpc Subscribe(sub.v1alpha1.SubscribeRequest) returns (sub.v1alpha1.SubscribeResponse);
-    rpc Confirm(sub.v1alpha1.ConfirmRequest) returns (sub.v1alpha1.ConfirmResponse);
-    rpc Unsubscribe(sub.v1alpha1.UnsubscribeRequest) returns (sub.v1alpha1.UnsubscribeResponse);
+    rpc Subscribe(SubscribeRequest) returns (SubscribeResponse);
+    rpc Confirm(ConfirmRequest) returns (ConfirmResponse);
+    rpc Unsubscribe(UnsubscribeRequest) returns (UnsubscribeResponse);
 }
 
 message SubscribeRequest {
@@ -37,7 +37,7 @@ message UnsubscribeResponse {
 }
 
 service WeatherService {
-    rpc GetCurrent(sub.v1alpha1.GetCurrentRequest) returns (sub.v1alpha1.GetCurrentResponse);
+    rpc GetCurrent(GetCurrentRequest) returns (GetCurrentResponse);
 }
 
 message GetCurrentRequest {
