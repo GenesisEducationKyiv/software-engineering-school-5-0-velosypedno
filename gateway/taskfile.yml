@@ -3,26 +3,22 @@ version: '3'
 tasks:
   default:
     desc: List available tasks
-    dir: .
     cmds:
       - go-task --list-all
 
   lint:
     desc: Run local linter config 
-    dir: .
     cmds:
       - golangci-lint run
 
   copy:env:
     desc: Copy default env vars
-    dir: .
     cmds:
       - cp .env.sample .env
     silent: false
 
   copy:env:optional:
      desc: Ensure .env exists
-     dir: .
      cmds:
       - |
         if [ ! -f .env ]; then
@@ -35,7 +31,6 @@ tasks:
   run:debug:
     desc: Run API in debug mode
     dotenv: [".env"]
-    dir: .
     cmds:
       - go run cmd/main.go
     env:
@@ -48,7 +43,6 @@ tasks:
   
   test:unit:
     desc: Run unit tests
-    dir: .
     cmds:
       - go test ./... -v -tags=unit
 

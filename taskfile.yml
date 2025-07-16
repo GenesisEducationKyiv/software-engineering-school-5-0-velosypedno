@@ -2,7 +2,9 @@ version: '3'
 
 includes:
   docker: ./taskfile.docker.yml
-  gw: ./gateway/taskfile.yml
+  gw: 
+    taskfile: ./gateway/taskfile.yml
+    dir: ./gateway
 
 tasks:
   default:
