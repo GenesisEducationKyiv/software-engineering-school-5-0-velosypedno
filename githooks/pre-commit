@@ -3,5 +3,6 @@
 set -e
 
 go-task lint
+cd gateway && go-task lint
 
 exit 0
