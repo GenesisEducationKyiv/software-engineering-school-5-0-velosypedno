@@ -3,6 +3,7 @@
 set -e
 
 go-task lint
-cd gateway && go-task lint
+go-task gw:lint
+go-task weath:lint
 
 exit 0
