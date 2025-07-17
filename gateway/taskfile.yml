@@ -6,6 +6,11 @@ tasks:
     cmds:
       - go-task --list-all
 
+  lint:
+    desc: Run local linter config 
+    cmds:
+      - golangci-lint run
+
   copy:env:
     desc: Copy default env vars
     cmds:
@@ -28,6 +33,8 @@ tasks:
     dotenv: [".env"]
     cmds:
       - go run cmd/main.go
+    env:
+      GRPC_HOST: localhost
 
   test:
     desc: Run all tests
@@ -38,3 +45,13 @@ tasks:
     desc: Run unit tests
     cmds:
       - go test ./... -v -tags=unit
+
+  install:
+    desc: Install dependencies
+    cmds:
+      - task: install:linter
+
+  install:linter:
+    desc: Install linter
+    cmds:
+      - go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.1.6

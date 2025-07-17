@@ -1,7 +1,10 @@
 version: '3'
 
 includes:
-  docker: ./Taskfile.docker.yml
+  docker: ./taskfile.docker.yml
+  gw: 
+    taskfile: ./gateway/taskfile.yml
+    dir: ./gateway
 
 tasks:
   default:
@@ -57,6 +60,7 @@ tasks:
     cmds:
       - task: test:unit
       - task: test:integration
+      - task: gw:test
   
   test:unit:
     desc: Run unit tests

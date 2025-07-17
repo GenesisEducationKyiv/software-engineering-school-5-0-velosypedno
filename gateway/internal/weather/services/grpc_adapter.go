@@ -33,7 +33,6 @@ func (s *GRPCAdapter) GetCurrent(ctx context.Context, city string) (domain.Weath
 
 		log.Println(fmt.Errorf("grpc adapter: %s", st.Message()))
 		return domain.Weather{}, fmt.Errorf("grpc adapter: %w", gRPCToDomainError(st.Code()))
-
 	}
 	return domain.Weather{
 		Humidity:    float64(resp.Humidity),
