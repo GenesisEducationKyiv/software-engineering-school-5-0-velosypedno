@@ -14,6 +14,10 @@ import (
 
 func (s *WeathGRPCServer) GetCurrent(_ context.Context, req *pb.GetCurrentRequest) (*pb.GetCurrentResponse, error) {
 	city := req.City
+	if city == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "city is empty")
+	}
+
 	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), s.requestTimeout)
 	defer cancel()
 	weather, err := s.weathSvc.GetCurrent(ctxWithTimeout, city)
