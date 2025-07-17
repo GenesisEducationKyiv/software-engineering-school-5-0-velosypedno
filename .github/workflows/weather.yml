@@ -1,0 +1,41 @@
+name: Weather
+
+on: push
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Install go and go-task
+      uses: ./.github/actions/setup
+      with:
+        go-version-file: './go.mod'
+        install-linter: 'true'
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Run linter
+      run: cd weather && task lint
+  
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Install go and go-task
+      uses: ./.github/actions/setup
+      with:
+        go-version-file: './go.mod'
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Run tests
+      run: cd weather && task test:unit
