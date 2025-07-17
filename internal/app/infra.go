@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/cache"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/config"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/domain"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/email"
@@ -20,6 +19,7 @@ import (
 	weathchain "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/repos/weather/chain"
 	weathdecorator "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/repos/weather/decorator"
 	weathprovider "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/repos/weather/provider"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/cache"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/cb"
 	"github.com/google/uuid"
 	"github.com/prometheus/client_golang/prometheus"

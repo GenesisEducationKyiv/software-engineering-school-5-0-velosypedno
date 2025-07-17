@@ -45,6 +45,18 @@ tasks:
     cmds:
       - go test ./... -v -tags=unit
 
+  test:integration:
+    desc: Run integration tests
+    dotenv: [".env.sample"]
+    env:
+      REDIS_PORT: 6381
+      REDIS_HOST: localhost
+    cmds:
+      - task: copy:env:optional
+      - docker compose -f docker-compose.test.yml up -d
+      - defer: docker compose -f docker-compose.test.yml down
+      - go test ./... -v -tags=integration
+
   install:
     desc: Install dependencies
     cmds:

@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/cache"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/cache"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/cb"
 	pb "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/weath/v1alpha1"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/domain"

@@ -7,13 +7,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/cache"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/config"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/domain"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/repos/decorator"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/cache"
-	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/config"
-	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/domain"
-	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/repos/weather/decorator"
 )
 
 type weathMetrics struct {

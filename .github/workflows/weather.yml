@@ -39,3 +39,24 @@ jobs:
     
     - name: Run tests
       run: cd weather && task test:unit
+
+    
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+
+    - name: Install go and go-task
+      uses: ./.github/actions/setup
+      with:
+        go-version-file: './go.mod'
+        install-migrator: 'true'
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Run tests
+      run: cd weather && task test:integration
