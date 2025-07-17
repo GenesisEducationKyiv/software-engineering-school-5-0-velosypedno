@@ -10,9 +10,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/domain"
-	weathdecorator "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/repos/weather/decorator"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/cb"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/domain"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/repos/decorator"
 )
 
 func newTestBreaker() *cb.CircuitBreaker {
@@ -30,7 +30,7 @@ func TestBreakerDecorator_Success(t *testing.T) {
 		Err:      nil,
 	}
 	breaker := newTestBreaker()
-	repo := weathdecorator.NewBreakerDecorator(mock, breaker)
+	repo := decorator.NewBreakerDecorator(mock, breaker)
 
 	// Act
 	result, err := repo.GetCurrent(context.Background(), "Lviv")
@@ -49,7 +49,7 @@ func TestBreakerDecorator_UnavailableErrorTriggersBreaker(t *testing.T) {
 		Err:      domain.ErrWeatherUnavailable,
 	}
 	breaker := newTestBreaker()
-	repo := weathdecorator.NewBreakerDecorator(mock, breaker)
+	repo := decorator.NewBreakerDecorator(mock, breaker)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Odessa")
@@ -66,7 +66,7 @@ func TestBreakerDecorator_OtherErrorDoesNotTriggerBreaker(t *testing.T) {
 		Err:      domain.ErrCityNotFound,
 	}
 	breaker := newTestBreaker()
-	repo := weathdecorator.NewBreakerDecorator(mock, breaker)
+	repo := decorator.NewBreakerDecorator(mock, breaker)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "!!!")
@@ -86,7 +86,7 @@ func TestBreakerDecorator_BreakerOpenSkipsCall(t *testing.T) {
 	breaker.Fail()
 	require.False(t, breaker.Allowed())
 
-	repo := weathdecorator.NewBreakerDecorator(mock, breaker)
+	repo := decorator.NewBreakerDecorator(mock, breaker)
 
 	// Act
 	result, err := repo.GetCurrent(context.Background(), "Dnipro")
@@ -110,7 +110,7 @@ func TestBreakerDecorator_ClosedAfterTimeout(t *testing.T) {
 		Response: domain.Weather{},
 		Err:      domain.ErrWeatherUnavailable,
 	}
-	repo := weathdecorator.NewBreakerDecorator(mock, breaker)
+	repo := decorator.NewBreakerDecorator(mock, breaker)
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kharkiv")
@@ -135,7 +135,7 @@ func TestBreakerDecorator_OpenAgain(t *testing.T) {
 		Response: domain.Weather{},
 		Err:      domain.ErrWeatherUnavailable,
 	}
-	repo := weathdecorator.NewBreakerDecorator(mock, breaker)
+	repo := decorator.NewBreakerDecorator(mock, breaker)
 
 	// Act
 	city := "Kharkiv"

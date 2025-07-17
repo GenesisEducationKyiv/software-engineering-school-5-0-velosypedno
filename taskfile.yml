@@ -5,6 +5,9 @@ includes:
   gw: 
     taskfile: ./gateway/taskfile.yml
     dir: ./gateway
+  weath: 
+    taskfile: ./weather/taskfile.yml
+    dir: ./weather
 
 tasks:
   default:
