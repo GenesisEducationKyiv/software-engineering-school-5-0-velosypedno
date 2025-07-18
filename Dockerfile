@@ -17,8 +17,10 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends ca-certificates && \
     rm -rf /var/lib/apt/lists/
 
-COPY --from=builder /app/Taskfile.yml ./Taskfile.yml
-COPY --from=builder /app/Taskfile.docker.yml ./Taskfile.docker.yml
+COPY --from=builder /app/taskfile.yml ./taskfile.yml
+COPY --from=builder /app/gateway/taskfile.yml ./gateway/taskfile.yml
+COPY --from=builder /app/weather/taskfile.yml ./weather/taskfile.yml
+COPY --from=builder /app/taskfile.docker.yml ./taskfile.docker.yml
 
 COPY --from=builder /app/bin/api ./bin/api
 COPY --from=builder /go/bin/task /usr/local/bin/task

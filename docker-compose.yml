@@ -38,6 +38,23 @@ x-sub-env: &sub-env
 
   VISUAL_CROSSING_API_KEY: ${VISUAL_CROSSING_API_KEY}
   VISUAL_CROSSING_API_BASE_URL: ${VISUAL_CROSSING_API_BASE_URL}
+
+
+x-weather-env: &weather-env
+  GRPC_HOST: ${WEATHER_SERVICE_HOST}
+  GRPC_PORT: ${WEATHER_SERVICE_GRPC_PORT}
+  HTTP_HOST: ${WEATHER_SERVICE_HOST}
+  HTTP_PORT: ${WEATHER_SERVICE_HTTP_PORT}
+
+  FREE_WEATHER_API_KEY: ${FREE_WEATHER_API_KEY}
+  WEATHER_API_BASE_URL: ${WEATHER_API_BASE_URL}
+
+  TOMORROW_WEATHER_API_KEY: ${TOMORROW_WEATHER_API_KEY}
+  TOMORROW_API_BASE_URL: ${TOMORROW_API_BASE_URL}
+
+  VISUAL_CROSSING_API_KEY: ${VISUAL_CROSSING_API_KEY}
+  VISUAL_CROSSING_API_BASE_URL: ${VISUAL_CROSSING_API_BASE_URL}
+
 services:
   postgres:
     image: postgres:17.5
@@ -89,6 +106,20 @@ services:
       redis:
         condition: service_healthy
     entrypoint: ["/app/bin/api"]
+    restart: unless-stopped
+
+  weather:
+    build:
+      context: .
+      dockerfile: weather/Dockerfile
+    ports:
+      - "50101:50101"
+    environment:
+      <<: [*weather-env, *redis-env]
+    depends_on:
+      redis:
+        condition: service_healthy
+    entrypoint: ["/app/bin/weather"]
     restart: unless-stopped
 
   gateway:

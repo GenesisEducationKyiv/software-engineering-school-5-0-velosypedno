@@ -9,7 +9,6 @@ import (
 	pb "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/weath/v1alpha1"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/domain"
 	grpch "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/handlers/grpc"
-	httph "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/handlers/http"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/repos/chain"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/repos/decorator"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/repos/provider"
@@ -68,10 +67,6 @@ func (a *App) setupWeatherRepo() *decorator.CacheDecorator {
 
 func (a *App) setupRouter() *gin.Engine {
 	router := gin.Default()
-	weatherRepo := a.setupWeatherRepo()
-	weatherService := services.NewWeatherService(weatherRepo)
-
-	router.GET("/api/weather", httph.NewWeatherGETHandler(weatherService, weatherRequestTimeout))
 	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	return router
 }
