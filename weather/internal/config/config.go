@@ -40,6 +40,10 @@ type GRPCConfig struct {
 	Host string `envconfig:"GRPC_HOST" required:"true"`
 }
 
+func (c GRPCConfig) Addr() string {
+	return c.Host + ":" + c.Port
+}
+
 type Config struct {
 	GRPCSrv GRPCConfig
 	HTTPSrv HTTPConfig

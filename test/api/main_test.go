@@ -10,10 +10,10 @@ import (
 	"os"
 	"testing"
 
-	_ "github.com/lib/pq"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/app"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/config"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/test/mock"
+	_ "github.com/lib/pq"
 )
 
 const apiURL = "http://127.0.0.1:8081"
@@ -34,9 +34,6 @@ func TestMain(m *testing.M) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	cfg.FreeWeather.URL = freeWeatherAPI.URL
-	cfg.TomorrowWeather.URL = tomorrowAPI.URL
-	cfg.VisualCrossing.URL = vcAPI.URL
 	fmt.Println(cfg)
 
 	// setup DB
