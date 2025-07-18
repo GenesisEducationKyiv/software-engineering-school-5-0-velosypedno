@@ -40,6 +40,10 @@ type GRPCConfig struct {
 	Host string `envconfig:"GRPC_HOST" required:"true"`
 }
 
+func (c GRPCConfig) Addr() string {
+	return c.Host + ":" + c.Port
+}
+
 type WeatherServiceConfig struct {
 	Port string `envconfig:"WEATHER_SERVICE_PORT" required:"true"`
 	Host string `envconfig:"WEATHER_SERVICE_HOST" required:"true"`

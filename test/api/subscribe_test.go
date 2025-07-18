@@ -3,14 +3,16 @@
 package api_test
 
 import (
+	"context"
 	"encoding/json"
-	"fmt"
 	"net/http"
-	"strings"
 	"testing"
 	"time"
 
+	pb "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/sub/v1alpha2"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func TestSubscribeSuccessFlow(t *testing.T) {
@@ -18,20 +20,18 @@ func TestSubscribeSuccessFlow(t *testing.T) {
 	t.Log("Clearing the database...")
 	clearDB()
 
-	// Step 2: Send the POST request to /api/subscribe
+	// Step 2: Send the gRPC Subscribe request
 	toEmail := "test.subscribe.success@example.com"
-	payload := fmt.Sprintf(`{
-        "email": "%s",
-        "frequency": "daily",
-        "city": "Kyiv"
-    }`, toEmail)
-	t.Logf("Sending subscription request for email: %s", toEmail)
-	resp, err := http.Post(apiURL+"/api/subscribe", "application/json", strings.NewReader(payload))
-	require.NoError(t, err, "Failed to send POST: %v", err)
-	defer resp.Body.Close()
+	t.Logf("Sending gRPC subscription request for email: %s", toEmail)
 
-	t.Logf("Received response with status code: %d", resp.StatusCode)
-	require.Equal(t, http.StatusOK, resp.StatusCode, "Expected status 200 OK, got %d", resp.StatusCode)
+	req := &pb.SubscribeRequest{
+		Email:     toEmail,
+		Frequency: "daily",
+		City:      "Kyiv",
+	}
+
+	_, err := SubGRPCClient.Subscribe(context.Background(), req)
+	require.NoError(t, err, "Failed to send gRPC Subscribe request")
 
 	// Step 3: Wait for the email to appear in MailHog
 	t.Log("Waiting for confirmation email to appear in MailHog...")
@@ -61,7 +61,7 @@ func TestSubscribeSuccessFlow(t *testing.T) {
 			break
 		}
 
-		require.Less(t, time.Since(start), timeout, "Timeout reached")
+		require.Less(t, time.Since(start), timeout, "Timeout reached while waiting for email")
 
 		t.Log("No email found yet, retrying...")
 		time.Sleep(interval)
@@ -73,7 +73,7 @@ func TestSubscribeSuccessFlow(t *testing.T) {
 	err = DB.QueryRow("SELECT COUNT(*) FROM subscriptions WHERE email = $1", toEmail).Scan(&count)
 	require.NoError(t, err, "Failed to query subscription count: %v", err)
 	t.Logf("Found %d subscription(s) in the database for email %s", count, toEmail)
-	require.Equal(t, count, 1, "Expected 1 subscription in database, got %d", count)
+	require.Equal(t, 1, count, "Expected 1 subscription in database, got %d", count)
 
 	var activated bool
 	err = DB.QueryRow("SELECT activated FROM subscriptions WHERE email = $1", toEmail).Scan(&activated)
@@ -83,31 +83,31 @@ func TestSubscribeSuccessFlow(t *testing.T) {
 }
 
 func TestSubscribeDuplicateFlow(t *testing.T) {
+	ctx := context.Background()
+
 	// Step 1: Clear the database
 	t.Log("Clearing the database...")
 	clearDB()
 
 	// Step 2: Send the first subscription request
 	toEmail := "test.duplicate.subscribe@example.com"
-	payload := fmt.Sprintf(`{
-        "email": "%s",
-        "frequency": "daily",
-        "city": "Kyiv"
-    }`, toEmail)
-	t.Log("Sending first subscription request...")
-	endpoint := "/api/subscribe"
-	resp, err := http.Post(apiURL+endpoint, "application/json", strings.NewReader(payload))
-	require.NoError(t, err, "Failed to send POST: %v", err)
-	resp.Body.Close()
+	t.Log("Sending first gRPC subscription request...")
+	req := &pb.SubscribeRequest{
+		Email:     toEmail,
+		Frequency: "daily",
+		City:      "Kyiv",
+	}
+	_, err := SubGRPCClient.Subscribe(ctx, req)
+	require.NoError(t, err, "Failed to send first Subscribe request: %v", err)
 
 	// Step 3: Send the second (duplicate) subscription request
-	t.Log("Sending duplicate subscription request...")
-	resp, err = http.Post(apiURL+endpoint, "application/json", strings.NewReader(payload))
-	require.NoError(t, err, "Failed to send duplicate POST: %v", err)
-	defer resp.Body.Close()
+	t.Log("Sending duplicate gRPC subscription request...")
+	_, err = SubGRPCClient.Subscribe(ctx, req)
+	require.Error(t, err, "Expected error on duplicate Subscribe request")
 
-	t.Logf("Received response with status code: %d", resp.StatusCode)
-	require.Equal(t, http.StatusConflict, resp.StatusCode, "Expected status 409 Conflict for duplicate subscription, got %d", resp.StatusCode)
+	st, ok := status.FromError(err)
+	require.True(t, ok, "Expected a gRPC status error")
+	require.Equal(t, codes.AlreadyExists, st.Code(), "Expected AlreadyExists code for duplicate subscription, got %v", st.Code())
 
 	// Step 4: Check that only one subscription exists in the database
 	t.Log("Verifying that only one subscription is stored in the database...")

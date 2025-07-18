@@ -74,13 +74,15 @@ tasks:
     desc: Run integration tests
     dotenv: [".env.sample"]
     env:
+      WEATHER_SERVICE_PORT: 50104
+      WEATHER_SERVICE_HOST: localhost
+      GRPC_PORT: 50103
+      GRPC_HOST: localhost
       API_PORT: 8081
       DB_PORT: 5433
-      REDIS_PORT: 6380
       SMTP_PORT: 1025
       DB_HOST: localhost
       SMTP_HOST: localhost
-      REDIS_HOST: localhost
       EMAIL_FROM: testuser@example.com
       TEMPLATES_DIR: ../../internal/templates
     cmds:

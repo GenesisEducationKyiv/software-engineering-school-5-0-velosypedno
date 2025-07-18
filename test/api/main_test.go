@@ -7,28 +7,25 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/app"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/config"
-	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/test/mock"
+	pb "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/sub/v1alpha2"
 	_ "github.com/lib/pq"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const apiURL = "http://127.0.0.1:8081"
 
 var DB *sql.DB
+var SubGRPCClient pb.SubscriptionServiceClient
 
 func TestMain(m *testing.M) {
-	// setup fake weather APIs
-	freeWeatherAPI := mock.NewFreeWeatherAPI()
-	defer freeWeatherAPI.Close()
-	tomorrowAPI := mock.NewTomorrowAPI()
-	defer tomorrowAPI.Close()
-	vcAPI := mock.NewVisualCrossingAPI()
-	defer vcAPI.Close()
-
 	// setup config
 	cfg, err := config.Load()
 	if err != nil {
@@ -52,6 +49,31 @@ func TestMain(m *testing.M) {
 	// run app
 	app := app.New(cfg)
 	go app.Run(ctx)
+
+	// wait in grpc server start
+	deadline := time.Now().Add(1 * time.Second)
+	for {
+		conn, err := net.Dial("tcp", cfg.GRPCSrv.Addr())
+		if err == nil {
+			_ = conn.Close()
+			log.Println("gRPC server is ready")
+			break
+		}
+
+		if time.Now().After(deadline) {
+			log.Fatalf("gRPC server did not become ready within 1 second at %s", cfg.GRPCSrv.Addr())
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	// setup grpc client
+	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
+	conn, err := grpc.NewClient(cfg.GRPCSrv.Addr(), opt)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer conn.Close()
+	SubGRPCClient = pb.NewSubscriptionServiceClient(conn)
 
 	// run tests
 	code := m.Run()

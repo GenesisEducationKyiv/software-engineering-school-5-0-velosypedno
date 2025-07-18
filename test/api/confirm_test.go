@@ -3,15 +3,20 @@
 package api_test
 
 import (
-	"fmt"
-	"net/http"
+	"context"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+
+	subv1alpha2 "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/sub/v1alpha2"
 )
 
 func TestSubscribeConfirmFlow(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	// Step 1: Clear DB and insert a test subscription
 	t.Log("Clearing DB and inserting a fake subscription...")
 	clearDB()
@@ -29,16 +34,16 @@ func TestSubscribeConfirmFlow(t *testing.T) {
 	require.NoError(t, err, "Failed to insert test subscription")
 	t.Logf("Inserted subscription with token: %s", token)
 
-	// Step 2: Make GET request to /api/confirm/:token
-	url := fmt.Sprintf("%s/api/confirm/%s", apiURL, token.String())
-	t.Logf("Sending GET request to: %s", url)
+	// Step 2: Call Confirm RPC method
+	t.Logf("Calling gRPC Confirm method with token: %s", token)
 
-	resp, err := http.Get(url)
-	require.NoError(t, err, "Failed to send GET request to confirm subscription")
-	defer resp.Body.Close()
+	resp, err := SubGRPCClient.Confirm(ctx, &subv1alpha2.ConfirmRequest{
+		Token: token.String(),
+	})
+	require.NoError(t, err, "gRPC Confirm call failed")
+	require.NotNil(t, resp, "Confirm response is nil")
 
-	t.Logf("Response status code: %d", resp.StatusCode)
-	require.Equal(t, http.StatusOK, resp.StatusCode, "Expected status 200 OK, got %d", resp.StatusCode)
+	t.Logf("Confirm response message: %s", resp.Message)
 
 	// Step 3: Verify that subscription is now activated
 	var activated bool
