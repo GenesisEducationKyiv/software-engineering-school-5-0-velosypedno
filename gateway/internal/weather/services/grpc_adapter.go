@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/gateway/internal/weather/domain"
-	pb "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/sub/v1alpha1"
+	pb "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/weath/v1alpha1"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

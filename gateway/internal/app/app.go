@@ -8,7 +8,8 @@ import (
 	"time"
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/gateway/internal/config"
-	pb "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/sub/v1alpha1"
+	pbsub "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/sub/v1alpha2"
+	pbweath "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/weath/v1alpha1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -18,10 +19,13 @@ const shutdownTimeout = 20 * time.Second
 type App struct {
 	cfg *config.Config
 
-	grpcCon  *grpc.ClientConn
-	subSvc   pb.SubscriptionServiceClient
-	weathSvc pb.WeatherServiceClient
-	httpSrv  *http.Server
+	subGRPCCon    *grpc.ClientConn
+	subGRPCClient pbsub.SubscriptionServiceClient
+
+	weathGRPCCon    *grpc.ClientConn
+	weathGRPCClient pbweath.WeatherServiceClient
+
+	httpSrv *http.Server
 }
 
 func New(cfg *config.Config) *App {
@@ -33,16 +37,20 @@ func New(cfg *config.Config) *App {
 func (a *App) Run(ctx context.Context) error {
 	var err error
 
-	// setup grpc connection
+	// setup subscription grpc connection
 	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
-	a.grpcCon, err = grpc.NewClient(a.cfg.GRPCAddress(), opt)
+	a.subGRPCCon, err = grpc.NewClient(a.cfg.SubSvc.Addr(), opt)
 	if err != nil {
 		return err
 	}
+	a.subGRPCClient = pbsub.NewSubscriptionServiceClient(a.subGRPCCon)
 
-	// setup grpc clients
-	a.subSvc = pb.NewSubscriptionServiceClient(a.grpcCon)
-	a.weathSvc = pb.NewWeatherServiceClient(a.grpcCon)
+	// setup weather grpc connection
+	a.weathGRPCCon, err = grpc.NewClient(a.cfg.WeatherSvc.Addr(), opt)
+	if err != nil {
+		return err
+	}
+	a.weathGRPCClient = pbweath.NewWeatherServiceClient(a.weathGRPCCon)
 
 	// setup http server
 	a.httpSrv = a.setupHTTPServer()
@@ -75,5 +83,32 @@ func (a *App) shutdown(timeoutCtx context.Context) error {
 			log.Println("HTTP Server Shutdown successfully")
 		}
 	}
+
+	// gRPC subscription connection
+	if a.subGRPCCon != nil {
+		if err := a.subGRPCCon.Close(); err != nil {
+			wrapped := fmt.Errorf("close sub grpc connection: %w", err)
+			log.Println(wrapped)
+			if shutdownErr == nil {
+				shutdownErr = wrapped
+			}
+		} else {
+			log.Println("Subscription gRPC connection closed successfully")
+		}
+	}
+
+	// gRPC weather connection
+	if a.weathGRPCCon != nil {
+		if err := a.weathGRPCCon.Close(); err != nil {
+			wrapped := fmt.Errorf("close weather grpc connection: %w", err)
+			log.Println(wrapped)
+			if shutdownErr == nil {
+				shutdownErr = wrapped
+			}
+		} else {
+			log.Println("Weather gRPC connection closed successfully")
+		}
+	}
+
 	return shutdownErr
 }

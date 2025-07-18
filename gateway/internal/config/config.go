@@ -2,15 +2,29 @@ package config
 
 import "github.com/kelseyhightower/envconfig"
 
-type Config struct {
-	GRPCPort string `envconfig:"GRPC_PORT" required:"true"`
-	GRPCHost string `envconfig:"GRPC_HOST" required:"true"`
-
-	APIGatewayPort string `envconfig:"API_GATEWAY_PORT" required:"true"`
+type WeatherServiceConfig struct {
+	Port string `envconfig:"WEATHER_SERVICE_PORT" required:"true"`
+	Host string `envconfig:"WEATHER_SERVICE_HOST" required:"true"`
 }
 
-func (c *Config) GRPCAddress() string {
-	return c.GRPCHost + ":" + c.GRPCPort
+func (c WeatherServiceConfig) Addr() string {
+	return c.Host + ":" + c.Port
+}
+
+type SubServiceConfig struct {
+	Port string `envconfig:"SUB_SERVICE_PORT" required:"true"`
+	Host string `envconfig:"SUB_SERVICE_HOST" required:"true"`
+}
+
+func (c SubServiceConfig) Addr() string {
+	return c.Host + ":" + c.Port
+}
+
+type Config struct {
+	WeatherSvc WeatherServiceConfig
+	SubSvc     SubServiceConfig
+
+	APIGatewayPort string `envconfig:"API_GATEWAY_PORT" required:"true"`
 }
 
 func Load() (*Config, error) {
