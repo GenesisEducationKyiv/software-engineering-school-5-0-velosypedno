@@ -7,7 +7,7 @@ import (
 	"log"
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/domain"
-	pb "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/sub/v1alpha1"
+	pb "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/sub/v1alpha2"
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"

@@ -5,47 +5,22 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"net/http"
-	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/config"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/domain"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/email"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/mailers"
-	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/metrics"
 	subrepo "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/repos/subscription"
-	weathchain "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/repos/weather/chain"
-	weathdecorator "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/repos/weather/decorator"
-	weathprovider "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/repos/weather/provider"
-	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/cache"
-	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/cb"
+	weathrepo "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/repos/weather"
+	pbweath "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/weath/v1alpha1"
 	"github.com/google/uuid"
-	"github.com/prometheus/client_golang/prometheus"
-	"github.com/redis/go-redis/v9"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 const (
-	logPerm os.FileMode = 0644
-
-	logFilepath        = "./log.log"
 	confirmSubTmplName = "confirm_sub.html"
-
-	freeWeatherName    = "weatherapi.com"
-	tomorrowIOName     = "tomorrow.io"
-	visualCrossingName = "visualcrossing.com"
-
-	// CB = CircuitBreaker
-	weatherCBTimeout = 5 * time.Minute
-	weatherCBLimit   = 10
-	weatherCBRecover = 5
-
-	cacheTTL = 5 * time.Minute
-)
-
-var (
-	appMetricsRegister = prometheus.DefaultRegisterer
 )
 
 type (
@@ -76,10 +51,8 @@ type (
 )
 
 type InfrastructureContainer struct {
-	DB             *sql.DB
-	Redis          *redis.Client
-	WeatherMetrics *metrics.WeatherMetrics
-	Logger         *log.Logger
+	DB       *sql.DB
+	GRPCConn *grpc.ClientConn
 
 	WeatherRepo weatherRepo
 	SubRepo     subscriptionRepo
@@ -90,21 +63,20 @@ type InfrastructureContainer struct {
 }
 
 func NewInfrastructureContainer(cfg config.Config) (*InfrastructureContainer, error) {
-	// db, metrics, logger, redis
+	// db
 	db, err := newDB(cfg.DB)
-	if err != nil {
-		return nil, err
-	}
-	redis := newRedis(cfg.Redis)
-	weatherMetrics := metrics.NewWeatherMetrics(appMetricsRegister)
-	logger, err := newLogger(logFilepath)
 	if err != nil {
 		return nil, err
 	}
 
 	// repos
-	weatherRepo := newWeatherRepo(cfg, redis, weatherMetrics, logger)
 	subRepo := subrepo.NewDBRepo(db)
+	grpcConn, err := newWeatherGRPCConn(cfg)
+	if err != nil {
+		return nil, err
+	}
+	weathGRPCClient := pbweath.NewWeatherServiceClient(grpcConn)
+	weathRepo := weathrepo.NewGRPCAdapter(weathGRPCClient)
 
 	// mailers
 	emailBackend := newSMTPEmailBackend(cfg.SMTP)
@@ -113,12 +85,10 @@ func NewInfrastructureContainer(cfg config.Config) (*InfrastructureContainer, er
 	subMailer := mailers.NewSubscriptionMailer(emailBackend, confirmTmplPath)
 
 	return &InfrastructureContainer{
-		DB:             db,
-		Redis:          redis,
-		WeatherMetrics: weatherMetrics,
-		Logger:         logger,
+		DB:       db,
+		GRPCConn: grpcConn,
 
-		WeatherRepo: weatherRepo,
+		WeatherRepo: weathRepo,
 		SubRepo:     subRepo,
 
 		EmailBackend:  emailBackend,
@@ -130,14 +100,14 @@ func NewInfrastructureContainer(cfg config.Config) (*InfrastructureContainer, er
 func (c *InfrastructureContainer) Shutdown(ctx context.Context) error {
 	var shutdownErr error
 
-	// redis
-	if c.Redis != nil {
-		if err := c.Redis.Close(); err != nil {
-			wrapped := fmt.Errorf("shutdown redis: %w", err)
+	// grpc
+	if c.GRPCConn != nil {
+		if err := c.GRPCConn.Close(); err != nil {
+			wrapped := fmt.Errorf("shutdown gRPC connection: %w", err)
 			log.Println(wrapped)
 			shutdownErr = wrapped
 		} else {
-			log.Println("Redis closed")
+			log.Println("gRPC connection closed")
 		}
 	}
 
@@ -157,37 +127,13 @@ func (c *InfrastructureContainer) Shutdown(ctx context.Context) error {
 	return shutdownErr
 }
 
-func newWeatherRepo(cfg config.Config, redis *redis.Client,
-	metrics *metrics.WeatherMetrics, logger *log.Logger) *weathdecorator.CacheDecorator {
-	freeWeathR := weathprovider.NewFreeWeatherAPI(
-		weathprovider.APICfg{APIKey: cfg.FreeWeather.Key, APIURL: cfg.FreeWeather.URL},
-		&http.Client{},
-	)
-	tomorrowWeathR := weathprovider.NewTomorrowAPI(
-		weathprovider.APICfg{APIKey: cfg.TomorrowWeather.Key, APIURL: cfg.TomorrowWeather.URL},
-		&http.Client{},
-	)
-	vcWeathR := weathprovider.NewVisualCrossingAPI(
-		weathprovider.APICfg{APIKey: cfg.VisualCrossing.Key, APIURL: cfg.VisualCrossing.URL},
-		&http.Client{},
-	)
-
-	logFreeWeathR := weathdecorator.NewLogDecorator(freeWeathR, freeWeatherName, logger)
-	logTomorrowR := weathdecorator.NewLogDecorator(tomorrowWeathR, tomorrowIOName, logger)
-	logVcWeathR := weathdecorator.NewLogDecorator(vcWeathR, visualCrossingName, logger)
-
-	breakerFreeWeathR := weathdecorator.NewBreakerDecorator(logFreeWeathR,
-		cb.NewCircuitBreaker(weatherCBTimeout, weatherCBLimit, weatherCBRecover))
-	breakerTomorrowR := weathdecorator.NewBreakerDecorator(logTomorrowR,
-		cb.NewCircuitBreaker(weatherCBTimeout, weatherCBLimit, weatherCBRecover))
-	breakerVcWeathR := weathdecorator.NewBreakerDecorator(logVcWeathR,
-		cb.NewCircuitBreaker(weatherCBTimeout, weatherCBLimit, weatherCBRecover))
-
-	weathChain := weathchain.NewProvidersFallbackChain(breakerFreeWeathR, breakerTomorrowR, breakerVcWeathR)
-
-	redisBackend := cache.NewRedisCacheClient[domain.Weather](redis, cacheTTL)
-	cachedRepoChain := weathdecorator.NewCacheDecorator(weathChain, redisBackend, metrics)
-	return cachedRepoChain
+func newWeatherGRPCConn(cfg config.Config) (*grpc.ClientConn, error) {
+	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
+	grpcConn, err := grpc.NewClient(cfg.WeathSvc.Addr(), opt)
+	if err != nil {
+		return nil, err
+	}
+	return grpcConn, nil
 }
 
 func newSMTPEmailBackend(cfg config.SMTPConfig) *email.SMTPBackend {
@@ -200,20 +146,4 @@ func newDB(cfg config.DBConfig) (*sql.DB, error) {
 		return nil, err
 	}
 	return db, nil
-}
-
-func newRedis(cfg config.RedisConfig) *redis.Client {
-	return redis.NewClient(&redis.Options{
-		Addr:     cfg.Addr(),
-		Password: cfg.Pass,
-	})
-}
-
-func newLogger(path string) (*log.Logger, error) {
-	// #nosec G304 -- logFilepath is a constant and not user-controlled
-	f, err := os.OpenFile(path, os.O_APPEND|os.O_CREATE|os.O_WRONLY, logPerm)
-	if err != nil {
-		return nil, err
-	}
-	return log.New(f, "", log.LstdFlags), nil
 }

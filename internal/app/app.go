@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"net/http"
 	"time"
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/internal/config"
@@ -23,7 +22,6 @@ type App struct {
 	cfg *config.Config
 
 	cron    *cron.Cron
-	httpAPI *http.Server
 	grpcAPI *grpc.Server
 
 	infra    *InfrastructureContainer
@@ -56,19 +54,6 @@ func (a *App) Run(ctx context.Context) error {
 	a.cron = presentation.Cron
 	a.cron.Start()
 
-	// http api
-	a.httpAPI = &http.Server{
-		Addr:        ":" + a.cfg.Srv.Port,
-		Handler:     presentation.HTTPHandler,
-		ReadTimeout: readTimeout,
-	}
-	go func() {
-		if err := a.httpAPI.ListenAndServe(); err != nil {
-			log.Printf("http api: %v", err)
-		}
-	}()
-	log.Printf("APIServer started on port %s", a.cfg.Srv.Port)
-
 	// grpc api
 	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%s", a.cfg.GRPCSrv.Host, a.cfg.GRPCSrv.Port))
 	if err != nil {
@@ -95,17 +80,6 @@ func (a *App) Run(ctx context.Context) error {
 func (a *App) shutdown(timeoutCtx context.Context) error {
 	var shutdownErr error
 
-	// http api
-	if a.httpAPI != nil {
-		if err := a.httpAPI.Shutdown(timeoutCtx); err != nil {
-			wrapped := fmt.Errorf("shutdown api server: %w", err)
-			log.Println(wrapped)
-			shutdownErr = wrapped
-		} else {
-			log.Println("APIServer Shutdown successfully")
-		}
-	}
-
 	// grpc api
 	if a.grpcAPI != nil {
 		done := make(chan struct{})
@@ -131,9 +105,7 @@ func (a *App) shutdown(timeoutCtx context.Context) error {
 		case <-timeoutCtx.Done():
 			wrapped := fmt.Errorf("shutdown cron scheduler: %w", timeoutCtx.Err())
 			log.Println(wrapped)
-			if shutdownErr == nil {
-				shutdownErr = wrapped
-			}
+			shutdownErr = wrapped
 		}
 	}
 
