@@ -8,6 +8,9 @@ includes:
   weath: 
     taskfile: ./weather/taskfile.yml
     dir: ./weather
+  sub: 
+    taskfile: ./sub/taskfile.yml
+    dir: ./sub
 
 tasks:
   default:
@@ -53,58 +56,27 @@ tasks:
     cmds:
       - go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.1.6
 
-  install:migrator:
-    desc: Install migrator
-    cmds:
-      - go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@v4.16.2
-
   test:
     desc: Run all tests
     cmds:
-      - task: test:unit
-      - task: test:integration
       - task: gw:test
+      - task: weath:test
+      - task: sub:test
   
   test:unit:
     desc: Run unit tests
     cmds:
-      - go test ./... -v -tags=unit
+      - task: gw:test:unit
+      - task: weath:test:unit
+      - task: sub:test:unit
 
   test:integration:
     desc: Run integration tests
     dotenv: [".env.sample"]
-    env:
-      WEATHER_SERVICE_PORT: 50104
-      WEATHER_SERVICE_HOST: localhost
-      GRPC_PORT: 50103
-      GRPC_HOST: localhost
-      API_PORT: 8081
-      DB_PORT: 5433
-      SMTP_PORT: 1025
-      DB_HOST: localhost
-      SMTP_HOST: localhost
-      EMAIL_FROM: testuser@example.com
-      TEMPLATES_DIR: ../../internal/templates
     cmds:
-      - task: copy:env:optional
-      - docker compose -f docker-compose.test.yml up -d
-      - defer: docker compose -f docker-compose.test.yml down
-      - migrate -database "${DB_DRIVER}://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable" -path db/migrations up
-      - go test ./... -v -tags=integration
-
-  migrate:up:
-    desc: Run migrations
-    cmds:
-      - migrate -database "${DB_DRIVER}://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}?sslmode=disable" -path db/migrations up
-    
-  api:run:debug:
-    desc: Run API in debug mode
-    dotenv: [".env"]
-    env:
-      DB_HOST: localhost
-      REDIS_HOST: localhost
-    cmds:
-      - go run cmd/api/main.go
+      - task: gw:test:integration
+      - task: weath:test:integration
+      - task: sub:test:integration
 
   copy:env:optional:
      desc: Ensure .env exists

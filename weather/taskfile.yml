@@ -39,6 +39,7 @@ tasks:
     desc: Run all tests
     cmds:
       - task: test:unit
+      - task: test:integration
   
   test:unit:
     desc: Run unit tests
