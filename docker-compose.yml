@@ -81,7 +81,9 @@ services:
       timeout: 2s
       retries: 4
   migrator:
-    build: .
+    build: 
+      context: .
+      dockerfile: sub/Dockerfile
     environment:
       <<: *db-env
     depends_on:
@@ -91,7 +93,9 @@ services:
     restart: "no"
 
   sub:
-    build: .
+    build: 
+      context: .
+      dockerfile: sub/Dockerfile
     ports:
       - "50100:50100"
     environment:
@@ -101,7 +105,7 @@ services:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
-    entrypoint: ["/app/bin/api"]
+    entrypoint: ["/app/bin/sub"]
     restart: unless-stopped
 
   weather:
