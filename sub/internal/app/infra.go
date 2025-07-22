@@ -12,7 +12,7 @@ import (
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/config"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/domain"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/email"
-	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/mailers"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/notifiers"
 	subrepo "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/repos/subscription"
 	weathrepo "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/repos/weather"
 	"github.com/google/uuid"
@@ -45,11 +45,11 @@ type (
 		Send(to, subject, body string) error
 	}
 
-	weatherMailer interface {
+	weatherNotifier interface {
 		SendCurrent(subscription domain.Subscription, weather domain.Weather) error
 	}
 
-	subMailer interface {
+	subNotifier interface {
 		SendConfirmation(subscription domain.Subscription) error
 	}
 )
@@ -66,9 +66,9 @@ type InfrastructureContainer struct {
 	WeatherRepo weatherRepo
 	SubRepo     subscriptionRepo
 
-	EmailBackend  emailBackend
-	WeatherMailer weatherMailer
-	SubMailer     subMailer
+	EmailBackend    emailBackend
+	WeatherNotifier weatherNotifier
+	SubNotifier     subNotifier
 }
 
 func NewInfrastructureContainer(cfg config.Config) (*InfrastructureContainer, error) {
@@ -111,9 +111,9 @@ func NewInfrastructureContainer(cfg config.Config) (*InfrastructureContainer, er
 
 	// mailers
 	emailBackend := newSMTPEmailBackend(cfg.SMTP)
-	weatherMailer := mailers.NewWeatherMailer(emailBackend)
+	weatherNotifier := notifiers.NewWeatherEmailNotifier(emailBackend)
 	confirmTmplPath := filepath.Join(cfg.Srv.TemplatesDir, confirmSubTmplName)
-	subMailer := mailers.NewSubscriptionMailer(emailBackend, confirmTmplPath)
+	subNotifier := notifiers.NewSubscriptionEmailNotifier(emailBackend, confirmTmplPath)
 
 	return &InfrastructureContainer{
 		DB:       db,
@@ -125,9 +125,9 @@ func NewInfrastructureContainer(cfg config.Config) (*InfrastructureContainer, er
 		WeatherRepo: weathRepo,
 		SubRepo:     subRepo,
 
-		EmailBackend:  emailBackend,
-		WeatherMailer: weatherMailer,
-		SubMailer:     subMailer,
+		EmailBackend:    emailBackend,
+		WeatherNotifier: weatherNotifier,
+		SubNotifier:     subNotifier,
 	}, nil
 }
 

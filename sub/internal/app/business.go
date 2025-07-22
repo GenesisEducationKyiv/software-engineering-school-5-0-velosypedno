@@ -25,11 +25,11 @@ type BusinessContainer struct {
 func NewBusinessContainer(infraContainer *InfrastructureContainer) (*BusinessContainer, error) {
 	subService := subservice.NewSubscriptionService(
 		infraContainer.SubRepo,
-		infraContainer.SubMailer,
+		infraContainer.SubNotifier,
 	)
 	weathNotifyService := weathnotify.NewWeatherNotificationService(
 		infraContainer.SubRepo,
-		infraContainer.WeatherMailer,
+		infraContainer.WeatherNotifier,
 		infraContainer.WeatherRepo,
 	)
 
