@@ -67,6 +67,8 @@ func (c WeatherServiceConfig) Addr() string {
 type Config struct {
 	DB       DBConfig
 	SMTP     SMTPConfig
+	RabbitMQ RabbitMQConfig
+
 	Srv      SrvConfig
 	GRPCSrv  GRPCConfig
 	WeathSvc WeatherServiceConfig
