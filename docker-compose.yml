@@ -166,7 +166,10 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    volumes:
+      - rabbitmq-data:/var/lib/rabbitmq
 
 volumes:
   postgres-data:
   prometheus-data:
+  rabbitmq-data:
