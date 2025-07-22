@@ -59,6 +59,7 @@ tasks:
       API_PORT: 8081
       DB_PORT: 5433
       SMTP_PORT: 1025
+      RABBITMQ_PORT: 5673
       DB_HOST: localhost
       SMTP_HOST: localhost
       EMAIL_FROM: testuser@example.com

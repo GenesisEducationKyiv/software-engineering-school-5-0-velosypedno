@@ -14,6 +14,21 @@ services:
       interval: 3s
       timeout: 3s
       retries: 5
+  
+  test-rabbitmq:
+    image: rabbitmq:3.13-management
+    restart: always
+    ports:
+      - "${RABBITMQ_PORT}:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
+      interval: 3s
+      timeout: 3s
+      retries: 5
 
   mailhog:
     image: mailhog/mailhog
@@ -23,4 +38,5 @@ services:
     depends_on:
       test-db:
         condition: service_healthy
-     
+      test-rabbitmq:
+        condition: service_healthy

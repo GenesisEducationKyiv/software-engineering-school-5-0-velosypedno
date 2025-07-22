@@ -48,10 +48,15 @@ func TestMain(m *testing.M) {
 	ctx, cancel := context.WithCancel(context.Background())
 	// run app
 	app := app.New(cfg)
-	go app.Run(ctx)
+	go func() {
+		err = app.Run(ctx)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
-	// wait in grpc server start
-	deadline := time.Now().Add(1 * time.Second)
+	// wait on grpc server start
+	deadline := time.Now().Add(3 * time.Second)
 	for {
 		conn, err := net.Dial("tcp", cfg.GRPCSrv.Addr())
 		if err == nil {
@@ -61,7 +66,7 @@ func TestMain(m *testing.M) {
 		}
 
 		if time.Now().After(deadline) {
-			log.Fatalf("gRPC server did not become ready within 1 second at %s", cfg.GRPCSrv.Addr())
+			log.Fatalf("gRPC server did not become ready within 3 second at %s", cfg.GRPCSrv.Addr())
 		}
 		time.Sleep(100 * time.Millisecond)
 	}

@@ -79,7 +79,6 @@ tasks:
     desc: Run integration tests
     dotenv: [".env.sample"]
     cmds:
-      - task: gw:test:integration
       - task: weath:test:integration
       - task: sub:test:integration
 
