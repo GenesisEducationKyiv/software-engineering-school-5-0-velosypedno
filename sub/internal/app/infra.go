@@ -12,7 +12,10 @@ import (
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/config"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/domain"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/email"
-	notifiers "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/notifiers/email"
+	brokernotify "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/notifiers/broker"
+	compositenotify "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/notifiers/composite"
+	emailnotify "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/notifiers/email"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/producers"
 	subrepo "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/repos/subscription"
 	weathrepo "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/repos/weather"
 	"github.com/google/uuid"
@@ -111,9 +114,13 @@ func NewInfrastructureContainer(cfg config.Config) (*InfrastructureContainer, er
 
 	// mailers
 	emailBackend := newSMTPEmailBackend(cfg.SMTP)
-	weatherNotifier := notifiers.NewWeatherEmailNotifier(emailBackend)
+	weatherNotifier := emailnotify.NewWeatherEmailNotifier(emailBackend)
+
 	confirmTmplPath := filepath.Join(cfg.Srv.TemplatesDir, confirmSubTmplName)
-	subNotifier := notifiers.NewSubscriptionEmailNotifier(emailBackend, confirmTmplPath)
+	subEmailNotifier := emailnotify.NewSubscriptionEmailNotifier(emailBackend, confirmTmplPath)
+	subEventProducer := producers.NewSubscribeEventProducer(ch)
+	subBrokerNotifier := brokernotify.NewSubscriptionEmailNotifier(subEventProducer)
+	subNotifier := compositenotify.NewSubscriptionCompositeNotifier(subEmailNotifier, subBrokerNotifier)
 
 	return &InfrastructureContainer{
 		DB:       db,
