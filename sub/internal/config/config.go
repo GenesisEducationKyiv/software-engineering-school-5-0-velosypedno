@@ -75,10 +75,10 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
-	var сfg Config
-	if err := envconfig.Process("", &сfg); err != nil {
+	var cfg Config
+	if err := envconfig.Process("", &cfg); err != nil {
 		return nil, err
 	}
 
-	return &сfg, nil
+	return &cfg, nil
 }

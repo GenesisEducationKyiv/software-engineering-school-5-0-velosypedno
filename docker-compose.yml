@@ -111,8 +111,8 @@ services:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
+      rmq-initializer:
+        condition: service_completed_successfully
     entrypoint: ["/app/bin/sub"]
     restart: unless-stopped
 
@@ -171,6 +171,17 @@ services:
 
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+  rmq-initializer:
+    build: 
+      context: .
+      dockerfile: rmq-initializer/Dockerfile
+    environment:
+      <<: [*rabbitmq-env]
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    entrypoint: ["/app/bin/rmq-initializer"]
+    restart: no
 
 volumes:
   postgres-data:
