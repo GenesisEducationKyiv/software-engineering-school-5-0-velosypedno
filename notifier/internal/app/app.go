@@ -43,7 +43,7 @@ func (a *App) Run(ctx context.Context) error {
 
 	// wait on shutdown signal
 	<-ctx.Done()
-	log.Println("Context cancelled, shutting down app...")
+	log.Println("Context canceled, shutting down app...")
 
 	// shutdown
 	err = a.shutdown()

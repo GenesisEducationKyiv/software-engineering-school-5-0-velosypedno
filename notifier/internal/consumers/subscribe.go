@@ -41,16 +41,26 @@ func (c *SubscribeEventConsumer) Consume(ctx context.Context) {
 			var event messaging.SubscribeEvent
 			err := json.Unmarshal(msg.Body, &event)
 			if err != nil {
-				msg.Reject(false)
+				log.Println(fmt.Errorf("subscribe event consumer: %v", err))
+				err = msg.Reject(false)
+				if err != nil {
+					log.Println(fmt.Errorf("subscribe event consumer: %v", err))
+				}
 				continue
 			}
 			err = c.handler.Handle(event)
 			if err != nil {
 				log.Println(fmt.Errorf("subscribe event consumer: %v", err))
-				msg.Nack(false, true)
+				err = msg.Nack(false, true)
+				if err != nil {
+					log.Println(fmt.Errorf("subscribe event consumer: %v", err))
+				}
 				continue
 			}
-			msg.Ack(false)
+			err = msg.Ack(false)
+			if err != nil {
+				log.Println(fmt.Errorf("subscribe event consumer: %v", err))
+			}
 		}
 	}
 }
