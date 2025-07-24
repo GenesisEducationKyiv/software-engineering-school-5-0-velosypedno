@@ -31,11 +31,11 @@ func (c *SubscribeEventConsumer) Consume(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Println("Subscribe event consumer stopped")
+			log.Println("subscribe event consumer stopped")
 			return
 		case msg, ok := <-c.msgs:
 			if !ok {
-				log.Println("Subscribe event consumer stopped")
+				log.Println("subscribe event consumer: channel closed")
 				return
 			}
 			var event messaging.SubscribeEvent

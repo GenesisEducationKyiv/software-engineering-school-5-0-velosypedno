@@ -57,7 +57,7 @@ func (a *App) setupSubscribeEventConsumer() (*consumers.SubscribeEventConsumer, 
 	msgs, err := a.rmqCh.Consume(
 		q.Name, // queue
 		"",     // consumer
-		true,   // auto-ack
+		false,  // auto-ack
 		false,  // exclusive
 		false,  // no-local
 		false,  // no-wait

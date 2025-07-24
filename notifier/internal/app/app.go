@@ -4,15 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/notifier/internal/config"
-	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/messaging"
 	amqp "github.com/rabbitmq/amqp091-go"
-)
-
-const (
-	shutdownTimeout = 20 * time.Second
 )
 
 type App struct {
@@ -41,19 +35,6 @@ func (a *App) Run(ctx context.Context) error {
 		return err
 	}
 
-	err = a.rmqCh.ExchangeDeclare(
-		messaging.ExchangeName, // name
-		"direct",               // type
-		true,                   // durable
-		false,                  // auto-deleted
-		false,                  // internal
-		false,                  // no-wait
-		nil,                    // arguments
-	)
-	if err != nil {
-		return err
-	}
-
 	subEventConsumer, err := a.setupSubscribeEventConsumer()
 	if err != nil {
 		return err
@@ -62,6 +43,7 @@ func (a *App) Run(ctx context.Context) error {
 
 	// wait on shutdown signal
 	<-ctx.Done()
+	log.Println("Context cancelled, shutting down app...")
 
 	// shutdown
 	err = a.shutdown()

@@ -11,6 +11,9 @@ includes:
   sub: 
     taskfile: ./sub/taskfile.yml
     dir: ./sub
+  notif: 
+    taskfile: ./notifier/taskfile.yml
+    dir: ./notifier
 
 tasks:
   default:
