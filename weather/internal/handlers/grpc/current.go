@@ -12,13 +12,13 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func (s *WeathGRPCServer) GetCurrent(_ context.Context, req *pb.GetCurrentRequest) (*pb.GetCurrentResponse, error) {
+func (s *WeathGRPCServer) GetCurrent(ctx context.Context, req *pb.GetCurrentRequest) (*pb.GetCurrentResponse, error) {
 	city := req.City
 	if city == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "city is empty")
 	}
 
-	ctxWithTimeout, cancel := context.WithTimeout(context.Background(), s.requestTimeout)
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, s.requestTimeout)
 	defer cancel()
 	weather, err := s.weathSvc.GetCurrent(ctxWithTimeout, city)
 	if errors.Is(err, domain.ErrCityNotFound) {
