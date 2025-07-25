@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"path/filepath"
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/messaging"
 	pbweath "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/weath/v1alpha1"
@@ -13,7 +12,6 @@ import (
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/domain"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/email"
 	brokernotify "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/notifiers/broker"
-	compositenotify "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/notifiers/composite"
 	emailnotify "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/notifiers/email"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/producers"
 	subrepo "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/repos/subscription"
@@ -116,11 +114,8 @@ func NewInfrastructureContainer(cfg config.Config) (*InfrastructureContainer, er
 	emailBackend := newSMTPEmailBackend(cfg.SMTP)
 	weatherNotifier := emailnotify.NewWeatherEmailNotifier(emailBackend)
 
-	confirmTmplPath := filepath.Join(cfg.Srv.TemplatesDir, confirmSubTmplName)
-	subEmailNotifier := emailnotify.NewSubscriptionEmailNotifier(emailBackend, confirmTmplPath)
 	subEventProducer := producers.NewSubscribeEventProducer(ch)
-	subBrokerNotifier := brokernotify.NewSubscriptionEmailNotifier(subEventProducer)
-	subNotifier := compositenotify.NewSubscriptionCompositeNotifier(subEmailNotifier, subBrokerNotifier)
+	subNotifier := brokernotify.NewSubscriptionEmailNotifier(subEventProducer)
 
 	return &InfrastructureContainer{
 		DB:       db,

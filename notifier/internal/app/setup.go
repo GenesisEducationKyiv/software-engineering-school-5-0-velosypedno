@@ -1,12 +1,17 @@
 package app
 
 import (
+	"path/filepath"
 	"sync"
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/notifier/internal/consumers"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/notifier/internal/handlers"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/notifier/internal/mailers"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/email"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/messaging"
 )
+
+const confirmSubTmplName = "confirm_sub.html"
 
 var declareExchangeOnce sync.Once
 var declareExchangeErr error
@@ -66,9 +71,20 @@ func (a *App) setupSubscribeEventConsumer() (*consumers.SubscribeEventConsumer, 
 	if err != nil {
 		return nil, err
 	}
-
+	smtpBackend := email.NewSMTPBackend(
+		a.cfg.SMTP.Host,
+		a.cfg.SMTP.Port,
+		a.cfg.SMTP.User,
+		a.cfg.SMTP.Pass,
+		a.cfg.SMTP.EmailFrom,
+	)
+	_ = smtpBackend
+	stdoutBackend := email.NewStdoutBackend()
+	confirmTmplPath := filepath.Join(a.cfg.TemplatesDir, confirmSubTmplName)
+	subscribeMailer := mailers.NewSubscriptionEmailNotifier(stdoutBackend, confirmTmplPath)
+	subscribeEventHandler := handlers.NewSubscribeEventHandler(subscribeMailer)
 	subscribeEventConsumer := consumers.NewSubscribeEventConsumer(
-		handlers.NewSubscribeEventHandler(),
+		subscribeEventHandler,
 		msgs,
 	)
 
