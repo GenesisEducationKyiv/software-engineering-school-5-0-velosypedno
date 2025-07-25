@@ -3,5 +3,8 @@
 set -e
 
 go-task lint
+go-task gw:lint
+go-task weath:lint
+go-task sub:lint
 
 exit 0

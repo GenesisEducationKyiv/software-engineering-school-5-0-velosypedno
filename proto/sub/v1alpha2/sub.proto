@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package sub.v1alpha2;
+
+option go_package = "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/sub/v1alpha2;subv1alpha2";
+
+service SubscriptionService {
+    rpc Subscribe(SubscribeRequest) returns (SubscribeResponse);
+    rpc Confirm(ConfirmRequest) returns (ConfirmResponse);
+    rpc Unsubscribe(UnsubscribeRequest) returns (UnsubscribeResponse);
+}
+
+message SubscribeRequest {
+    string email = 1;
+    string frequency = 2;
+    string city = 3;
+}
+
+message SubscribeResponse {
+    string message = 1;
+}
+
+message ConfirmRequest {
+    string token = 1;
+}
+
+message ConfirmResponse {
+    string message = 1;
+}
+
+message UnsubscribeRequest {
+    string token = 1;
+}
+
+message UnsubscribeResponse {
+    string message = 1;
+}
