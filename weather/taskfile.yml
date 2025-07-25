@@ -7,7 +7,7 @@ tasks:
       - go-task --list-all
 
   lint:
-    desc: Run local linter config 
+    desc: Run local linter config
     cmds:
       - golangci-lint run
 
