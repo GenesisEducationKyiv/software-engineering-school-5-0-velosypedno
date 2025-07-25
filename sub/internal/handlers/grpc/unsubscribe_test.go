@@ -8,7 +8,7 @@ import (
 
 	pb "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/sub/v1alpha2"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/domain"
-	subgrpc "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/handlers/grpc/subscription"
+	handlers "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/handlers/grpc"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -22,7 +22,7 @@ func TestSubGRPCServer_Unsubscribe(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		// Arrange
 		var called bool
-		srv := subgrpc.NewSubGRPCServer(&mockSubService{
+		srv := handlers.NewSubGRPCServer(&mockSubService{
 			UnsubscribeFn: func(u uuid.UUID) error {
 				called = true
 				assert.Equal(t, validToken, u)
@@ -41,7 +41,7 @@ func TestSubGRPCServer_Unsubscribe(t *testing.T) {
 
 	t.Run("InvalidToken", func(t *testing.T) {
 		// Arrange
-		srv := subgrpc.NewSubGRPCServer(&mockSubService{})
+		srv := handlers.NewSubGRPCServer(&mockSubService{})
 
 		// Act
 		_, err := srv.Unsubscribe(context.Background(), &pb.UnsubscribeRequest{Token: "invalid"})
@@ -53,7 +53,7 @@ func TestSubGRPCServer_Unsubscribe(t *testing.T) {
 
 	t.Run("NotFound", func(t *testing.T) {
 		// Arrange
-		srv := subgrpc.NewSubGRPCServer(&mockSubService{
+		srv := handlers.NewSubGRPCServer(&mockSubService{
 			UnsubscribeFn: func(u uuid.UUID) error {
 				return domain.ErrSubNotFound
 			},
@@ -69,7 +69,7 @@ func TestSubGRPCServer_Unsubscribe(t *testing.T) {
 
 	t.Run("InternalError", func(t *testing.T) {
 		// Arrange
-		srv := subgrpc.NewSubGRPCServer(&mockSubService{
+		srv := handlers.NewSubGRPCServer(&mockSubService{
 			UnsubscribeFn: func(u uuid.UUID) error {
 				return domain.ErrInternal
 			},
@@ -85,7 +85,7 @@ func TestSubGRPCServer_Unsubscribe(t *testing.T) {
 
 	t.Run("UnexpectedError", func(t *testing.T) {
 		// Arrange
-		srv := subgrpc.NewSubGRPCServer(&mockSubService{
+		srv := handlers.NewSubGRPCServer(&mockSubService{
 			UnsubscribeFn: func(u uuid.UUID) error {
 				return domain.ErrInternal
 			},

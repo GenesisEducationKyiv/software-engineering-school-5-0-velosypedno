@@ -3,7 +3,7 @@ package app
 import (
 	pb "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/sub/v1alpha2"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/domain"
-	subgrpc "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/handlers/grpc/subscription"
+	grpchandlers "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/handlers/grpc"
 	"github.com/gin-gonic/gin"
 	"github.com/robfig/cron/v3"
 	"google.golang.org/grpc"
@@ -49,6 +49,6 @@ func newCron(notifier weatherNotificationService) (*cron.Cron, error) {
 
 func newGRPCServer(subSvc subscriptionService) *grpc.Server {
 	grpcServer := grpc.NewServer()
-	pb.RegisterSubscriptionServiceServer(grpcServer, subgrpc.NewSubGRPCServer(subSvc))
+	pb.RegisterSubscriptionServiceServer(grpcServer, grpchandlers.NewSubGRPCServer(subSvc))
 	return grpcServer
 }

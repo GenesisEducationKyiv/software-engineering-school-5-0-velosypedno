@@ -8,7 +8,7 @@ import (
 
 	pb "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/sub/v1alpha2"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/domain"
-	subgrpc "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/handlers/grpc/subscription"
+	handlers "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/handlers/grpc"
 	subsrv "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/services/subscription"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -49,7 +49,7 @@ func TestSubGRPCServer_Confirm(t *testing.T) {
 
 	t.Run("Success", func(t *testing.T) {
 		// Arrange
-		srv := subgrpc.NewSubGRPCServer(
+		srv := handlers.NewSubGRPCServer(
 			&mockSubService{
 				ActivateFn: func(u uuid.UUID) error {
 					if u != validToken {
@@ -70,7 +70,7 @@ func TestSubGRPCServer_Confirm(t *testing.T) {
 
 	t.Run("InvalidToken", func(t *testing.T) {
 		// Arrange
-		srv := subgrpc.NewSubGRPCServer(&mockSubService{})
+		srv := handlers.NewSubGRPCServer(&mockSubService{})
 
 		// Act
 		_, err := srv.Confirm(context.Background(), &pb.ConfirmRequest{Token: "invalid"})
@@ -84,7 +84,7 @@ func TestSubGRPCServer_Confirm(t *testing.T) {
 
 	t.Run("NotFound", func(t *testing.T) {
 		// Arrange
-		srv := subgrpc.NewSubGRPCServer(
+		srv := handlers.NewSubGRPCServer(
 			&mockSubService{
 				ActivateFn: func(u uuid.UUID) error {
 					return domain.ErrSubNotFound
@@ -104,7 +104,7 @@ func TestSubGRPCServer_Confirm(t *testing.T) {
 
 	t.Run("InternalError", func(t *testing.T) {
 		// Arrange
-		srv := subgrpc.NewSubGRPCServer(
+		srv := handlers.NewSubGRPCServer(
 			&mockSubService{
 				ActivateFn: func(u uuid.UUID) error {
 					return domain.ErrInternal

@@ -12,7 +12,7 @@ import (
 	"testing"
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/domain"
-	subh "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/handlers/http/subscription"
+	handlers "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/handlers/http"
 	subsrv "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/services/subscription"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
@@ -96,7 +96,7 @@ func TestSubscribePOSTHandler(t *testing.T) {
 				mockService.On("Subscribe", input).Return(tt.mockSrvErr)
 			}
 			route := gin.New()
-			route.POST("/subscribe", subh.NewSubscribePOSTHandler(mockService))
+			route.POST("/subscribe", handlers.NewSubscribePOSTHandler(mockService))
 
 			// Act
 			req := httptest.NewRequest(http.MethodPost, "/subscribe", bytes.NewBuffer([]byte(tt.body)))
