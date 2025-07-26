@@ -84,6 +84,7 @@ tasks:
     cmds:
       - task: weath:test:integration
       - task: sub:test:integration
+      - task: notif:test:integration
 
   copy:env:optional:
      desc: Ensure .env exists
