@@ -1,0 +1,57 @@
+version: '3'
+
+tasks:
+  default:
+    desc: List available tasks
+    cmds:
+      - go-task --list-all
+
+  lint:
+    desc: Run local linter config 
+    cmds:
+      - golangci-lint run
+
+  copy:env:
+    desc: Copy default env vars
+    cmds:
+      - cp .env.sample .env
+    silent: false
+
+  copy:env:optional:
+     desc: Ensure .env exists
+     cmds:
+      - |
+        if [ ! -f .env ]; then
+          echo ".env not found, copying from .env.sample"
+          cp .env.sample .env
+        else
+          echo ".env already exists"
+        fi
+
+  run:debug:
+    desc: Run API in debug mode
+    dotenv: [".env"]
+    cmds:
+      - go run cmd/main.go
+    env:
+      GRPC_HOST: localhost
+
+  test:
+    desc: Run all tests
+    cmds:
+      - task: test:unit
+  
+  test:unit:
+    desc: Run unit tests
+    cmds:
+      - go test ./... -v -tags=unit
+
+  install:
+    desc: Install dependencies
+    cmds:
+      - task: install:linter
+
+  install:linter:
+    desc: Install linter
+    cmds:
+      - go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.1.6

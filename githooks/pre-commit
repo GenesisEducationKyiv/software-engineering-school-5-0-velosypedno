@@ -3,5 +3,9 @@
 set -e
 
 go-task lint
+go-task gw:lint
+go-task weath:lint
+go-task sub:lint
+go-task notif:lint
 
 exit 0
