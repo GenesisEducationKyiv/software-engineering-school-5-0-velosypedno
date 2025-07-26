@@ -10,9 +10,7 @@ import (
 	pbweath "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/weath/v1alpha1"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/config"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/domain"
-	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/email"
 	brokernotify "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/notifiers/broker"
-	emailnotify "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/notifiers/email"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/producers"
 	subrepo "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/repos/subscription"
 	weathrepo "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/repos/weather"
@@ -111,9 +109,6 @@ func NewInfrastructureContainer(cfg config.Config) (*InfrastructureContainer, er
 	weathRepo := weathrepo.NewGRPCAdapter(weathGRPCClient)
 
 	// mailers
-	emailBackend := newSMTPEmailBackend(cfg.SMTP)
-	weatherEmailNotifier := emailnotify.NewWeatherEmailNotifier(emailBackend)
-	_ = weatherEmailNotifier
 	weatherNotifyCommandProducer := producers.NewWeatherNotifyCommandProducer(ch)
 	weatherNotifier := brokernotify.NewWeatherNotifyCommandNotifier(weatherNotifyCommandProducer)
 
@@ -130,7 +125,6 @@ func NewInfrastructureContainer(cfg config.Config) (*InfrastructureContainer, er
 		WeatherRepo: weathRepo,
 		SubRepo:     subRepo,
 
-		EmailBackend:    emailBackend,
 		WeatherNotifier: weatherNotifier,
 		SubNotifier:     subNotifier,
 	}, nil
@@ -198,10 +192,6 @@ func newWeatherGRPCConn(cfg config.Config) (*grpc.ClientConn, error) {
 		return nil, err
 	}
 	return grpcConn, nil
-}
-
-func newSMTPEmailBackend(cfg config.SMTPConfig) *email.SMTPBackend {
-	return email.NewSMTPBackend(cfg.Host, cfg.Port, cfg.User, cfg.Pass, cfg.EmailFrom)
 }
 
 func newDB(cfg config.DBConfig) (*sql.DB, error) {

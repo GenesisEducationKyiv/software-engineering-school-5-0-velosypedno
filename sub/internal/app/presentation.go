@@ -32,7 +32,7 @@ func NewPresentationContainer(businessContainer *BusinessContainer) (
 
 func newCron(notifier weatherNotificationService) (*cron.Cron, error) {
 	cron := cron.New()
-	_, err := cron.AddFunc("* * * * *", func() {
+	_, err := cron.AddFunc("0 * * * *", func() {
 		notifier.SendByFreq(domain.FreqHourly)
 	})
 	if err != nil {

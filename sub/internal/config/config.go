@@ -33,19 +33,6 @@ func (c RabbitMQConfig) Addr() string {
 	return fmt.Sprintf("amqp://%s:%s@%s:%s/", c.User, c.Pass, c.Host, c.Port)
 }
 
-type SMTPConfig struct {
-	Host      string `envconfig:"SMTP_HOST" required:"true"`
-	Port      string `envconfig:"SMTP_PORT" required:"true"`
-	User      string `envconfig:"SMTP_USER" required:"true"`
-	Pass      string `envconfig:"SMTP_PASS" required:"true"`
-	EmailFrom string `envconfig:"EMAIL_FROM" required:"true"`
-}
-
-type SrvConfig struct {
-	Port         string `envconfig:"API_PORT" required:"true"`
-	TemplatesDir string `envconfig:"TEMPLATES_DIR" required:"true"`
-}
-
 type GRPCConfig struct {
 	Port string `envconfig:"GRPC_PORT" required:"true"`
 	Host string `envconfig:"GRPC_HOST" required:"true"`
@@ -66,10 +53,8 @@ func (c WeatherServiceConfig) Addr() string {
 
 type Config struct {
 	DB       DBConfig
-	SMTP     SMTPConfig
 	RabbitMQ RabbitMQConfig
 
-	Srv      SrvConfig
 	GRPCSrv  GRPCConfig
 	WeathSvc WeatherServiceConfig
 }

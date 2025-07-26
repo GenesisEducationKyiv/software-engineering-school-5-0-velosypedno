@@ -28,13 +28,9 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
-
-  mailhog:
-    image: mailhog/mailhog
-    ports:
-      - "1025:1025" 
-      - "8025:8025" 
+      
+  test-waiter:
+    image: alpine
     depends_on:
       test-db:
         condition: service_healthy

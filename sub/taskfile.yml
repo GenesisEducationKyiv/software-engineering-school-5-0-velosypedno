@@ -56,14 +56,9 @@ tasks:
       WEATHER_SERVICE_HOST: localhost
       GRPC_PORT: 50103
       GRPC_HOST: localhost
-      API_PORT: 8081
       DB_PORT: 5433
-      SMTP_PORT: 1025
       RABBITMQ_PORT: 5673
       DB_HOST: localhost
-      SMTP_HOST: localhost
-      EMAIL_FROM: testuser@example.com
-      TEMPLATES_DIR: ../../internal/templates
     cmds:
       - task: copy:env:optional
       - docker compose -f docker-compose.test.yml up -d
