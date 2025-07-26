@@ -90,3 +90,61 @@ func (a *App) setupSubscribeEventConsumer() (*consumers.SubscribeEventConsumer, 
 
 	return subscribeEventConsumer, nil
 }
+
+func (a *App) setupWeatherCommandConsumer() (*consumers.WeatherCommandConsumer, error) {
+	err := a.setupExchange()
+	if err != nil {
+		return nil, err
+	}
+	q, err := a.rmqCh.QueueDeclare(
+		messaging.WeatherQueueName, // name
+		true,                       // durable
+		false,                      // delete when unused
+		false,                      // exclusive
+		false,                      // no-wait
+		nil,                        // arguments
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	err = a.rmqCh.QueueBind(
+		q.Name,                      // queue name
+		messaging.WeatherRoutingKey, // routing key
+		messaging.ExchangeName,      // exchange
+		false,
+		nil)
+	if err != nil {
+		return nil, err
+	}
+
+	msgs, err := a.rmqCh.Consume(
+		q.Name, // queue
+		"",     // consumer
+		false,  // auto-ack
+		false,  // exclusive
+		false,  // no-local
+		false,  // no-wait
+		nil,    // args
+	)
+	if err != nil {
+		return nil, err
+	}
+	smtpBackend := email.NewSMTPBackend(
+		a.cfg.SMTP.Host,
+		a.cfg.SMTP.Port,
+		a.cfg.SMTP.User,
+		a.cfg.SMTP.Pass,
+		a.cfg.SMTP.EmailFrom,
+	)
+	_ = smtpBackend
+	stdoutBackend := email.NewStdoutBackend()
+	weatherMailer := mailers.NewWeatherEmailNotifier(stdoutBackend)
+	weatherCommandHandler := handlers.NewWeatherNotifyCommandHandler(weatherMailer)
+	weatherCommandConsumer := consumers.NewWeatherCommandConsumer(
+		weatherCommandHandler,
+		msgs,
+	)
+
+	return weatherCommandConsumer, nil
+}

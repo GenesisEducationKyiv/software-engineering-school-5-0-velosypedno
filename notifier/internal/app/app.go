@@ -41,6 +41,12 @@ func (a *App) Run(ctx context.Context) error {
 	}
 	go subEventConsumer.Consume(ctx)
 
+	weatherCommandConsumer, err := a.setupWeatherCommandConsumer()
+	if err != nil {
+		return err
+	}
+	go weatherCommandConsumer.Consume(ctx)
+
 	// wait on shutdown signal
 	<-ctx.Done()
 	log.Println("Context canceled, shutting down app...")
