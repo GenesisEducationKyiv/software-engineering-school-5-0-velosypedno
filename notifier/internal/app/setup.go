@@ -12,6 +12,8 @@ import (
 )
 
 const confirmSubTmplName = "confirm_sub.html"
+const subscribeConsumerName = "subscribe event"
+const weathNotifyConsumerName = "weather notify command"
 
 var declareExchangeOnce sync.Once
 var declareExchangeErr error
@@ -31,7 +33,7 @@ func (a *App) setupExchange() error {
 	return declareExchangeErr
 }
 
-func (a *App) setupSubscribeEventConsumer() (*consumers.SubscribeEventConsumer, error) {
+func (a *App) setupSubscribeEventConsumer() (*consumers.GenericConsumer[messaging.SubscribeEvent], error) {
 	err := a.setupExchange()
 	if err != nil {
 		return nil, err
@@ -83,15 +85,11 @@ func (a *App) setupSubscribeEventConsumer() (*consumers.SubscribeEventConsumer, 
 	confirmTmplPath := filepath.Join(a.cfg.TemplatesDir, confirmSubTmplName)
 	subscribeMailer := mailers.NewSubscriptionEmailNotifier(stdoutBackend, confirmTmplPath)
 	subscribeEventHandler := handlers.NewSubscribeEventHandler(subscribeMailer)
-	subscribeEventConsumer := consumers.NewSubscribeEventConsumer(
-		subscribeEventHandler,
-		msgs,
-	)
-
+	subscribeEventConsumer := consumers.NewGenericConsumer(subscribeEventHandler, msgs, subscribeConsumerName)
 	return subscribeEventConsumer, nil
 }
 
-func (a *App) setupWeatherCommandConsumer() (*consumers.WeatherCommandConsumer, error) {
+func (a *App) setupWeatherCommandConsumer() (*consumers.GenericConsumer[messaging.WeatherNotifyCommand], error) {
 	err := a.setupExchange()
 	if err != nil {
 		return nil, err
@@ -141,10 +139,6 @@ func (a *App) setupWeatherCommandConsumer() (*consumers.WeatherCommandConsumer, 
 	stdoutBackend := email.NewStdoutBackend()
 	weatherMailer := mailers.NewWeatherEmailNotifier(stdoutBackend)
 	weatherCommandHandler := handlers.NewWeatherNotifyCommandHandler(weatherMailer)
-	weatherCommandConsumer := consumers.NewWeatherCommandConsumer(
-		weatherCommandHandler,
-		msgs,
-	)
-
+	weatherCommandConsumer := consumers.NewGenericConsumer(weatherCommandHandler, msgs, weathNotifyConsumerName)
 	return weatherCommandConsumer, nil
 }
