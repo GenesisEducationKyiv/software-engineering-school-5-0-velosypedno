@@ -20,7 +20,6 @@ services:
     restart: always
     ports:
       - "${RABBITMQ_PORT}:5672"
-      - "15672:15672"
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
