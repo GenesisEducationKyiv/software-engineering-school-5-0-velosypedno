@@ -69,4 +69,26 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	q, err = ch.QueueDeclare(
+		messaging.WeatherQueueName, // name
+		true,                       // durable
+		false,                      // delete when unused
+		false,                      // exclusive
+		false,                      // no-wait
+		nil,                        // arguments
+	)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = ch.QueueBind(
+		q.Name,                      // queue name
+		messaging.WeatherRoutingKey, // routing key
+		messaging.ExchangeName,      // exchange
+		false,
+		nil)
+	if err != nil {
+		log.Fatal(err)
+	}
 }

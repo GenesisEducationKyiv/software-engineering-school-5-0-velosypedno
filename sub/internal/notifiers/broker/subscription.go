@@ -6,15 +6,15 @@ import (
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/domain"
 )
 
-type eventProducer interface {
+type subscribeEventProducer interface {
 	Produce(sub domain.Subscription) error
 }
 
 type SubscriptionEventNotifier struct {
-	producer eventProducer
+	producer subscribeEventProducer
 }
 
-func NewSubscriptionEmailNotifier(producer eventProducer) *SubscriptionEventNotifier {
+func NewSubscriptionEmailNotifier(producer subscribeEventProducer) *SubscriptionEventNotifier {
 	return &SubscriptionEventNotifier{
 		producer: producer,
 	}

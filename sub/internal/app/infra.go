@@ -112,7 +112,10 @@ func NewInfrastructureContainer(cfg config.Config) (*InfrastructureContainer, er
 
 	// mailers
 	emailBackend := newSMTPEmailBackend(cfg.SMTP)
-	weatherNotifier := emailnotify.NewWeatherEmailNotifier(emailBackend)
+	weatherEmailNotifier := emailnotify.NewWeatherEmailNotifier(emailBackend)
+	_ = weatherEmailNotifier
+	weatherNotifyCommandProducer := producers.NewWeatherNotifyCommandProducer(ch)
+	weatherNotifier := brokernotify.NewWeatherNotifyCommandNotifier(weatherNotifyCommandProducer)
 
 	subEventProducer := producers.NewSubscribeEventProducer(ch)
 	subNotifier := brokernotify.NewSubscriptionEmailNotifier(subEventProducer)
