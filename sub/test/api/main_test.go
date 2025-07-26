@@ -128,6 +128,13 @@ func clearDB() {
 	}
 }
 
+func clearRMQ() {
+	_, err := RMQChannel.QueuePurge(messaging.SubscribeQueueName, false)
+	if err != nil {
+		log.Panic(err)
+	}
+}
+
 func setupRMQ(cfg config.RabbitMQConfig) (*amqp.Connection, *amqp.Channel, error) {
 	conn, err := amqp.Dial(cfg.Addr())
 	if err != nil {
