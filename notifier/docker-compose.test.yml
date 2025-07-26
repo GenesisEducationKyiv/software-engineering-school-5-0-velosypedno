@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+
+  test-rabbitmq:
+    image: rabbitmq:3.13-management
+    restart: always
+    ports:
+      - "${RABBITMQ_PORT}:5672"
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_port_connectivity"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025" 
+      - "8025:8025" 
+    depends_on:
+      test-rabbitmq:
+        condition: service_healthy

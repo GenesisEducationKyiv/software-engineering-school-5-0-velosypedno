@@ -82,8 +82,9 @@ func (a *App) setupSubscribeEventConsumer() (*consumers.GenericConsumer[messagin
 	)
 	_ = smtpBackend
 	stdoutBackend := email.NewStdoutBackend()
+	_ = stdoutBackend
 	confirmTmplPath := filepath.Join(a.cfg.TemplatesDir, confirmSubTmplName)
-	subscribeMailer := mailers.NewSubscriptionEmailNotifier(stdoutBackend, confirmTmplPath)
+	subscribeMailer := mailers.NewSubscriptionEmailNotifier(smtpBackend, confirmTmplPath)
 	subscribeEventHandler := handlers.NewSubscribeEventHandler(subscribeMailer)
 	subscribeEventConsumer := consumers.NewGenericConsumer(subscribeEventHandler, msgs, subscribeConsumerName)
 	return subscribeEventConsumer, nil
@@ -137,7 +138,8 @@ func (a *App) setupWeatherCommandConsumer() (*consumers.GenericConsumer[messagin
 	)
 	_ = smtpBackend
 	stdoutBackend := email.NewStdoutBackend()
-	weatherMailer := mailers.NewWeatherEmailNotifier(stdoutBackend)
+	_ = stdoutBackend
+	weatherMailer := mailers.NewWeatherEmailNotifier(smtpBackend)
 	weatherCommandHandler := handlers.NewWeatherNotifyCommandHandler(weatherMailer)
 	weatherCommandConsumer := consumers.NewGenericConsumer(weatherCommandHandler, msgs, weathNotifyConsumerName)
 	return weatherCommandConsumer, nil
