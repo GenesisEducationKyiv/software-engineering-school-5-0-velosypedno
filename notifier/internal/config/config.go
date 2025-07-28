@@ -25,9 +25,18 @@ type SMTPConfig struct {
 	EmailFrom string `envconfig:"EMAIL_FROM" required:"true"`
 }
 
+type HTTPSrvConfig struct {
+	Port string `envconfig:"HTTP_PORT" required:"true"`
+}
+
+func (c HTTPSrvConfig) Addr() string {
+	return ":" + c.Port
+}
+
 type Config struct {
 	SMTP     SMTPConfig
 	RabbitMQ RabbitMQConfig
+	HTTPSrv  HTTPSrvConfig
 
 	TemplatesDir string `envconfig:"TEMPLATES_DIR" required:"true"`
 }

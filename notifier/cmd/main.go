@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"log"
-	"os"
 	"os/signal"
 	"syscall"
 
@@ -15,19 +14,18 @@ func main() {
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
 
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		for sig := range sigs {
-			log.Printf("Received signal: %s\n", sig)
-		}
-	}()
-
+	log.Println("Loading config...")
 	cfg, err := config.Load()
 	if err != nil {
 		log.Panic(err)
 	}
+	log.Println("Config loaded")
+
+	log.Println("Creating app...")
 	app := app.New(cfg)
+	log.Println("App created")
+
+	log.Println("Running app...")
 	err = app.Run(ctx)
 	if err != nil {
 		log.Panic(err)

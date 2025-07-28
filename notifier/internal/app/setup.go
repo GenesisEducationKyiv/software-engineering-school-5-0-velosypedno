@@ -5,10 +5,12 @@ import (
 	"sync"
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/notifier/internal/consumers"
-	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/notifier/internal/handlers"
+	eventhandlers "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/notifier/internal/handlers/event"
+	httphandlers "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/notifier/internal/handlers/http"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/notifier/internal/mailers"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/email"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/messaging"
+	"github.com/gin-gonic/gin"
 )
 
 const confirmSubTmplName = "confirm_sub.html"
@@ -85,7 +87,7 @@ func (a *App) setupSubscribeEventConsumer() (*consumers.GenericConsumer[messagin
 	_ = stdoutBackend
 	confirmTmplPath := filepath.Join(a.cfg.TemplatesDir, confirmSubTmplName)
 	subscribeMailer := mailers.NewSubscriptionEmailNotifier(smtpBackend, confirmTmplPath)
-	subscribeEventHandler := handlers.NewSubscribeEventHandler(subscribeMailer)
+	subscribeEventHandler := eventhandlers.NewSubscribeEventHandler(subscribeMailer)
 	subscribeEventConsumer := consumers.NewGenericConsumer(subscribeEventHandler, msgs, subscribeConsumerName)
 	return subscribeEventConsumer, nil
 }
@@ -140,7 +142,14 @@ func (a *App) setupWeatherCommandConsumer() (*consumers.GenericConsumer[messagin
 	stdoutBackend := email.NewStdoutBackend()
 	_ = stdoutBackend
 	weatherMailer := mailers.NewWeatherEmailNotifier(smtpBackend)
-	weatherCommandHandler := handlers.NewWeatherNotifyCommandHandler(weatherMailer)
+	weatherCommandHandler := eventhandlers.NewWeatherNotifyCommandHandler(weatherMailer)
 	weatherCommandConsumer := consumers.NewGenericConsumer(weatherCommandHandler, msgs, weathNotifyConsumerName)
 	return weatherCommandConsumer, nil
+}
+
+func (a *App) setupRouter() *gin.Engine {
+	router := gin.Default()
+	router.GET("/healthcheck", httphandlers.NewHealthcheckGETHandler(a.rmqCh,
+		[]string{messaging.SubscribeQueueName, messaging.WeatherQueueName}))
+	return router
 }
