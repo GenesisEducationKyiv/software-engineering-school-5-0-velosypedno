@@ -7,6 +7,7 @@ import (
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/gateway/internal/app"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/gateway/internal/config"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/logging"
 	"go.uber.org/zap"
 )
 
@@ -21,8 +22,8 @@ func main() {
 			panic(err)
 		}
 	}()
-	logger = logger.With(zap.String("service", "gateway"))
-	mainLogger := logger.With(zap.String("component", "main"))
+	logFactory := logging.NewFactory(logger, "gateway")
+	mainLogger := logFactory.ForPackage("main")
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
