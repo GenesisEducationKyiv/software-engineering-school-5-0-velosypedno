@@ -22,6 +22,7 @@ func NewGenericConsumer[T any](handler handler[T], msgs <-chan amqp.Delivery, na
 	return &GenericConsumer[T]{
 		handler: handler,
 		msgs:    msgs,
+		name:    name,
 	}
 }
 
