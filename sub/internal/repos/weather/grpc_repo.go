@@ -11,15 +11,15 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-type GRPCAdapter struct {
+type GRPCRepo struct {
 	client pb.WeatherServiceClient
 }
 
-func NewGRPCAdapter(client pb.WeatherServiceClient) *GRPCAdapter {
-	return &GRPCAdapter{client: client}
+func NewGRPCRepo(client pb.WeatherServiceClient) *GRPCRepo {
+	return &GRPCRepo{client: client}
 }
 
-func (s *GRPCAdapter) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
+func (s *GRPCRepo) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
 	req := pb.GetCurrentRequest{
 		City: city,
 	}

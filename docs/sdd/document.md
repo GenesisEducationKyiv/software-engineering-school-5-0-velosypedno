@@ -46,11 +46,15 @@
 
 - `External SMTP server` delivers confirmation and weather update emails to users.
 
-## 4. DB schema
+## 4. Application Architecture Diagram
+
+![img.png](./application-architecture.png)
+
+## 5. DB schema
 
 ![img.png](./db-relations.png)
 
-## 5. API endpoints
+## 6. API endpoints
 
 All routes are prefixed with `/api`.
 

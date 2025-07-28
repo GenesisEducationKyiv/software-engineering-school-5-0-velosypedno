@@ -9,7 +9,7 @@ import (
 
 	pb "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/sub/v1alpha2"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/domain"
-	subgrpc "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/handlers/grpc/subscription"
+	handlers "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/handlers/grpc"
 	subsrv "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/services/subscription"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -35,7 +35,7 @@ func TestSubGRPCServer_Subscribe(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		// Arrange
 		var called bool
-		srv := subgrpc.NewSubGRPCServer(&mockSubService{
+		srv := handlers.NewSubGRPCServer(&mockSubService{
 			SubscribeFn: func(input subsrv.SubscriptionInput) error {
 				called = true
 				assert.Equal(t, validReq.Email, input.Email)
@@ -56,7 +56,7 @@ func TestSubGRPCServer_Subscribe(t *testing.T) {
 
 	t.Run("EmptyRequest", func(t *testing.T) {
 		// Arrange
-		srv := subgrpc.NewSubGRPCServer(&mockSubService{})
+		srv := handlers.NewSubGRPCServer(&mockSubService{})
 
 		// Act
 		_, err := srv.Subscribe(context.Background(), &pb.SubscribeRequest{})
@@ -68,7 +68,7 @@ func TestSubGRPCServer_Subscribe(t *testing.T) {
 
 	t.Run("InvalidEmail", func(t *testing.T) {
 		// Arrange
-		srv := subgrpc.NewSubGRPCServer(&mockSubService{})
+		srv := handlers.NewSubGRPCServer(&mockSubService{})
 
 		// Act
 		_, err := srv.Subscribe(context.Background(), &pb.SubscribeRequest{
@@ -84,7 +84,7 @@ func TestSubGRPCServer_Subscribe(t *testing.T) {
 
 	t.Run("InvalidFrequency", func(t *testing.T) {
 		// Arrange
-		srv := subgrpc.NewSubGRPCServer(&mockSubService{})
+		srv := handlers.NewSubGRPCServer(&mockSubService{})
 
 		// Act
 		_, err := srv.Subscribe(context.Background(), &pb.SubscribeRequest{
@@ -100,7 +100,7 @@ func TestSubGRPCServer_Subscribe(t *testing.T) {
 
 	t.Run("AlreadyExists", func(t *testing.T) {
 		// Arrange
-		srv := subgrpc.NewSubGRPCServer(&mockSubService{
+		srv := handlers.NewSubGRPCServer(&mockSubService{
 			SubscribeFn: func(input subsrv.SubscriptionInput) error {
 				return domain.ErrSubAlreadyExists
 			},
@@ -116,7 +116,7 @@ func TestSubGRPCServer_Subscribe(t *testing.T) {
 
 	t.Run("InternalError", func(t *testing.T) {
 		// Arrange
-		srv := subgrpc.NewSubGRPCServer(&mockSubService{
+		srv := handlers.NewSubGRPCServer(&mockSubService{
 			SubscribeFn: func(input subsrv.SubscriptionInput) error {
 				return domain.ErrInternal
 			},
@@ -132,7 +132,7 @@ func TestSubGRPCServer_Subscribe(t *testing.T) {
 
 	t.Run("UnexpectedError", func(t *testing.T) {
 		// Arrange
-		srv := subgrpc.NewSubGRPCServer(&mockSubService{
+		srv := handlers.NewSubGRPCServer(&mockSubService{
 			SubscribeFn: func(input subsrv.SubscriptionInput) error {
 				return errors.New("some unknown error")
 			},

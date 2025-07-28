@@ -106,7 +106,7 @@ func NewInfrastructureContainer(cfg config.Config) (*InfrastructureContainer, er
 		return nil, err
 	}
 	weathGRPCClient := pbweath.NewWeatherServiceClient(grpcConn)
-	weathRepo := weathrepo.NewGRPCAdapter(weathGRPCClient)
+	weathRepo := weathrepo.NewGRPCRepo(weathGRPCClient)
 
 	// mailers
 	weatherNotifyCommandProducer := producers.NewWeatherNotifyCommandProducer(ch)

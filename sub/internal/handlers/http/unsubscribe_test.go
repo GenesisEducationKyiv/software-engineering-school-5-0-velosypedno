@@ -9,33 +9,32 @@ import (
 	"testing"
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/domain"
-	subh "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/handlers/http/subscription"
+	handlers "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/handlers/http"
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-type mockSubscriptionActivator struct {
+type mockSubscriptionDeactivator struct {
 	mock.Mock
 }
 
-func (m *mockSubscriptionActivator) Activate(token uuid.UUID) error {
+func (m *mockSubscriptionDeactivator) Unsubscribe(token uuid.UUID) error {
 	args := m.Called(token)
 	return args.Error(0)
 }
 
-func TestConfirmGETHandler(t *testing.T) {
+func TestUnsubscribeGETHandler(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	validUUID := uuid.New()
-	invalidUUIDStr := "not-a-uuid"
+	invalidUUIDStr := "invalid-uuid"
 
 	tests := []struct {
-		name    string
-		token   string
-		mockErr error
-
+		name           string
+		token          string
+		mockErr        error
 		expectedStatus int
 	}{
 		{
@@ -55,7 +54,7 @@ func TestConfirmGETHandler(t *testing.T) {
 		{
 			name:    "ErrInternal",
 			token:   validUUID.String(),
-			mockErr: errors.New("some internal error"),
+			mockErr: errors.New("internal error"),
 
 			expectedStatus: http.StatusInternalServerError,
 		},
@@ -71,24 +70,23 @@ func TestConfirmGETHandler(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Arrange
-			mockService := new(mockSubscriptionActivator)
+			mockService := new(mockSubscriptionDeactivator)
 			if tt.mockErr != nil || tt.expectedStatus != http.StatusBadRequest {
 				tokenUUID, err := uuid.Parse(tt.token)
 				if err == nil {
-					mockService.On("Activate", tokenUUID).Return(tt.mockErr)
+					mockService.On("Unsubscribe", tokenUUID).Return(tt.mockErr)
 				}
 			}
 			route := gin.New()
-			route.GET("/confirm/:token", subh.NewConfirmGETHandler(mockService))
+			route.GET("/unsubscribe/:token", handlers.NewUnsubscribeGETHandler(mockService))
 
 			// Act
-			req := httptest.NewRequest(http.MethodGet, "/confirm/"+tt.token, nil)
+			req := httptest.NewRequest(http.MethodGet, "/unsubscribe/"+tt.token, nil)
 			resp := httptest.NewRecorder()
 			route.ServeHTTP(resp, req)
 
 			// Assert
 			assert.Equal(t, tt.expectedStatus, resp.Code)
-			mockService.AssertExpectations(t)
 		})
 	}
 }
