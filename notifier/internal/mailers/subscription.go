@@ -2,46 +2,53 @@ package mailers
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
-	"html/template"
 	"log"
-
-	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/domain"
+	"text/template"
 )
 
-type emailSender interface {
+var ErrInternal = errors.New("internal error")
+
+type Subscription struct {
+	Email string
+	Token string
+}
+
+type emailBackend interface {
 	Send(to, subject, body string) error
 }
 
-type SubscriptionMailer struct {
-	sender          emailSender
+type SubscriptionEmailNotifier struct {
+	sender          emailBackend
 	confirmTmplPath string
 }
 
-func NewSubscriptionMailer(sender emailSender, tmplPath string) *SubscriptionMailer {
-	return &SubscriptionMailer{
+func NewSubscriptionEmailNotifier(sender emailBackend, tmplPath string) *SubscriptionEmailNotifier {
+	return &SubscriptionEmailNotifier{
 		sender:          sender,
 		confirmTmplPath: tmplPath,
 	}
 }
 
-func (m *SubscriptionMailer) SendConfirmation(subscription domain.Subscription) error {
+func (m *SubscriptionEmailNotifier) SendConfirmation(subscription Subscription) error {
 	to := subscription.Email
 	subject := "Subscription Confirmation"
 	confirmSubURL := fmt.Sprintf("http://localhost:8080/api/confirm/%s", subscription.Token)
 	tmpl, err := template.ParseFiles(m.confirmTmplPath)
 	if err != nil {
 		log.Printf("sub mailer: %v\n", err)
-		return fmt.Errorf("sub mailer: %w", domain.ErrInternal)
+		return fmt.Errorf("sub mailer: %w", ErrInternal)
 	}
 	var body bytes.Buffer
 	if err := tmpl.Execute(&body, map[string]string{"Link": confirmSubURL}); err != nil {
 		log.Printf("sub mailer: %v\n", err)
-		return fmt.Errorf("sub mailer: %w", domain.ErrInternal)
+		return fmt.Errorf("sub mailer: %w", ErrInternal)
 	}
 	err = m.sender.Send(to, subject, body.String())
 	if err != nil {
-		return fmt.Errorf("sub mailer: %w", err)
+		log.Printf("sub mailer: %v\n", err)
+		return fmt.Errorf("sub mailer: %w", ErrInternal)
 	}
 	return nil
 }

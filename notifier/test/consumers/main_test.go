@@ -1,44 +1,26 @@
 //go:build integration
 
-package api_test
+package consumers_test
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"log"
-	"net"
 	"os"
 	"testing"
-	"time"
 
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/notifier/internal/app"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/notifier/internal/config"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/messaging"
-	pb "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/sub/v1alpha2"
-	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/app"
-	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/config"
-	_ "github.com/lib/pq"
 	amqp "github.com/rabbitmq/amqp091-go"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials/insecure"
 )
 
-const apiURL = "http://127.0.0.1:8081"
-
-var SubGRPCClient pb.SubscriptionServiceClient
-
 var (
-	DB            *sql.DB
 	RMQConnection *amqp.Connection
 	RMQChannel    *amqp.Channel
-	GRPCConn      *grpc.ClientConn
 )
 
 func closeConnections() {
-	if GRPCConn != nil {
-		if err := GRPCConn.Close(); err != nil {
-			log.Println("failed to close gRPC conn:", err)
-		}
-	}
 	if RMQChannel != nil {
 		if err := RMQChannel.Close(); err != nil {
 			log.Println("failed to close RMQ channel:", err)
@@ -47,11 +29,6 @@ func closeConnections() {
 	if RMQConnection != nil {
 		if err := RMQConnection.Close(); err != nil {
 			log.Println("failed to close RMQ conn:", err)
-		}
-	}
-	if DB != nil {
-		if err := DB.Close(); err != nil {
-			log.Println("failed to close DB:", err)
 		}
 	}
 }
@@ -72,13 +49,6 @@ func TestMain(m *testing.M) {
 		log.Panic(err)
 	}
 
-	// setup DB
-	DB, err = sql.Open(cfg.DB.Driver, cfg.DB.DSN())
-	if err != nil {
-		closeConnections()
-		log.Panic(err)
-	}
-
 	ctx, cancel := context.WithCancel(context.Background())
 	// run app
 	app := app.New(cfg)
@@ -90,42 +60,11 @@ func TestMain(m *testing.M) {
 		}
 	}()
 
-	// wait on grpc server start
-	deadline := time.Now().Add(3 * time.Second)
-	for {
-		conn, err := net.Dial("tcp", cfg.GRPCSrv.Addr())
-		if err == nil {
-			_ = conn.Close()
-			log.Println("gRPC server is ready")
-			break
-		}
-
-		if time.Now().After(deadline) {
-			log.Panicf("gRPC server did not become ready within 3 second at %s", cfg.GRPCSrv.Addr())
-		}
-		time.Sleep(100 * time.Millisecond)
-	}
-
-	// setup grpc client
-	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
-	GRPCConn, err = grpc.NewClient(cfg.GRPCSrv.Addr(), opt)
-	if err != nil {
-		log.Panic(err)
-	}
-	SubGRPCClient = pb.NewSubscriptionServiceClient(GRPCConn)
-
 	// run tests
 	code := m.Run()
 	cancel()
 	closeConnections()
 	os.Exit(code)
-}
-
-func clearDB() {
-	_, err := DB.Exec("TRUNCATE subscriptions")
-	if err != nil {
-		log.Panic(err)
-	}
 }
 
 func clearRMQ() {

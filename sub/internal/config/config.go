@@ -22,17 +22,15 @@ func (c DBConfig) DSN() string {
 	)
 }
 
-type SMTPConfig struct {
-	Host      string `envconfig:"SMTP_HOST" required:"true"`
-	Port      string `envconfig:"SMTP_PORT" required:"true"`
-	User      string `envconfig:"SMTP_USER" required:"true"`
-	Pass      string `envconfig:"SMTP_PASS" required:"true"`
-	EmailFrom string `envconfig:"EMAIL_FROM" required:"true"`
+type RabbitMQConfig struct {
+	Host string `envconfig:"RABBITMQ_HOST" required:"true"`
+	Port string `envconfig:"RABBITMQ_PORT" required:"true"`
+	User string `envconfig:"RABBITMQ_USER" required:"true"`
+	Pass string `envconfig:"RABBITMQ_PASSWORD" required:"true"`
 }
 
-type SrvConfig struct {
-	Port         string `envconfig:"API_PORT" required:"true"`
-	TemplatesDir string `envconfig:"TEMPLATES_DIR" required:"true"`
+func (c RabbitMQConfig) Addr() string {
+	return fmt.Sprintf("amqp://%s:%s@%s:%s/", c.User, c.Pass, c.Host, c.Port)
 }
 
 type GRPCConfig struct {
@@ -55,17 +53,17 @@ func (c WeatherServiceConfig) Addr() string {
 
 type Config struct {
 	DB       DBConfig
-	SMTP     SMTPConfig
-	Srv      SrvConfig
+	RabbitMQ RabbitMQConfig
+
 	GRPCSrv  GRPCConfig
 	WeathSvc WeatherServiceConfig
 }
 
 func Load() (*Config, error) {
-	var сfg Config
-	if err := envconfig.Process("", &сfg); err != nil {
+	var cfg Config
+	if err := envconfig.Process("", &cfg); err != nil {
 		return nil, err
 	}
 
-	return &сfg, nil
+	return &cfg, nil
 }

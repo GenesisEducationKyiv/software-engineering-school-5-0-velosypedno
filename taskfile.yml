@@ -11,6 +11,9 @@ includes:
   sub: 
     taskfile: ./sub/taskfile.yml
     dir: ./sub
+  notif: 
+    taskfile: ./notifier/taskfile.yml
+    dir: ./notifier
 
 tasks:
   default:
@@ -79,9 +82,9 @@ tasks:
     desc: Run integration tests
     dotenv: [".env.sample"]
     cmds:
-      - task: gw:test:integration
       - task: weath:test:integration
       - task: sub:test:integration
+      - task: notif:test:integration
 
   copy:env:optional:
      desc: Ensure .env exists

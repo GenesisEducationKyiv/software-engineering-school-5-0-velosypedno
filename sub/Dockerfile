@@ -23,5 +23,3 @@ COPY --from=builder /go/bin/task /usr/local/bin/task
 COPY --from=builder /go/bin/migrate /usr/local/bin/migrate
 
 COPY sub/db/migrations ./db/migrations
-COPY sub/internal/templates ./internal/templates
-

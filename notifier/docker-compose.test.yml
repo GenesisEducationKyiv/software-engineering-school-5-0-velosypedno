@@ -1,20 +1,7 @@
 version: '3.8'
 
 services:
-  test-db:
-    image: postgres:17.5
-    environment:
-      POSTGRES_DB: ${DB_NAME}
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-    ports:
-      - "5433:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 3s
-      timeout: 3s
-      retries: 5
-  
+
   test-rabbitmq:
     image: rabbitmq:3.13-management
     restart: always
@@ -28,11 +15,12 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-      
-  test-waiter:
-    image: alpine
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - "1025:1025" 
+      - "8025:8025" 
     depends_on:
-      test-db:
-        condition: service_healthy
       test-rabbitmq:
         condition: service_healthy

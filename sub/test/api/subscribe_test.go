@@ -5,10 +5,10 @@ package api_test
 import (
 	"context"
 	"encoding/json"
-	"net/http"
 	"testing"
 	"time"
 
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/messaging"
 	pb "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/sub/v1alpha2"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
@@ -16,9 +16,12 @@ import (
 )
 
 func TestSubscribeSuccessFlow(t *testing.T) {
-	// Step 1: Clear the database
+	// Step 1: Clear the database and RMQ
 	t.Log("Clearing the database...")
 	clearDB()
+
+	t.Log("Clearing the subscribe queue in RabbitMQ...")
+	clearRMQ()
 
 	// Step 2: Send the gRPC Subscribe request
 	toEmail := "test.subscribe.success@example.com"
@@ -33,37 +36,27 @@ func TestSubscribeSuccessFlow(t *testing.T) {
 	_, err := SubGRPCClient.Subscribe(context.Background(), req)
 	require.NoError(t, err, "Failed to send gRPC Subscribe request")
 
-	// Step 3: Wait for the email to appear in MailHog
-	t.Log("Waiting for confirmation email to appear in MailHog...")
+	// Step 3: Wait for the subscribe event to appear in the queue
+	t.Log("Waiting for subscribe event to appear in queue...")
 	var (
-		smtpAPIUrl = "http://localhost:8025/api/v2/search"
-		searchUrl  = smtpAPIUrl + "?kind=to&query=" + toEmail
-		timeout    = 5 * time.Second
-		interval   = 300 * time.Millisecond
-		start      = time.Now()
+		timeout  = 5 * time.Second
+		interval = 300 * time.Millisecond
+		start    = time.Now()
 	)
-	type smtpAPISearchResult struct {
-		Total int `json:"total"`
-	}
 
 	for {
-		t.Logf("Checking MailHog API: %s", searchUrl)
-		resp, err := http.Get(searchUrl)
-		require.NoError(t, err, "Failed to query MailHog API: %v", err)
-
-		var result smtpAPISearchResult
-		err = json.NewDecoder(resp.Body).Decode(&result)
-		resp.Body.Close()
-		require.NoError(t, err, "Failed to parse MailHog API response: %v", err)
-
-		if result.Total >= 1 {
-			t.Logf("Found %d email(s) in MailHog", result.Total)
+		t.Log("Checking subscribe queue in RabbitMQ")
+		msg, ok, err := RMQChannel.Get(messaging.SubscribeQueueName, true)
+		require.NoError(t, err, "Failed to get message from subscribe queue: %v", err)
+		if ok {
+			var event messaging.SubscribeEvent
+			err = json.Unmarshal(msg.Body, &event)
+			require.NoError(t, err, "Failed to unmarshal subscribe event: %v", err)
+			require.Equal(t, toEmail, event.Email, "Expected email %s, got %s", toEmail, event.Email)
 			break
 		}
-
-		require.Less(t, time.Since(start), timeout, "Timeout reached while waiting for email")
-
-		t.Log("No email found yet, retrying...")
+		require.Less(t, time.Since(start), timeout, "Timeout reached while waiting for event")
+		t.Log("No events found, retrying...")
 		time.Sleep(interval)
 	}
 

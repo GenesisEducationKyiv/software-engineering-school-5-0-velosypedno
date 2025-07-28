@@ -5,21 +5,25 @@ import (
 	"fmt"
 	"html/template"
 	"log"
-
-	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/domain"
 )
 
-type WeatherMailer struct {
-	sender emailSender
+type Weather struct {
+	Temperature float64
+	Humidity    float64
+	Description string
 }
 
-func NewWeatherMailer(sender emailSender) *WeatherMailer {
-	return &WeatherMailer{
+type WeatherEmailNotifier struct {
+	sender emailBackend
+}
+
+func NewWeatherEmailNotifier(sender emailBackend) *WeatherEmailNotifier {
+	return &WeatherEmailNotifier{
 		sender: sender,
 	}
 }
 
-func (m *WeatherMailer) SendCurrent(subscription domain.Subscription, weather domain.Weather) error {
+func (m *WeatherEmailNotifier) SendCurrent(subscription Subscription, weather Weather) error {
 	to := subscription.Email
 	subject := "Weather Update"
 
@@ -27,7 +31,7 @@ func (m *WeatherMailer) SendCurrent(subscription domain.Subscription, weather do
 	tmpl, err := template.ParseFiles("internal/templates/weather.html")
 	if err != nil {
 		log.Printf("weather mailer: %v\n", err)
-		return fmt.Errorf("weather mailer: %w", domain.ErrInternal)
+		return fmt.Errorf("weather mailer: %w", ErrInternal)
 	}
 	var body bytes.Buffer
 	err = tmpl.Execute(&body, map[string]any{
@@ -38,12 +42,13 @@ func (m *WeatherMailer) SendCurrent(subscription domain.Subscription, weather do
 	})
 	if err != nil {
 		log.Printf("weather mailer: %v\n", err)
-		return fmt.Errorf("weather mailer: %w", domain.ErrInternal)
+		return fmt.Errorf("weather mailer: %w", ErrInternal)
 	}
 
 	err = m.sender.Send(to, subject, body.String())
 	if err != nil {
-		return fmt.Errorf("weather mailer: %w", err)
+		log.Printf("weather mailer: %v\n", err)
+		return fmt.Errorf("weather mailer: %w", ErrInternal)
 	}
 	return nil
 }
