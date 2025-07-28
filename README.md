@@ -26,7 +26,7 @@ Ensure you have the following installed:
 1. **Clone the repository**:
 
    ```bash
-   git clone https://github.com/velosypedno/genesis-weather-api.git
+   git clone https://github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno.git
    ```
 
 2. **Change work directory**:

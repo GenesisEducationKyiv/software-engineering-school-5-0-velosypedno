@@ -18,9 +18,29 @@ x-redis-env: &redis-env
   REDIS_PORT: ${REDIS_PORT}
   REDIS_PASSWORD: ${REDIS_PASSWORD}
 
-x-app-env: &app-env
+x-gateway-env: &gateway-env
+  WEATHER_SERVICE_PORT: ${WEATHER_SERVICE_GRPC_PORT}
+  WEATHER_SERVICE_HOST: ${WEATHER_SERVICE_HOST}
+  SUB_SERVICE_PORT: ${SUB_SERVICE_PORT}
+  SUB_SERVICE_HOST: ${SUB_SERVICE_HOST}
+  API_GATEWAY_PORT: ${API_GATEWAY_PORT}
+
+x-sub-env: &sub-env
+  GRPC_PORT: ${SUB_SERVICE_PORT}
+  GRPC_HOST: ${SUB_SERVICE_HOST}
+
   API_PORT: ${API_PORT}
   TEMPLATES_DIR: ${TEMPLATES_DIR}
+  
+  WEATHER_SERVICE_PORT: ${WEATHER_SERVICE_GRPC_PORT}
+  WEATHER_SERVICE_HOST: ${WEATHER_SERVICE_HOST}
+
+
+x-weather-env: &weather-env
+  GRPC_HOST: ${WEATHER_SERVICE_HOST}
+  GRPC_PORT: ${WEATHER_SERVICE_GRPC_PORT}
+  HTTP_HOST: ${WEATHER_SERVICE_HOST}
+  HTTP_PORT: ${WEATHER_SERVICE_HTTP_PORT}
 
   FREE_WEATHER_API_KEY: ${FREE_WEATHER_API_KEY}
   WEATHER_API_BASE_URL: ${WEATHER_API_BASE_URL}
@@ -30,6 +50,7 @@ x-app-env: &app-env
 
   VISUAL_CROSSING_API_KEY: ${VISUAL_CROSSING_API_KEY}
   VISUAL_CROSSING_API_BASE_URL: ${VISUAL_CROSSING_API_BASE_URL}
+
 services:
   postgres:
     image: postgres:17.5
@@ -59,9 +80,10 @@ services:
       interval: 2s
       timeout: 2s
       retries: 4
-
   migrator:
-    build: .
+    build: 
+      context: .
+      dockerfile: sub/Dockerfile
     environment:
       <<: *db-env
     depends_on:
@@ -69,20 +91,49 @@ services:
         condition: service_healthy
     entrypoint: ["task", "migrate:up"]
     restart: "no"
-  api:
-    build: .
+
+  sub:
+    build: 
+      context: .
+      dockerfile: sub/Dockerfile
     ports:
-      - "8080:8080"
+      - "50100:50100"
     environment:
-      <<: [*db-env, *smtp-env, *app-env, *redis-env]
+      <<: [*db-env, *smtp-env, *sub-env, *redis-env]
     depends_on:
       migrator:
         condition: service_completed_successfully
       redis:
         condition: service_healthy
-    entrypoint: ["/app/bin/api"]
+    entrypoint: ["/app/bin/sub"]
     restart: unless-stopped
 
+  weather:
+    build:
+      context: .
+      dockerfile: weather/Dockerfile
+    ports:
+      - "50101:50101"
+    environment:
+      <<: [*weather-env, *redis-env]
+    depends_on:
+      redis:
+        condition: service_healthy
+    entrypoint: ["/app/bin/weather"]
+    restart: unless-stopped
+
+  gateway:
+    build: 
+      context: .
+      dockerfile: gateway/Dockerfile
+    ports:
+      - "8080:8082"
+    environment:
+      <<: [*gateway-env]
+    entrypoint: ["/app/bin/gateway"]
+    restart: unless-stopped
+    depends_on:
+     - sub
   
   prometheus:
     image: prom/prometheus:v2.45.0

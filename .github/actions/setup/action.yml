@@ -12,6 +12,9 @@ inputs:
     description: "Install linter"
     required: false
     default: "false"
+  token:
+    description: "GitHub token"
+    required: true
 runs:
   using: "composite"
   steps:
@@ -23,6 +26,7 @@ runs:
       uses: arduino/setup-task@v2
       with:
         version: 3.x
+        repo-token: ${{ inputs.token }}
     - name: "Install migrator"
       if: ${{ inputs.install-migrator == 'true' }}
       shell: bash

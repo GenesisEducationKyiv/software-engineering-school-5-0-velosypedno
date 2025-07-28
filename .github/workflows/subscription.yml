@@ -1,0 +1,116 @@
+name: Subscription
+
+on: push
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+
+    - name: Install go and go-task
+      uses: ./.github/actions/setup
+      with:
+        go-version-file: './go.mod'
+        install-linter: 'true'
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Run linter
+      run: cd sub && task lint
+  
+  unit-tests:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+
+    - name: Install go and go-task
+      uses: ./.github/actions/setup
+      with:
+        go-version-file: './go.mod'
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Run tests
+      run: cd sub && task test:unit
+
+  integration-tests:
+    name: Integration Tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+
+    - name: Install go and go-task
+      uses: ./.github/actions/setup
+      with:
+        go-version-file: './go.mod'
+        install-migrator: 'true'
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Run tests
+      run: cd sub && task test:integration
+
+
+  migrations:
+    name: Migrations
+    runs-on: ubuntu-latest
+
+    env:
+      DB_DRIVER: postgres
+      DB_USER: postgres
+      DB_PASSWORD: postgres_pass
+      DB_NAME: weather
+      DB_PORT: 5432
+      DB_HOST: localhost
+
+    services:
+      postgres:
+        image: postgres:latest
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres_pass
+          POSTGRES_DB: weather
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+
+    - name: Install go and go-task
+      uses: ./.github/actions/setup
+      with:
+        go-version-file: './go.mod'
+        install-migrator: 'true'
+        token: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Wait for postgres
+      run: |
+          until pg_isready -h localhost -p 5432 -U postgres; do
+            sleep 1
+          done
+
+    - name: Run migrations
+      run: cd sub && task migrate:up
+
+          

@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package weather.v1alpha1;
+
+option go_package = "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/weather/v1alpha1;weatherv1alpha1";
+
+service WeatherService {
+    rpc GetCurrent(GetCurrentRequest) returns (GetCurrentResponse);
+}
+
+message GetCurrentRequest {
+    string city = 1;
+}
+
+message GetCurrentResponse {
+    float temperature = 1;
+    float humidity = 2;
+    string description = 3;
+}
