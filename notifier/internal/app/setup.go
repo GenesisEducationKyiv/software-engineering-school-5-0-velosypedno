@@ -148,8 +148,20 @@ func (a *App) setupWeatherCommandConsumer() (*consumers.GenericConsumer[messagin
 func (a *App) setupRouter() *gin.Engine {
 	a.logger.Debug("Setting up HTTP router")
 	router := gin.Default()
-	router.GET("/healthcheck", httphandlers.NewHealthcheckGETHandler(a.rmqCh,
-		[]string{messaging.SubscribeQueueName, messaging.WeatherQueueName}))
+
+	queues := []string{
+		messaging.SubscribeQueueName,
+		messaging.WeatherQueueName,
+	}
+
+	handlerLogger := a.logFactory.ForPackage("handlers/http")
+	router.GET("/healthcheck",
+		httphandlers.NewHealthcheckGETHandler(
+			handlerLogger,
+			a.rmqCh,
+			queues,
+		),
+	)
 	a.logger.Debug("HTTP router created")
 	return router
 }
