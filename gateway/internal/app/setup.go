@@ -17,14 +17,17 @@ const weatherRequestTimeout = 5 * time.Second
 func (a *App) setupHTTPServer() *http.Server {
 	router := gin.Default()
 
-	subService := subsvc.NewGRPCAdapter(a.subGRPCClient)
 	weathService := weathsvc.NewGRPCAdapter(a.weathGRPCClient)
+
+	subGRPCClientLogger := a.logFactory.ForPackage("subscription/services/grpc_adapter")
+	subService := subsvc.NewGRPCAdapter(a.subGRPCClient, subGRPCClientLogger)
+	subHandlersLogger := a.logFactory.ForPackage("subscription/handlers")
 
 	api := router.Group("/api")
 	{
-		api.POST("/subscribe", subh.NewSubscribePOSTHandler(subService))
-		api.GET("/confirm/:token", subh.NewConfirmGETHandler(subService))
-		api.GET("/unsubscribe/:token", subh.NewUnsubscribeGETHandler(subService))
+		api.POST("/subscribe", subh.NewSubscribePOSTHandler(subService, subHandlersLogger))
+		api.GET("/confirm/:token", subh.NewConfirmGETHandler(subService, subHandlersLogger))
+		api.GET("/unsubscribe/:token", subh.NewUnsubscribeGETHandler(subService, subHandlersLogger))
 		api.GET("/weather", weathh.NewWeatherGETHandler(weathService, weatherRequestTimeout))
 	}
 	httpSrv := http.Server{

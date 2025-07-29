@@ -2,12 +2,13 @@ package handlers
 
 import (
 	"errors"
-	"log"
 	"net/http"
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/gateway/internal/subscription/domain"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/gateway/internal/subscription/services"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/logging"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 type subReqBody struct {
@@ -20,14 +21,17 @@ type subscriber interface {
 	Subscribe(subInput services.SubscriptionInput) error
 }
 
-func NewSubscribePOSTHandler(service subscriber) gin.HandlerFunc {
+func NewSubscribePOSTHandler(service subscriber, logger *zap.Logger) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var body subReqBody
 		if err := c.ShouldBindJSON(&body); err != nil {
-			log.Println(err)
+			logger.Warn("Invalid subscription request body",
+				zap.Error(err),
+			)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 			return
 		}
+
 		input := services.SubscriptionInput{
 			Email:     body.Email,
 			Frequency: body.Frequency,
@@ -35,19 +39,38 @@ func NewSubscribePOSTHandler(service subscriber) gin.HandlerFunc {
 		}
 
 		err := service.Subscribe(input)
-		if errors.Is(err, domain.ErrSubAlreadyExists) {
+		switch {
+		case errors.Is(err, domain.ErrSubAlreadyExists):
+
+			logger.Info("Attempt to subscribe already subscribed email",
+				zap.String("email_hash", logging.HashEmail(body.Email)),
+			)
 			c.JSON(http.StatusConflict, gin.H{"error": "Email already subscribed"})
 			return
-		}
-		if errors.Is(err, domain.ErrInternal) {
+
+		case errors.Is(err, domain.ErrInternal):
+			logger.Error("Internal error on subscription creation",
+				zap.String("email_hash", logging.HashEmail(body.Email)),
+				zap.Error(err),
+			)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create subscription"})
+			return
+
+		case err != nil:
+			logger.Error("Unexpected error on subscription creation",
+				zap.String("email_hash", logging.HashEmail(body.Email)),
+				zap.Error(err),
+			)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create subscription"})
 			return
 		}
-		if err != nil {
-			log.Println(err)
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to create subscription"})
-			return
-		}
+
+		logger.Info("Subscription created successfully",
+			zap.String("email_hash", logging.HashEmail(body.Email)),
+			zap.String("city", body.City),
+			zap.String("frequency", body.Frequency),
+		)
+
 		c.JSON(http.StatusOK, gin.H{"message": "Subscription successful. Confirmation email sent."})
 	}
 }

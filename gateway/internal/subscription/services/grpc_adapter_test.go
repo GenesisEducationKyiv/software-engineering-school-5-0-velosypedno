@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -43,7 +44,7 @@ func TestGRPCAdapter_Subscribe(t *testing.T) {
 				return &pb.SubscribeResponse{}, nil
 			},
 		}
-		adapter := services.NewGRPCAdapter(client)
+		adapter := services.NewGRPCAdapter(client, zap.NewNop())
 
 		// Act
 		err := adapter.Subscribe(services.SubscriptionInput{
@@ -63,7 +64,7 @@ func TestGRPCAdapter_Subscribe(t *testing.T) {
 				return nil, status.Error(codes.AlreadyExists, "already exists")
 			},
 		}
-		adapter := services.NewGRPCAdapter(client)
+		adapter := services.NewGRPCAdapter(client, zap.NewNop())
 
 		// Act
 		err := adapter.Subscribe(services.SubscriptionInput{})
@@ -79,7 +80,7 @@ func TestGRPCAdapter_Subscribe(t *testing.T) {
 				return nil, status.Error(codes.InvalidArgument, "invalid")
 			},
 		}
-		adapter := services.NewGRPCAdapter(client)
+		adapter := services.NewGRPCAdapter(client, zap.NewNop())
 
 		// Act
 		err := adapter.Subscribe(services.SubscriptionInput{})
@@ -95,7 +96,7 @@ func TestGRPCAdapter_Subscribe(t *testing.T) {
 				return nil, errors.New("connection lost")
 			},
 		}
-		adapter := services.NewGRPCAdapter(client)
+		adapter := services.NewGRPCAdapter(client, zap.NewNop())
 
 		// Act
 		err := adapter.Subscribe(services.SubscriptionInput{})
@@ -116,7 +117,7 @@ func TestGRPCAdapter_Activate(t *testing.T) {
 				return &pb.ConfirmResponse{}, nil
 			},
 		}
-		adapter := services.NewGRPCAdapter(client)
+		adapter := services.NewGRPCAdapter(client, zap.NewNop())
 
 		// Act
 		err := adapter.Activate(validToken)
@@ -132,7 +133,7 @@ func TestGRPCAdapter_Activate(t *testing.T) {
 				return nil, status.Error(codes.NotFound, "not found")
 			},
 		}
-		adapter := services.NewGRPCAdapter(client)
+		adapter := services.NewGRPCAdapter(client, zap.NewNop())
 
 		// Act
 		err := adapter.Activate(validToken)
@@ -153,7 +154,7 @@ func TestGRPCAdapter_Unsubscribe(t *testing.T) {
 				return &pb.UnsubscribeResponse{}, nil
 			},
 		}
-		adapter := services.NewGRPCAdapter(client)
+		adapter := services.NewGRPCAdapter(client, zap.NewNop())
 
 		// Act
 		err := adapter.Unsubscribe(validToken)
@@ -169,7 +170,7 @@ func TestGRPCAdapter_Unsubscribe(t *testing.T) {
 				return nil, status.Error(codes.Internal, "internal")
 			},
 		}
-		adapter := services.NewGRPCAdapter(client)
+		adapter := services.NewGRPCAdapter(client, zap.NewNop())
 
 		// Act
 		err := adapter.Unsubscribe(validToken)
