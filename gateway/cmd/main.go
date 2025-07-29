@@ -36,7 +36,7 @@ func main() {
 	mainLogger.Info("Config loaded")
 
 	mainLogger.Info("Creating app...")
-	app := app.New(cfg)
+	app := app.New(cfg, logFactory)
 	mainLogger.Info("App created")
 
 	mainLogger.Info("Running app...")
@@ -44,4 +44,5 @@ func main() {
 	if err != nil {
 		mainLogger.Panic("Failed to run app", zap.Error(err))
 	}
+	mainLogger.Info("App stopped successfully")
 }
