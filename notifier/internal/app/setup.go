@@ -87,7 +87,8 @@ func (a *App) setupSubscribeEventConsumer() (*consumers.GenericConsumer[messagin
 
 	subscribeMailer := mailers.NewSubscriptionEmailNotifier(smtpBackend, confirmTmplPath)
 	subscribeEventHandler := eventhandlers.NewSubscribeEventHandler(subscribeMailer)
-	subscribeEventConsumer := consumers.NewGenericConsumer(subscribeEventHandler, msgs, subscribeConsumerName)
+	consumerLogger := a.logFactory.ForPackage("consumers")
+	subscribeEventConsumer := consumers.NewGenericConsumer(consumerLogger, subscribeEventHandler, msgs, subscribeConsumerName)
 
 	a.logger.Debug("SubscribeEvent consumer successfully created")
 	return subscribeEventConsumer, nil
@@ -137,7 +138,8 @@ func (a *App) setupWeatherCommandConsumer() (*consumers.GenericConsumer[messagin
 
 	weatherMailer := mailers.NewWeatherEmailNotifier(smtpBackend)
 	weatherCommandHandler := eventhandlers.NewWeatherNotifyCommandHandler(weatherMailer)
-	weatherCommandConsumer := consumers.NewGenericConsumer(weatherCommandHandler, msgs, weathNotifyConsumerName)
+	consumerLogger := a.logFactory.ForPackage("consumers")
+	weatherCommandConsumer := consumers.NewGenericConsumer(consumerLogger, weatherCommandHandler, msgs, weathNotifyConsumerName)
 
 	a.logger.Debug("WeatherNotifyCommand consumer successfully created")
 	return weatherCommandConsumer, nil
