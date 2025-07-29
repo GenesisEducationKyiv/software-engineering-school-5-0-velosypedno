@@ -11,8 +11,10 @@ import (
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/notifier/internal/app"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/notifier/internal/config"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/logging"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/messaging"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"go.uber.org/zap"
 )
 
 var (
@@ -51,7 +53,9 @@ func TestMain(m *testing.M) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	// run app
-	app := app.New(cfg)
+	logger := zap.NewNop()
+	logFactory := logging.NewFactory(logger, "notifier")
+	app := app.New(cfg, logFactory)
 	go func() {
 		runErr := app.Run(ctx)
 		if runErr != nil {
