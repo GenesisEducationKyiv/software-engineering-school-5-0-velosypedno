@@ -44,7 +44,7 @@ func TestGRPCAdapter_Subscribe(t *testing.T) {
 				return &pb.SubscribeResponse{}, nil
 			},
 		}
-		adapter := services.NewGRPCAdapter(client, zap.NewNop())
+		adapter := services.NewGRPCAdapter(zap.NewNop(), client)
 
 		// Act
 		err := adapter.Subscribe(services.SubscriptionInput{
@@ -64,7 +64,7 @@ func TestGRPCAdapter_Subscribe(t *testing.T) {
 				return nil, status.Error(codes.AlreadyExists, "already exists")
 			},
 		}
-		adapter := services.NewGRPCAdapter(client, zap.NewNop())
+		adapter := services.NewGRPCAdapter(zap.NewNop(), client)
 
 		// Act
 		err := adapter.Subscribe(services.SubscriptionInput{})
@@ -80,7 +80,7 @@ func TestGRPCAdapter_Subscribe(t *testing.T) {
 				return nil, status.Error(codes.InvalidArgument, "invalid")
 			},
 		}
-		adapter := services.NewGRPCAdapter(client, zap.NewNop())
+		adapter := services.NewGRPCAdapter(zap.NewNop(), client)
 
 		// Act
 		err := adapter.Subscribe(services.SubscriptionInput{})
@@ -96,7 +96,7 @@ func TestGRPCAdapter_Subscribe(t *testing.T) {
 				return nil, errors.New("connection lost")
 			},
 		}
-		adapter := services.NewGRPCAdapter(client, zap.NewNop())
+		adapter := services.NewGRPCAdapter(zap.NewNop(), client)
 
 		// Act
 		err := adapter.Subscribe(services.SubscriptionInput{})
@@ -117,7 +117,7 @@ func TestGRPCAdapter_Activate(t *testing.T) {
 				return &pb.ConfirmResponse{}, nil
 			},
 		}
-		adapter := services.NewGRPCAdapter(client, zap.NewNop())
+		adapter := services.NewGRPCAdapter(zap.NewNop(), client)
 
 		// Act
 		err := adapter.Activate(validToken)
@@ -133,7 +133,7 @@ func TestGRPCAdapter_Activate(t *testing.T) {
 				return nil, status.Error(codes.NotFound, "not found")
 			},
 		}
-		adapter := services.NewGRPCAdapter(client, zap.NewNop())
+		adapter := services.NewGRPCAdapter(zap.NewNop(), client)
 
 		// Act
 		err := adapter.Activate(validToken)
@@ -154,7 +154,7 @@ func TestGRPCAdapter_Unsubscribe(t *testing.T) {
 				return &pb.UnsubscribeResponse{}, nil
 			},
 		}
-		adapter := services.NewGRPCAdapter(client, zap.NewNop())
+		adapter := services.NewGRPCAdapter(zap.NewNop(), client)
 
 		// Act
 		err := adapter.Unsubscribe(validToken)
@@ -170,7 +170,7 @@ func TestGRPCAdapter_Unsubscribe(t *testing.T) {
 				return nil, status.Error(codes.Internal, "internal")
 			},
 		}
-		adapter := services.NewGRPCAdapter(client, zap.NewNop())
+		adapter := services.NewGRPCAdapter(zap.NewNop(), client)
 
 		// Act
 		err := adapter.Unsubscribe(validToken)
