@@ -27,7 +27,7 @@ type GRPCAdapter struct {
 	logger *zap.Logger
 }
 
-func NewGRPCAdapter(client pb.SubscriptionServiceClient, logger *zap.Logger) *GRPCAdapter {
+func NewGRPCAdapter(logger *zap.Logger, client pb.SubscriptionServiceClient) *GRPCAdapter {
 	return &GRPCAdapter{
 		client: client,
 		logger: logger.With(zap.String("component", "GRPCAdapter")),

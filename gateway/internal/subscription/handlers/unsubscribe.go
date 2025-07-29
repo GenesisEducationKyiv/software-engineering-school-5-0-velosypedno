@@ -14,7 +14,7 @@ type subscriptionDeactivator interface {
 	Unsubscribe(token uuid.UUID) error
 }
 
-func NewUnsubscribeGETHandler(service subscriptionDeactivator, logger *zap.Logger) gin.HandlerFunc {
+func NewUnsubscribeGETHandler(logger *zap.Logger, service subscriptionDeactivator) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.Param("token")
 

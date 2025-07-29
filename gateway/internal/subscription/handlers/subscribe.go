@@ -21,7 +21,7 @@ type subscriber interface {
 	Subscribe(subInput services.SubscriptionInput) error
 }
 
-func NewSubscribePOSTHandler(service subscriber, logger *zap.Logger) gin.HandlerFunc {
+func NewSubscribePOSTHandler(logger *zap.Logger, service subscriber) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var body subReqBody
 		if err := c.ShouldBindJSON(&body); err != nil {

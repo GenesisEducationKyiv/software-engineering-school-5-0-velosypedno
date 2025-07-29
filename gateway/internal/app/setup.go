@@ -17,18 +17,20 @@ const weatherRequestTimeout = 5 * time.Second
 func (a *App) setupHTTPServer() *http.Server {
 	router := gin.Default()
 
-	weathService := weathsvc.NewGRPCAdapter(a.weathGRPCClient)
+	weathGRPCClientLogger := a.logFactory.ForPackage("weather/services/grpc_adapter")
+	weathService := weathsvc.NewGRPCAdapter(weathGRPCClientLogger, a.weathGRPCClient)
+	weathHandlerLogger := a.logFactory.ForPackage("weather/handlers")
 
 	subGRPCClientLogger := a.logFactory.ForPackage("subscription/services/grpc_adapter")
-	subService := subsvc.NewGRPCAdapter(a.subGRPCClient, subGRPCClientLogger)
+	subService := subsvc.NewGRPCAdapter(subGRPCClientLogger, a.subGRPCClient)
 	subHandlersLogger := a.logFactory.ForPackage("subscription/handlers")
 
 	api := router.Group("/api")
 	{
-		api.POST("/subscribe", subh.NewSubscribePOSTHandler(subService, subHandlersLogger))
-		api.GET("/confirm/:token", subh.NewConfirmGETHandler(subService, subHandlersLogger))
-		api.GET("/unsubscribe/:token", subh.NewUnsubscribeGETHandler(subService, subHandlersLogger))
-		api.GET("/weather", weathh.NewWeatherGETHandler(weathService, weatherRequestTimeout))
+		api.POST("/subscribe", subh.NewSubscribePOSTHandler(subHandlersLogger, subService))
+		api.GET("/confirm/:token", subh.NewConfirmGETHandler(subHandlersLogger, subService))
+		api.GET("/unsubscribe/:token", subh.NewUnsubscribeGETHandler(subHandlersLogger, subService))
+		api.GET("/weather", weathh.NewWeatherGETHandler(weathHandlerLogger, weathService, weatherRequestTimeout))
 	}
 	httpSrv := http.Server{
 		Addr:        ":" + a.cfg.APIGatewayPort,

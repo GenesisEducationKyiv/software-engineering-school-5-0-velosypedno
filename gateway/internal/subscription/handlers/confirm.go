@@ -14,7 +14,7 @@ type subscriptionActivator interface {
 	Activate(token uuid.UUID) error
 }
 
-func NewConfirmGETHandler(service subscriptionActivator, logger *zap.Logger) gin.HandlerFunc {
+func NewConfirmGETHandler(logger *zap.Logger, service subscriptionActivator) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := c.Param("token")
 
