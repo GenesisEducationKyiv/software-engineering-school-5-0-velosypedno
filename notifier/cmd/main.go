@@ -2,32 +2,47 @@ package main
 
 import (
 	"context"
-	"log"
 	"os/signal"
 	"syscall"
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/notifier/internal/app"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/notifier/internal/config"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/logging"
+	"go.uber.org/zap"
 )
 
 func main() {
+	logger, err := zap.NewProduction()
+	if err != nil {
+		panic(err)
+	}
+	defer func() {
+		err := logger.Sync()
+		if err != nil {
+			panic(err)
+		}
+	}()
+	logFactory := logging.NewFactory(logger, "notifier")
+	mainLogger := logFactory.ForPackage("main")
+
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
 
-	log.Println("Loading config...")
+	mainLogger.Info("Loading config...")
 	cfg, err := config.Load()
 	if err != nil {
-		log.Panic(err)
+		mainLogger.Panic("Failed to load config", zap.Error(err))
 	}
-	log.Println("Config loaded")
+	mainLogger.Info("Config loaded")
 
-	log.Println("Creating app...")
-	app := app.New(cfg)
-	log.Println("App created")
+	mainLogger.Info("Creating app...")
+	app := app.New(cfg, logFactory)
+	mainLogger.Info("App created")
 
-	log.Println("Running app...")
+	mainLogger.Info("Running app...")
 	err = app.Run(ctx)
 	if err != nil {
-		log.Panic(err)
+		mainLogger.Panic("Failed to run app", zap.Error(err))
 	}
+	mainLogger.Info("App stopped successfully")
 }

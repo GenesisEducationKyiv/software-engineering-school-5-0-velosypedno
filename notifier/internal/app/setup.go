@@ -11,6 +11,7 @@ import (
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/email"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/messaging"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 const confirmSubTmplName = "confirm_sub.html"
@@ -21,6 +22,7 @@ var declareExchangeOnce sync.Once
 var declareExchangeErr error
 
 func (a *App) setupExchange() error {
+	a.logger.Debug("Declaring exchange...", zap.String("exchange", messaging.ExchangeName))
 	declareExchangeOnce.Do(func() {
 		declareExchangeErr = a.rmqCh.ExchangeDeclare(
 			messaging.ExchangeName, // name
@@ -32,49 +34,49 @@ func (a *App) setupExchange() error {
 			nil,                    // arguments
 		)
 	})
+	if declareExchangeErr != nil {
+		a.logger.Error("Failed to declare exchange", zap.Error(declareExchangeErr))
+	} else {
+		a.logger.Debug("Exchange declared")
+	}
 	return declareExchangeErr
 }
 
 func (a *App) setupSubscribeEventConsumer() (*consumers.GenericConsumer[messaging.SubscribeEvent], error) {
-	err := a.setupExchange()
-	if err != nil {
+	a.logger.Debug("Setting up SubscribeEvent consumer...")
+
+	if err := a.setupExchange(); err != nil {
 		return nil, err
 	}
 
+	a.logger.Debug("Declaring Subscribe queue", zap.String("queue", messaging.SubscribeQueueName))
 	q, err := a.rmqCh.QueueDeclare(
-		messaging.SubscribeQueueName, // name
-		true,                         // durable
-		false,                        // delete when unused
-		false,                        // exclusive
-		false,                        // no-wait
-		nil,                          // arguments
+		messaging.SubscribeQueueName,
+		true, false, false, false, nil,
 	)
 	if err != nil {
+		a.logger.Error("Failed to declare Subscribe queue", zap.Error(err))
 		return nil, err
 	}
 
-	err = a.rmqCh.QueueBind(
-		q.Name,                        // queue name
-		messaging.SubscribeRoutingKey, // routing key
-		messaging.ExchangeName,        // exchange
-		false,
-		nil)
-	if err != nil {
+	a.logger.Debug("Binding Subscribe queue",
+		zap.String("queue", q.Name),
+		zap.String("routingKey", messaging.SubscribeRoutingKey),
+		zap.String("exchange", messaging.ExchangeName),
+	)
+	if err := a.rmqCh.QueueBind(q.Name, messaging.SubscribeRoutingKey, messaging.ExchangeName, false, nil); err != nil {
+		a.logger.Error("Failed to bind Subscribe queue", zap.Error(err))
 		return nil, err
 	}
 
-	msgs, err := a.rmqCh.Consume(
-		q.Name, // queue
-		"",     // consumer
-		false,  // auto-ack
-		false,  // exclusive
-		false,  // no-local
-		false,  // no-wait
-		nil,    // args
-	)
+	a.logger.Debug("Starting consumption from Subscribe queue")
+	msgs, err := a.rmqCh.Consume(q.Name, "", false, false, false, false, nil)
 	if err != nil {
+		a.logger.Error("Failed to start consuming Subscribe queue", zap.Error(err))
 		return nil, err
 	}
+
+	confirmTmplPath := filepath.Join(a.cfg.TemplatesDir, confirmSubTmplName)
 	smtpBackend := email.NewSMTPBackend(
 		a.cfg.SMTP.Host,
 		a.cfg.SMTP.Port,
@@ -82,55 +84,49 @@ func (a *App) setupSubscribeEventConsumer() (*consumers.GenericConsumer[messagin
 		a.cfg.SMTP.Pass,
 		a.cfg.SMTP.EmailFrom,
 	)
-	_ = smtpBackend
-	stdoutBackend := email.NewStdoutBackend()
-	_ = stdoutBackend
-	confirmTmplPath := filepath.Join(a.cfg.TemplatesDir, confirmSubTmplName)
+
 	subscribeMailer := mailers.NewSubscriptionEmailNotifier(smtpBackend, confirmTmplPath)
 	subscribeEventHandler := eventhandlers.NewSubscribeEventHandler(subscribeMailer)
 	subscribeEventConsumer := consumers.NewGenericConsumer(subscribeEventHandler, msgs, subscribeConsumerName)
+
+	a.logger.Debug("SubscribeEvent consumer successfully created")
 	return subscribeEventConsumer, nil
 }
 
 func (a *App) setupWeatherCommandConsumer() (*consumers.GenericConsumer[messaging.WeatherNotifyCommand], error) {
-	err := a.setupExchange()
-	if err != nil {
+	a.logger.Debug("Setting up WeatherNotifyCommand consumer...")
+
+	if err := a.setupExchange(); err != nil {
 		return nil, err
 	}
+
+	a.logger.Debug("Declaring Weather queue", zap.String("queue", messaging.WeatherQueueName))
 	q, err := a.rmqCh.QueueDeclare(
-		messaging.WeatherQueueName, // name
-		true,                       // durable
-		false,                      // delete when unused
-		false,                      // exclusive
-		false,                      // no-wait
-		nil,                        // arguments
+		messaging.WeatherQueueName,
+		true, false, false, false, nil,
 	)
 	if err != nil {
+		a.logger.Error("Failed to declare Weather queue", zap.Error(err))
 		return nil, err
 	}
 
-	err = a.rmqCh.QueueBind(
-		q.Name,                      // queue name
-		messaging.WeatherRoutingKey, // routing key
-		messaging.ExchangeName,      // exchange
-		false,
-		nil)
-	if err != nil {
+	a.logger.Debug("Binding Weather queue",
+		zap.String("queue", q.Name),
+		zap.String("routingKey", messaging.WeatherRoutingKey),
+		zap.String("exchange", messaging.ExchangeName),
+	)
+	if err := a.rmqCh.QueueBind(q.Name, messaging.WeatherRoutingKey, messaging.ExchangeName, false, nil); err != nil {
+		a.logger.Error("Failed to bind Weather queue", zap.Error(err))
 		return nil, err
 	}
 
-	msgs, err := a.rmqCh.Consume(
-		q.Name, // queue
-		"",     // consumer
-		false,  // auto-ack
-		false,  // exclusive
-		false,  // no-local
-		false,  // no-wait
-		nil,    // args
-	)
+	a.logger.Debug("Starting consumption from Weather queue")
+	msgs, err := a.rmqCh.Consume(q.Name, "", false, false, false, false, nil)
 	if err != nil {
+		a.logger.Error("Failed to start consuming Weather queue", zap.Error(err))
 		return nil, err
 	}
+
 	smtpBackend := email.NewSMTPBackend(
 		a.cfg.SMTP.Host,
 		a.cfg.SMTP.Port,
@@ -138,18 +134,20 @@ func (a *App) setupWeatherCommandConsumer() (*consumers.GenericConsumer[messagin
 		a.cfg.SMTP.Pass,
 		a.cfg.SMTP.EmailFrom,
 	)
-	_ = smtpBackend
-	stdoutBackend := email.NewStdoutBackend()
-	_ = stdoutBackend
+
 	weatherMailer := mailers.NewWeatherEmailNotifier(smtpBackend)
 	weatherCommandHandler := eventhandlers.NewWeatherNotifyCommandHandler(weatherMailer)
 	weatherCommandConsumer := consumers.NewGenericConsumer(weatherCommandHandler, msgs, weathNotifyConsumerName)
+
+	a.logger.Debug("WeatherNotifyCommand consumer successfully created")
 	return weatherCommandConsumer, nil
 }
 
 func (a *App) setupRouter() *gin.Engine {
+	a.logger.Debug("Setting up HTTP router")
 	router := gin.Default()
 	router.GET("/healthcheck", httphandlers.NewHealthcheckGETHandler(a.rmqCh,
 		[]string{messaging.SubscribeQueueName, messaging.WeatherQueueName}))
+	a.logger.Debug("HTTP router created")
 	return router
 }

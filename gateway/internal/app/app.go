@@ -87,14 +87,14 @@ func (a *App) shutdown(timeoutCtx context.Context) error {
 	var shutdownErr error
 
 	// http server
-	a.logger.Info("Shutting down http server...")
+	a.logger.Info("Shutting down HTTP server...")
 	if a.httpSrv != nil {
 		if err := a.httpSrv.Shutdown(timeoutCtx); err != nil {
-			a.logger.Error("Failed to shutdown http server", zap.Error(err))
+			a.logger.Error("HTTP server shutdown failed", zap.Error(err))
 			wrapped := fmt.Errorf("shutdown http server: %w", err)
 			shutdownErr = wrapped
 		} else {
-			a.logger.Info("HTTP Server Shutdown successfully")
+			a.logger.Info("HTTP server shutdown successful")
 		}
 	}
 
