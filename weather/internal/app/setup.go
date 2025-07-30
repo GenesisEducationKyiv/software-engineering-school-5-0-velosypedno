@@ -34,6 +34,10 @@ const (
 )
 
 func (a *App) setupWeatherRepo() *decorator.CacheDecorator {
+	_ = freeWeatherName
+	_ = tomorrowIOName
+	_ = visualCrossingName
+
 	freeWeathR := provider.NewFreeWeatherAPI(
 		provider.APICfg{APIKey: a.cfg.FreeWeather.Key, APIURL: a.cfg.FreeWeather.URL},
 		&http.Client{},
@@ -47,15 +51,11 @@ func (a *App) setupWeatherRepo() *decorator.CacheDecorator {
 		&http.Client{},
 	)
 
-	logFreeWeathR := decorator.NewLogDecorator(freeWeathR, freeWeatherName, a.reposLogger)
-	logTomorrowR := decorator.NewLogDecorator(tomorrowWeathR, tomorrowIOName, a.reposLogger)
-	logVcWeathR := decorator.NewLogDecorator(vcWeathR, visualCrossingName, a.reposLogger)
-
-	breakerFreeWeathR := decorator.NewBreakerDecorator(logFreeWeathR,
+	breakerFreeWeathR := decorator.NewBreakerDecorator(freeWeathR,
 		cb.NewCircuitBreaker(weatherCBTimeout, weatherCBLimit, weatherCBRecover))
-	breakerTomorrowR := decorator.NewBreakerDecorator(logTomorrowR,
+	breakerTomorrowR := decorator.NewBreakerDecorator(tomorrowWeathR,
 		cb.NewCircuitBreaker(weatherCBTimeout, weatherCBLimit, weatherCBRecover))
-	breakerVcWeathR := decorator.NewBreakerDecorator(logVcWeathR,
+	breakerVcWeathR := decorator.NewBreakerDecorator(vcWeathR,
 		cb.NewCircuitBreaker(weatherCBTimeout, weatherCBLimit, weatherCBRecover))
 
 	weathChain := chain.NewProvidersFallbackChain(breakerFreeWeathR, breakerTomorrowR, breakerVcWeathR)
