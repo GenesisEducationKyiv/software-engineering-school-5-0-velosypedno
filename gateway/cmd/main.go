@@ -11,6 +11,8 @@ import (
 	"go.uber.org/zap"
 )
 
+const service = "gateway"
+
 func main() {
 	logger, err := zap.NewProduction()
 	if err != nil {
@@ -22,7 +24,7 @@ func main() {
 			panic(err)
 		}
 	}()
-	logFactory := logging.NewFactory(logger, "gateway")
+	logFactory := logging.NewFactory(logger, service)
 	mainLogger := logFactory.ForPackage("main")
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
