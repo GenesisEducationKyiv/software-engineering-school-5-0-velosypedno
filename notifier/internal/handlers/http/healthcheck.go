@@ -10,7 +10,6 @@ import (
 
 func NewHealthcheckGETHandler(logger *zap.Logger, ch *amqp.Channel, queueNames []string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		logger.Info("healthcheck request")
 		for _, queueName := range queueNames {
 			_, err := ch.QueueDeclarePassive(queueName, true, false, false, false, nil)
 			if err != nil {
@@ -18,8 +17,6 @@ func NewHealthcheckGETHandler(logger *zap.Logger, ch *amqp.Channel, queueNames [
 					zap.String("queue", queueName),
 					zap.Error(err),
 				)
-			} else {
-				logger.Debug("queue available", zap.String("queue", queueName))
 			}
 		}
 
