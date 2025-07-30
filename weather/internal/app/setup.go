@@ -56,7 +56,8 @@ func (a *App) setupWeatherRepo() *decorator.CacheDecorator {
 	weathChain := chain.NewProvidersFallbackChain(breakerFreeWeathR, breakerTomorrowR, breakerVcWeathR)
 
 	redisBackend := cache.NewRedisCacheClient[domain.Weather](a.redisClient, cacheTTL)
-	cachedRepoChain := decorator.NewCacheDecorator(weathChain, redisBackend, a.metrics.weather)
+	cacheLogger := a.logFactory.ForPackage("repos/decorator")
+	cachedRepoChain := decorator.NewCacheDecorator(cacheLogger, weathChain, redisBackend, a.metrics.weather)
 	return cachedRepoChain
 }
 
