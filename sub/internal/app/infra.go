@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"log"
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/messaging"
 	pbweath "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/weath/v1alpha1"
@@ -16,6 +15,7 @@ import (
 	weathrepo "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/repos/weather"
 	"github.com/google/uuid"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -70,16 +70,25 @@ type InfrastructureContainer struct {
 	SubNotifier     subNotifier
 }
 
-func NewInfrastructureContainer(cfg config.Config) (*InfrastructureContainer, error) {
+func NewInfrastructureContainer(cfg config.Config, logger *zap.Logger) (*InfrastructureContainer, error) {
 	// messaging
+	logger.Info("Connecting to RabbitMQ...")
 	conn, err := newRabbitMQConn(cfg.RabbitMQ)
 	if err != nil {
+		logger.Error("Failed to connect to RabbitMQ", zap.Error(err))
 		return nil, err
 	}
+	logger.Info("Connected to RabbitMQ")
+
+	logger.Info("Opening RabbitMQ channel...")
 	ch, err := newRabbitMQChannel(conn)
 	if err != nil {
+		logger.Error("Failed to open RabbitMQ channel", zap.Error(err))
 		return nil, err
 	}
+	logger.Info("RabbitMQ channel opened")
+
+	logger.Info("Declaring RabbitMQ exchange...")
 	err = ch.ExchangeDeclare(
 		messaging.ExchangeName,
 		"direct",
@@ -90,98 +99,111 @@ func NewInfrastructureContainer(cfg config.Config) (*InfrastructureContainer, er
 		nil,   // args
 	)
 	if err != nil {
+		logger.Error("Failed to declare RabbitMQ exchange", zap.Error(err))
 		return nil, err
 	}
+	logger.Info("RabbitMQ exchange declared")
 
 	// db
+	logger.Info("Connecting to database...")
 	db, err := newDB(cfg.DB)
 	if err != nil {
+		logger.Error("Failed to connect to database", zap.Error(err))
 		return nil, err
 	}
+	logger.Info("Connected to database")
+
+	// gRPC to Weather Service
+	logger.Info("Connecting to Weather gRPC service...")
+	grpcConn, err := newWeatherGRPCConn(cfg)
+	if err != nil {
+		logger.Error("Failed to connect to Weather gRPC service", zap.Error(err))
+		return nil, err
+	}
+	logger.Info("Connected to Weather gRPC service")
 
 	// repos
 	subRepo := subrepo.NewDBRepo(db)
-	grpcConn, err := newWeatherGRPCConn(cfg)
-	if err != nil {
-		return nil, err
-	}
 	weathGRPCClient := pbweath.NewWeatherServiceClient(grpcConn)
 	weathRepo := weathrepo.NewGRPCRepo(weathGRPCClient)
 
 	// mailers
 	weatherNotifyCommandProducer := producers.NewWeatherNotifyCommandProducer(ch)
 	weatherNotifier := brokernotify.NewWeatherNotifyCommandNotifier(weatherNotifyCommandProducer)
-
 	subEventProducer := producers.NewSubscribeEventProducer(ch)
 	subNotifier := brokernotify.NewSubscriptionEmailNotifier(subEventProducer)
 
 	return &InfrastructureContainer{
-		DB:       db,
-		GRPCConn: grpcConn,
-
-		RabbitMQConn: conn,
-		RabbitMQCh:   ch,
-
-		WeatherRepo: weathRepo,
-		SubRepo:     subRepo,
-
+		DB:              db,
+		GRPCConn:        grpcConn,
+		RabbitMQConn:    conn,
+		RabbitMQCh:      ch,
+		WeatherRepo:     weathRepo,
+		SubRepo:         subRepo,
 		WeatherNotifier: weatherNotifier,
 		SubNotifier:     subNotifier,
 	}, nil
 }
 
-func (c *InfrastructureContainer) Shutdown(ctx context.Context) error {
+func (c *InfrastructureContainer) Shutdown(ctx context.Context, logger *zap.Logger) error {
 	var shutdownErr error
+
+	logger.Info("Starting infrastructure shutdown")
 
 	// grpc
 	if c.GRPCConn != nil {
+		logger.Info("Closing gRPC connection...")
 		if err := c.GRPCConn.Close(); err != nil {
-			wrapped := fmt.Errorf("shutdown gRPC connection: %w", err)
-			log.Println(wrapped)
-			shutdownErr = wrapped
+			errWrapped := fmt.Errorf("shutdown gRPC connection: %w", err)
+			logger.Error("Failed to close gRPC connection", zap.Error(errWrapped))
+			shutdownErr = errWrapped
 		} else {
-			log.Println("gRPC connection closed")
+			logger.Info("gRPC connection closed")
 		}
 	}
 
 	// db
 	if c.DB != nil {
+		logger.Info("Closing database connection...")
 		if err := c.DB.Close(); err != nil {
-			wrapped := fmt.Errorf("shutdown db: %w", err)
-			log.Println(wrapped)
+			errWrapped := fmt.Errorf("shutdown db: %w", err)
+			logger.Error("Failed to close database connection", zap.Error(errWrapped))
 			if shutdownErr == nil {
-				shutdownErr = wrapped
+				shutdownErr = errWrapped
 			}
 		} else {
-			log.Println("DB closed")
+			logger.Info("Database connection closed")
 		}
 	}
 
 	// messaging
 	if c.RabbitMQCh != nil {
+		logger.Info("Closing RabbitMQ channel...")
 		if err := c.RabbitMQCh.Close(); err != nil {
-			wrapped := fmt.Errorf("shutdown rabbitmq channel: %w", err)
-			log.Println(wrapped)
+			errWrapped := fmt.Errorf("shutdown RabbitMQ channel: %w", err)
+			logger.Error("Failed to close RabbitMQ channel", zap.Error(errWrapped))
 			if shutdownErr == nil {
-				shutdownErr = wrapped
+				shutdownErr = errWrapped
 			}
 		} else {
-			log.Println("RabbitMQ channel closed")
+			logger.Info("RabbitMQ channel closed")
 		}
 	}
 
 	if c.RabbitMQConn != nil {
+		logger.Info("Closing RabbitMQ connection...")
 		if err := c.RabbitMQConn.Close(); err != nil {
-			wrapped := fmt.Errorf("shutdown rabbitmq connection: %w", err)
-			log.Println(wrapped)
+			errWrapped := fmt.Errorf("shutdown RabbitMQ connection: %w", err)
+			logger.Error("Failed to close RabbitMQ connection", zap.Error(errWrapped))
 			if shutdownErr == nil {
-				shutdownErr = wrapped
+				shutdownErr = errWrapped
 			}
 		} else {
-			log.Println("RabbitMQ connection closed")
+			logger.Info("RabbitMQ connection closed")
 		}
 	}
 
+	logger.Info("Infrastructure shutdown complete")
 	return shutdownErr
 }
 
