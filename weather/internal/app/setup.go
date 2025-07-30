@@ -19,11 +19,6 @@ import (
 )
 
 const (
-	freeWeatherName    = "weatherapi.com"
-	tomorrowIOName     = "tomorrow.io"
-	visualCrossingName = "visualcrossing.com"
-
-	confirmSubTmplName    = "confirm_sub.html"
 	weatherRequestTimeout = 10 * time.Second
 	cacheTTL              = 5 * time.Minute
 
@@ -34,19 +29,19 @@ const (
 )
 
 func (a *App) setupWeatherRepo() *decorator.CacheDecorator {
-	_ = freeWeatherName
-	_ = tomorrowIOName
-	_ = visualCrossingName
-
+	weatherProviderLogger := a.logFactory.ForPackage("repos/provider")
 	freeWeathR := provider.NewFreeWeatherAPI(
+		weatherProviderLogger,
 		provider.APICfg{APIKey: a.cfg.FreeWeather.Key, APIURL: a.cfg.FreeWeather.URL},
 		&http.Client{},
 	)
 	tomorrowWeathR := provider.NewTomorrowAPI(
+		weatherProviderLogger,
 		provider.APICfg{APIKey: a.cfg.TomorrowWeather.Key, APIURL: a.cfg.TomorrowWeather.URL},
 		&http.Client{},
 	)
 	vcWeathR := provider.NewVisualCrossingAPI(
+		weatherProviderLogger,
 		provider.APICfg{APIKey: a.cfg.VisualCrossing.Key, APIURL: a.cfg.VisualCrossing.URL},
 		&http.Client{},
 	)

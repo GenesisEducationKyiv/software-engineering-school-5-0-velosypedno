@@ -4,19 +4,22 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
+
+	"go.uber.org/zap"
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/domain"
 )
 
+const freeWeatherName = "weatherapi.com"
 const noMatchingLocationFoundCode = 1006
 
 type APICfg struct {
 	APIKey string
 	APIURL string
 }
+
 type HTTPClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
@@ -24,12 +27,14 @@ type HTTPClient interface {
 type FreeWeatherAPI struct {
 	cfg    APICfg
 	client HTTPClient
+	logger *zap.Logger
 }
 
-func NewFreeWeatherAPI(cfg APICfg, client HTTPClient) *FreeWeatherAPI {
+func NewFreeWeatherAPI(logger *zap.Logger, cfg APICfg, client HTTPClient) *FreeWeatherAPI {
 	return &FreeWeatherAPI{
 		cfg:    cfg,
 		client: client,
+		logger: logger.With(zap.String("provider", freeWeatherName)),
 	}
 }
 
@@ -54,50 +59,71 @@ func (r *FreeWeatherAPI) GetCurrent(ctx context.Context, city string) (domain.We
 	// step 1: format request
 	q := url.QueryEscape(city)
 	url := fmt.Sprintf("%s/current.json?key=%s&q=%s", r.cfg.APIURL, r.cfg.APIKey, q)
+
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
-		log.Printf("free weather repo: failed to format request for %s, err:%v\n", city, err)
+		r.logger.Error("failed to create HTTP request",
+			zap.String("city", city),
+			zap.Error(err),
+		)
 		return domain.Weather{}, fmt.Errorf("free weather repo: %w", domain.ErrInternal)
 	}
 
-	// step 2: send request
+	// step 2: perform request
 	resp, err := r.client.Do(req)
 	if err != nil {
-		log.Printf("free weather repo: failed to get weather for %s, err:%v\n", city, err)
+		r.logger.Error("failed to perform HTTP request",
+			zap.String("url", url),
+			zap.Error(err),
+		)
 		return domain.Weather{}, fmt.Errorf("free weather repo: %w", domain.ErrWeatherUnavailable)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			log.Printf("failed to close resp body: %v\n", err)
+			r.logger.Warn("failed to close HTTP response body",
+				zap.Error(err),
+			)
 		}
 	}()
 
 	// step 3: handle response
 	if resp.StatusCode == http.StatusForbidden {
-		log.Println("free weather repo: api key is invalid")
+		r.logger.Error("API key is invalid",
+			zap.Int("status_code", resp.StatusCode),
+		)
 		return domain.Weather{}, fmt.Errorf("free weather repo: %w", domain.ErrWeatherUnavailable)
 	}
+
 	if resp.StatusCode != http.StatusOK {
 		var errResp freeWeatherAPIErrorResponse
 		if err := json.NewDecoder(resp.Body).Decode(&errResp); err == nil {
 			if errResp.Error.Code == noMatchingLocationFoundCode {
-				log.Printf("free weather repo: city %s not found\n", city)
+				r.logger.Info("city not found",
+					zap.String("city", city),
+				)
 				return domain.Weather{}, fmt.Errorf("free weather repo: %w", domain.ErrCityNotFound)
 			}
-			log.Printf("free weather repo: api error: %s\n", errResp.Error.Message)
+			r.logger.Error("API returned error",
+				zap.String("message", errResp.Error.Message),
+				zap.Int("error_code", errResp.Error.Code),
+			)
 			return domain.Weather{}, fmt.Errorf("free weather repo: %w", domain.ErrInternal)
 		}
-		log.Printf("free weather repo: unexpected error %d\n", resp.StatusCode)
+		r.logger.Error("unexpected HTTP response status",
+			zap.Int("status_code", resp.StatusCode),
+		)
 		return domain.Weather{}, fmt.Errorf("free weather repo: %w", domain.ErrInternal)
 	}
 
-	// step 4: parse response body
 	var responseData freeWeatherAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
-		log.Printf("free weather repo: failed to decode weather data: %v\n", err)
+		r.logger.Error("failed to decode weather API response",
+			zap.Error(err),
+		)
 		return domain.Weather{}, fmt.Errorf("free weather repo: %w", domain.ErrInternal)
 	}
 
+	// step 4: return weather
 	return domain.Weather{
 		Temperature: responseData.Current.TempC,
 		Humidity:    responseData.Current.Humidity,

@@ -5,16 +5,20 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
+
+	"go.uber.org/zap"
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/domain"
 )
 
+const visualCrossingName = "visualcrossing.com"
+
 type VisualCrossingAPI struct {
 	cfg    APICfg
 	client HTTPClient
+	logger *zap.Logger
 }
 
 type visualCrossingAPIResponse struct {
@@ -25,71 +29,85 @@ type visualCrossingAPIResponse struct {
 	} `json:"currentConditions"`
 }
 
-func NewVisualCrossingAPI(cfg APICfg, client HTTPClient) *VisualCrossingAPI {
+func NewVisualCrossingAPI(logger *zap.Logger, cfg APICfg, client HTTPClient) *VisualCrossingAPI {
 	return &VisualCrossingAPI{
 		cfg:    cfg,
 		client: client,
+		logger: logger.With(zap.String("provider", visualCrossingName)),
 	}
 }
 
 func (r *VisualCrossingAPI) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
-	// step 1: format request
 	q := url.QueryEscape(city)
 	url := fmt.Sprintf("%s/%s/today?key=%s&include=current&unitGroup=metric", r.cfg.APIURL, q, r.cfg.APIKey)
+
 	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
-		log.Printf("visual crossing repo: failed to format request for %s, err:%v\n", city, err)
+		r.logger.Error("failed to create HTTP request",
+			zap.String("city", city),
+			zap.Error(err),
+		)
 		return domain.Weather{}, fmt.Errorf("visual crossing repo: %w", domain.ErrInternal)
 	}
 
-	// step 2: send request
 	resp, err := r.client.Do(req)
 	if err != nil {
-		log.Printf("visual crossing repo: failed to get weather for %s, err:%v\n", city, err)
+		r.logger.Error("failed to perform HTTP request",
+			zap.String("url", url),
+			zap.Error(err),
+		)
 		return domain.Weather{}, fmt.Errorf("visual crossing repo: %w", domain.ErrWeatherUnavailable)
 	}
 	defer func() {
 		if err := resp.Body.Close(); err != nil {
-			log.Printf("visual crossing repo: failed to close resp body: %v\n", err)
+			r.logger.Warn("failed to close HTTP response body",
+				zap.Error(err),
+			)
 		}
 	}()
 
-	// step 3: handle response
-	if resp.StatusCode == http.StatusUnauthorized {
-		log.Println("visual crossing repo: api key is invalid")
+	switch resp.StatusCode {
+	case http.StatusUnauthorized:
+		r.logger.Error("API key is invalid",
+			zap.Int("status_code", resp.StatusCode),
+		)
 		return domain.Weather{}, fmt.Errorf("visual crossing repo: %w", domain.ErrWeatherUnavailable)
-	}
-	if resp.StatusCode == http.StatusInternalServerError {
+
+	case http.StatusInternalServerError, http.StatusBadRequest:
 		bodyBytes, err := io.ReadAll(resp.Body)
 		if err != nil {
-			log.Printf("visual crossing repo: failed to read response body: %v\n", err)
+			r.logger.Error("failed to read response body",
+				zap.Error(err),
+			)
 			return domain.Weather{}, fmt.Errorf("visual crossing repo: %w", domain.ErrInternal)
 		}
 
-		log.Printf("visual crossing repo: api error: %s\n", string(bodyBytes))
-		return domain.Weather{}, fmt.Errorf("visual crossing repo: %w", domain.ErrInternal)
-	}
-	if resp.StatusCode == http.StatusBadRequest {
-		bodyBytes, err := io.ReadAll(resp.Body)
-		if err != nil {
-			log.Printf("visual crossing repo: failed to read response body: %v\n", err)
-			return domain.Weather{}, fmt.Errorf("visual crossing repo: %w", domain.ErrInternal)
+		r.logger.Error("API returned error",
+			zap.Int("status_code", resp.StatusCode),
+			zap.String("body", string(bodyBytes)),
+		)
+
+		if resp.StatusCode == http.StatusBadRequest {
+			return domain.Weather{}, fmt.Errorf("visual crossing repo: %w", domain.ErrCityNotFound)
 		}
+		return domain.Weather{}, fmt.Errorf("visual crossing repo: %w", domain.ErrInternal)
 
-		log.Printf("visual crossing repo: api error: %s\n", string(bodyBytes))
-		return domain.Weather{}, fmt.Errorf("visual crossing repo: %w", domain.ErrCityNotFound)
-	}
-	if resp.StatusCode != http.StatusOK {
-		log.Printf("visual crossing repo: unexpected error %d\n", resp.StatusCode)
+	case http.StatusOK:
+	default:
+		r.logger.Error("unexpected HTTP response status",
+			zap.Int("status_code", resp.StatusCode),
+		)
 		return domain.Weather{}, fmt.Errorf("visual crossing repo: %w", domain.ErrInternal)
 	}
 
-	// step 4: parse response body
 	var responseData visualCrossingAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
-		log.Printf("visual crossing repo: failed to decode weather data: %v\n", err)
+		r.logger.Error("failed to decode weather API response",
+			zap.Error(err),
+		)
 		return domain.Weather{}, fmt.Errorf("visual crossing repo: %w", domain.ErrInternal)
 	}
+
 	return domain.Weather{
 		Temperature: responseData.Current.TempC,
 		Humidity:    responseData.Current.Humidity,
