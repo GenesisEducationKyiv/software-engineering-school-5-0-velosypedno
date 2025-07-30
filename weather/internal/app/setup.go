@@ -73,10 +73,9 @@ func (a *App) setupRouter() *gin.Engine {
 
 func (a *App) setupGRPCSrv() *grpc.Server {
 	grpcServer := grpc.NewServer()
-
+	logger := a.logFactory.ForPackage("handlers/grpc")
 	weatherRepo := a.setupWeatherRepo()
 	weatherService := services.NewWeatherService(weatherRepo)
-
-	pb.RegisterWeatherServiceServer(grpcServer, grpch.NewWeatherGRPCServer(weatherService, weatherRequestTimeout))
+	pb.RegisterWeatherServiceServer(grpcServer, grpch.NewWeatherGRPCServer(weatherService, weatherRequestTimeout, logger))
 	return grpcServer
 }

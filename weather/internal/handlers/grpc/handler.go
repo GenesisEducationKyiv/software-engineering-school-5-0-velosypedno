@@ -4,6 +4,8 @@ import (
 	"context"
 	"time"
 
+	"go.uber.org/zap"
+
 	pb "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/weath/v1alpha1"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/domain"
 )
@@ -17,11 +19,17 @@ type WeathGRPCServer struct {
 
 	weathSvc       weatherService
 	requestTimeout time.Duration
+	logger         *zap.Logger
 }
 
-func NewWeatherGRPCServer(weathSvc weatherService, requestTimeout time.Duration) *WeathGRPCServer {
+func NewWeatherGRPCServer(
+	weathSvc weatherService,
+	requestTimeout time.Duration,
+	logger *zap.Logger,
+) *WeathGRPCServer {
 	return &WeathGRPCServer{
 		weathSvc:       weathSvc,
 		requestTimeout: requestTimeout,
+		logger:         logger,
 	}
 }
