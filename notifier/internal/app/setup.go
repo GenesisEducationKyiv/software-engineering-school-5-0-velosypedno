@@ -14,9 +14,12 @@ import (
 	"go.uber.org/zap"
 )
 
-const confirmSubTmplName = "confirm_sub.html"
-const subscribeConsumerName = "subscribe event"
-const weathNotifyConsumerName = "weather notify command"
+const (
+	confirmSubTmplName      = "confirm_sub.html"
+	weatherTmplName         = "weather.html"
+	subscribeConsumerName   = "subscribe event"
+	weathNotifyConsumerName = "weather notify command"
+)
 
 var declareExchangeOnce sync.Once
 var declareExchangeErr error
@@ -84,8 +87,8 @@ func (a *App) setupSubscribeEventConsumer() (*consumers.GenericConsumer[messagin
 		a.cfg.SMTP.Pass,
 		a.cfg.SMTP.EmailFrom,
 	)
-
-	subscribeMailer := mailers.NewSubscriptionEmailNotifier(smtpBackend, confirmTmplPath)
+	mailerLogger := a.logFactory.ForPackage("mailers")
+	subscribeMailer := mailers.NewSubscriptionEmailNotifier(mailerLogger, smtpBackend, confirmTmplPath)
 	subscribeEventHandler := eventhandlers.NewSubscribeEventHandler(subscribeMailer)
 	consumerLogger := a.logFactory.ForPackage("consumers")
 	subscribeEventConsumer := consumers.NewGenericConsumer(consumerLogger, subscribeEventHandler, msgs, subscribeConsumerName)
@@ -135,8 +138,9 @@ func (a *App) setupWeatherCommandConsumer() (*consumers.GenericConsumer[messagin
 		a.cfg.SMTP.Pass,
 		a.cfg.SMTP.EmailFrom,
 	)
-
-	weatherMailer := mailers.NewWeatherEmailNotifier(smtpBackend)
+	weatherTmplPath := filepath.Join(a.cfg.TemplatesDir, weatherTmplName)
+	mailerLogger := a.logFactory.ForPackage("mailers")
+	weatherMailer := mailers.NewWeatherEmailNotifier(mailerLogger, smtpBackend, weatherTmplPath)
 	weatherCommandHandler := eventhandlers.NewWeatherNotifyCommandHandler(weatherMailer)
 	consumerLogger := a.logFactory.ForPackage("consumers")
 	weatherCommandConsumer := consumers.NewGenericConsumer(consumerLogger, weatherCommandHandler, msgs, weathNotifyConsumerName)
