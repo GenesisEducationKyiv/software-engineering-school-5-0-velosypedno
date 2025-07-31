@@ -31,6 +31,7 @@ x-gateway-env: &gateway-env
   SUB_SERVICE_HOST: ${SUB_SERVICE_HOST}
   API_GATEWAY_PORT: ${API_GATEWAY_PORT}
   GIN_MODE: ${GIN_MODE}
+  LOG_DIR: ${LOG_DIR}
 
 x-sub-env: &sub-env
   GRPC_PORT: ${SUB_SERVICE_PORT}
@@ -38,11 +39,13 @@ x-sub-env: &sub-env
   WEATHER_SERVICE_PORT: ${WEATHER_SERVICE_GRPC_PORT}
   WEATHER_SERVICE_HOST: ${WEATHER_SERVICE_HOST}
   GIN_MODE: ${GIN_MODE}
+  LOG_DIR: ${LOG_DIR}
 
 x-notifier-env: &notifier-env
   TEMPLATES_DIR: ${TEMPLATES_DIR}
   HTTP_PORT: ${NOTIFIER_PORT}
   GIN_MODE: ${GIN_MODE}
+  LOG_DIR: ${LOG_DIR}
 
 x-weather-env: &weather-env
   GRPC_HOST: ${WEATHER_SERVICE_HOST}
@@ -50,6 +53,7 @@ x-weather-env: &weather-env
   HTTP_HOST: ${WEATHER_SERVICE_HOST}
   HTTP_PORT: ${WEATHER_SERVICE_HTTP_PORT}
   GIN_MODE: ${GIN_MODE}
+  LOG_DIR: ${LOG_DIR}
 
   FREE_WEATHER_API_KEY: ${FREE_WEATHER_API_KEY}
   WEATHER_API_BASE_URL: ${WEATHER_API_BASE_URL}
@@ -118,6 +122,8 @@ services:
         condition: service_healthy
     entrypoint: ["/app/bin/sub"]
     restart: unless-stopped
+    volumes:
+      - ./sub/logs:${LOG_DIR}
 
   weather:
     build:
@@ -132,6 +138,8 @@ services:
         condition: service_healthy
     entrypoint: ["/app/bin/weather"]
     restart: unless-stopped
+    volumes:
+      - ./weather/logs:${LOG_DIR}
 
   gateway:
     build: 
@@ -145,6 +153,8 @@ services:
     restart: unless-stopped
     depends_on:
      - sub
+    volumes:
+      - ./gateway/logs:${LOG_DIR}
 
   notifier:
     build: 
@@ -159,6 +169,8 @@ services:
     depends_on:
       rabbitmq:
         condition: service_healthy
+    volumes:
+      - ./notifier/logs:${LOG_DIR}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:8088/healthcheck"]
       interval: 10s
