@@ -3,20 +3,22 @@ package producers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/messaging"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/domain"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"go.uber.org/zap"
 )
 
 type SubscribeEventProducer struct {
-	ch *amqp.Channel
+	logger *zap.Logger
+	ch     *amqp.Channel
 }
 
-func NewSubscribeEventProducer(ch *amqp.Channel) *SubscribeEventProducer {
+func NewSubscribeEventProducer(logger *zap.Logger, ch *amqp.Channel) *SubscribeEventProducer {
 	return &SubscribeEventProducer{
-		ch: ch,
+		logger: logger.With(zap.String("producer", "SubscribeEventProducer")),
+		ch:     ch,
 	}
 }
 
@@ -27,7 +29,7 @@ func (p *SubscribeEventProducer) Produce(sub domain.Subscription) error {
 	}
 	body, err := json.Marshal(event)
 	if err != nil {
-		log.Println(fmt.Errorf("subscription event producer: %v", err))
+		p.logger.Error("Failed to marshal subscribe event", zap.Error(err))
 		return fmt.Errorf("subscription event producer: %w", domain.ErrInternal)
 	}
 	err = p.ch.Publish(
@@ -41,7 +43,7 @@ func (p *SubscribeEventProducer) Produce(sub domain.Subscription) error {
 		},
 	)
 	if err != nil {
-		log.Println(fmt.Errorf("subscription event producer: %v", err))
+		p.logger.Error("Failed to publish subscribe event", zap.Error(err))
 		return fmt.Errorf("subscription event producer: %w", domain.ErrInternal)
 	}
 	return nil

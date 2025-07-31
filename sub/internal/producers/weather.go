@@ -3,20 +3,22 @@ package producers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/messaging"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/domain"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"go.uber.org/zap"
 )
 
 type WeatherNotifyCommandProducer struct {
-	ch *amqp.Channel
+	logger *zap.Logger
+	ch     *amqp.Channel
 }
 
-func NewWeatherNotifyCommandProducer(ch *amqp.Channel) *WeatherNotifyCommandProducer {
+func NewWeatherNotifyCommandProducer(logger *zap.Logger, ch *amqp.Channel) *WeatherNotifyCommandProducer {
 	return &WeatherNotifyCommandProducer{
-		ch: ch,
+		logger: logger.With(zap.String("producer", "WeatherNotifyCommandProducer")),
+		ch:     ch,
 	}
 }
 
@@ -32,7 +34,7 @@ func (p *WeatherNotifyCommandProducer) Produce(sub domain.Subscription, weath do
 	}
 	body, err := json.Marshal(event)
 	if err != nil {
-		log.Println(fmt.Errorf("weather notify command producer: %v", err))
+		p.logger.Error("Failed to marshal weather notify command", zap.Error(err))
 		return fmt.Errorf("weather notify command producer: %w", domain.ErrInternal)
 	}
 	err = p.ch.Publish(
@@ -46,7 +48,7 @@ func (p *WeatherNotifyCommandProducer) Produce(sub domain.Subscription, weath do
 		},
 	)
 	if err != nil {
-		log.Println(fmt.Errorf("weather notify command producer: %v", err))
+		p.logger.Error("Failed to publish weather notify command", zap.Error(err))
 		return fmt.Errorf("weather notify command producer: %w", domain.ErrInternal)
 	}
 	return nil

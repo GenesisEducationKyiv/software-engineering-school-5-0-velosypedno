@@ -43,7 +43,7 @@ func (a *App) Run(ctx context.Context) error {
 	var err error
 
 	a.logger.Info("Initializing infrastructure container")
-	a.infra, err = NewInfrastructureContainer(*a.cfg, a.logger)
+	a.infra, err = NewInfrastructureContainer(a.cfg, a.logger, a.logFactory)
 	if err != nil {
 		a.logger.Error("Failed to initialize infrastructure container", zap.Error(err))
 		return err

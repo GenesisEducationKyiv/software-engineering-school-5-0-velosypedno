@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/logging"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/messaging"
 	pbweath "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/weath/v1alpha1"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/config"
@@ -70,7 +71,11 @@ type InfrastructureContainer struct {
 	SubNotifier     subNotifier
 }
 
-func NewInfrastructureContainer(cfg config.Config, logger *zap.Logger) (*InfrastructureContainer, error) {
+func NewInfrastructureContainer(
+	cfg *config.Config,
+	logger *zap.Logger,
+	logFactory *logging.LoggerFactory,
+) (*InfrastructureContainer, error) {
 	// messaging
 	logger.Info("Connecting to RabbitMQ...")
 	conn, err := newRabbitMQConn(cfg.RabbitMQ)
@@ -128,9 +133,10 @@ func NewInfrastructureContainer(cfg config.Config, logger *zap.Logger) (*Infrast
 	weathRepo := weathrepo.NewGRPCRepo(weathGRPCClient)
 
 	// mailers
-	weatherNotifyCommandProducer := producers.NewWeatherNotifyCommandProducer(ch)
+	producerLogger := logFactory.ForPackage("producers")
+	weatherNotifyCommandProducer := producers.NewWeatherNotifyCommandProducer(producerLogger, ch)
 	weatherNotifier := brokernotify.NewWeatherNotifyCommandNotifier(weatherNotifyCommandProducer)
-	subEventProducer := producers.NewSubscribeEventProducer(ch)
+	subEventProducer := producers.NewSubscribeEventProducer(producerLogger, ch)
 	subNotifier := brokernotify.NewSubscriptionEmailNotifier(subEventProducer)
 
 	return &InfrastructureContainer{
@@ -207,7 +213,7 @@ func (c *InfrastructureContainer) Shutdown(ctx context.Context, logger *zap.Logg
 	return shutdownErr
 }
 
-func newWeatherGRPCConn(cfg config.Config) (*grpc.ClientConn, error) {
+func newWeatherGRPCConn(cfg *config.Config) (*grpc.ClientConn, error) {
 	opt := grpc.WithTransportCredentials(insecure.NewCredentials())
 	grpcConn, err := grpc.NewClient(cfg.WeathSvc.Addr(), opt)
 	if err != nil {
