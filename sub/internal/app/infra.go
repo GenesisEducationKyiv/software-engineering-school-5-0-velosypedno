@@ -128,9 +128,11 @@ func NewInfrastructureContainer(
 	logger.Info("Connected to Weather gRPC service")
 
 	// repos
-	subRepo := subrepo.NewDBRepo(db)
+	subRepoLogger := logFactory.ForPackage("repos/subscription")
+	subRepo := subrepo.NewDBRepo(subRepoLogger, db)
 	weathGRPCClient := pbweath.NewWeatherServiceClient(grpcConn)
-	weathRepo := weathrepo.NewGRPCRepo(weathGRPCClient)
+	weatherRepoLogger := logFactory.ForPackage("repos/weather")
+	weathRepo := weathrepo.NewGRPCRepo(weatherRepoLogger, weathGRPCClient)
 
 	// mailers
 	producerLogger := logFactory.ForPackage("producers")
