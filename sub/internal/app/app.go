@@ -50,7 +50,7 @@ func (a *App) Run(ctx context.Context) error {
 	}
 
 	a.logger.Info("Initializing business container")
-	a.business, err = NewBusinessContainer(a.infra)
+	a.business, err = NewBusinessContainer(a.infra, a.logFactory)
 	if err != nil {
 		a.logger.Error("Failed to initialize business container", zap.Error(err))
 		return err
