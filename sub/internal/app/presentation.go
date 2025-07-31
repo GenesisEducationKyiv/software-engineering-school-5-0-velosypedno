@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/logging"
 	pb "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/sub/v1alpha2"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/domain"
 	subgrpc "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/handlers/grpc"
@@ -15,14 +16,14 @@ type PresentationContainer struct {
 	GRPCSrv     *grpc.Server
 }
 
-func NewPresentationContainer(businessContainer *BusinessContainer) (
+func NewPresentationContainer(businessContainer *BusinessContainer, logFactory *logging.LoggerFactory) (
 	*PresentationContainer, error,
 ) {
 	cron, err := newCron(businessContainer.WeathNotifyService)
 	if err != nil {
 		return nil, err
 	}
-	grpcSrv := newGRPCServer(businessContainer.SubService)
+	grpcSrv := newGRPCServer(businessContainer.SubService, logFactory)
 
 	return &PresentationContainer{
 		Cron:    cron,
@@ -47,8 +48,9 @@ func newCron(notifier weatherNotificationService) (*cron.Cron, error) {
 	return cron, nil
 }
 
-func newGRPCServer(subSvc subscriptionService) *grpc.Server {
+func newGRPCServer(subSvc subscriptionService, logFactory *logging.LoggerFactory) *grpc.Server {
 	grpcServer := grpc.NewServer()
-	pb.RegisterSubscriptionServiceServer(grpcServer, subgrpc.NewSubGRPCServer(subSvc))
+	grpcLogger := logFactory.ForPackage("handlers/grpc")
+	pb.RegisterSubscriptionServiceServer(grpcServer, subgrpc.NewSubGRPCServer(grpcLogger, subSvc))
 	return grpcServer
 }

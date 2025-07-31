@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 )
 
@@ -22,7 +23,7 @@ func TestSubGRPCServer_Unsubscribe(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		// Arrange
 		var called bool
-		srv := handlers.NewSubGRPCServer(&mockSubService{
+		srv := handlers.NewSubGRPCServer(zap.NewNop(), &mockSubService{
 			UnsubscribeFn: func(u uuid.UUID) error {
 				called = true
 				assert.Equal(t, validToken, u)
@@ -41,7 +42,7 @@ func TestSubGRPCServer_Unsubscribe(t *testing.T) {
 
 	t.Run("InvalidToken", func(t *testing.T) {
 		// Arrange
-		srv := handlers.NewSubGRPCServer(&mockSubService{})
+		srv := handlers.NewSubGRPCServer(zap.NewNop(), &mockSubService{})
 
 		// Act
 		_, err := srv.Unsubscribe(context.Background(), &pb.UnsubscribeRequest{Token: "invalid"})
@@ -53,7 +54,7 @@ func TestSubGRPCServer_Unsubscribe(t *testing.T) {
 
 	t.Run("NotFound", func(t *testing.T) {
 		// Arrange
-		srv := handlers.NewSubGRPCServer(&mockSubService{
+		srv := handlers.NewSubGRPCServer(zap.NewNop(), &mockSubService{
 			UnsubscribeFn: func(u uuid.UUID) error {
 				return domain.ErrSubNotFound
 			},
@@ -69,7 +70,7 @@ func TestSubGRPCServer_Unsubscribe(t *testing.T) {
 
 	t.Run("InternalError", func(t *testing.T) {
 		// Arrange
-		srv := handlers.NewSubGRPCServer(&mockSubService{
+		srv := handlers.NewSubGRPCServer(zap.NewNop(), &mockSubService{
 			UnsubscribeFn: func(u uuid.UUID) error {
 				return domain.ErrInternal
 			},
@@ -85,7 +86,7 @@ func TestSubGRPCServer_Unsubscribe(t *testing.T) {
 
 	t.Run("UnexpectedError", func(t *testing.T) {
 		// Arrange
-		srv := handlers.NewSubGRPCServer(&mockSubService{
+		srv := handlers.NewSubGRPCServer(zap.NewNop(), &mockSubService{
 			UnsubscribeFn: func(u uuid.UUID) error {
 				return domain.ErrInternal
 			},

@@ -13,6 +13,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -50,6 +51,7 @@ func TestSubGRPCServer_Confirm(t *testing.T) {
 	t.Run("Success", func(t *testing.T) {
 		// Arrange
 		srv := handlers.NewSubGRPCServer(
+			zap.NewNop(),
 			&mockSubService{
 				ActivateFn: func(u uuid.UUID) error {
 					if u != validToken {
@@ -70,7 +72,7 @@ func TestSubGRPCServer_Confirm(t *testing.T) {
 
 	t.Run("InvalidToken", func(t *testing.T) {
 		// Arrange
-		srv := handlers.NewSubGRPCServer(&mockSubService{})
+		srv := handlers.NewSubGRPCServer(zap.NewNop(), &mockSubService{})
 
 		// Act
 		_, err := srv.Confirm(context.Background(), &pb.ConfirmRequest{Token: "invalid"})
@@ -85,6 +87,7 @@ func TestSubGRPCServer_Confirm(t *testing.T) {
 	t.Run("NotFound", func(t *testing.T) {
 		// Arrange
 		srv := handlers.NewSubGRPCServer(
+			zap.NewNop(),
 			&mockSubService{
 				ActivateFn: func(u uuid.UUID) error {
 					return domain.ErrSubNotFound
@@ -105,6 +108,7 @@ func TestSubGRPCServer_Confirm(t *testing.T) {
 	t.Run("InternalError", func(t *testing.T) {
 		// Arrange
 		srv := handlers.NewSubGRPCServer(
+			zap.NewNop(),
 			&mockSubService{
 				ActivateFn: func(u uuid.UUID) error {
 					return domain.ErrInternal

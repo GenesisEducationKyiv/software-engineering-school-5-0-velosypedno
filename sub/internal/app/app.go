@@ -57,7 +57,7 @@ func (a *App) Run(ctx context.Context) error {
 	}
 
 	a.logger.Info("Initializing presentation container")
-	presentation, err := NewPresentationContainer(a.business)
+	presentation, err := NewPresentationContainer(a.business, a.logFactory)
 	if err != nil {
 		a.logger.Error("Failed to initialize presentation container", zap.Error(err))
 		return err
