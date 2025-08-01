@@ -203,11 +203,20 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
     volumes:
       - rabbitmq-data:/var/lib/rabbitmq
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    volumes:
+      - grafana-data:/var/lib/grafana
+    restart: unless-stopped
 
 volumes:
   postgres-data:
   prometheus-data:
   rabbitmq-data:
+  grafana-data:
