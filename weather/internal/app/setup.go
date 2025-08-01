@@ -34,16 +34,19 @@ func (a *App) setupWeatherRepo() *decorator.CacheDecorator {
 		weatherProviderLogger,
 		provider.APICfg{APIKey: a.cfg.FreeWeather.Key, APIURL: a.cfg.FreeWeather.URL},
 		&http.Client{},
+		a.metrics.provider,
 	)
 	tomorrowWeathR := provider.NewTomorrowAPI(
 		weatherProviderLogger,
 		provider.APICfg{APIKey: a.cfg.TomorrowWeather.Key, APIURL: a.cfg.TomorrowWeather.URL},
 		&http.Client{},
+		a.metrics.provider,
 	)
 	vcWeathR := provider.NewVisualCrossingAPI(
 		weatherProviderLogger,
 		provider.APICfg{APIKey: a.cfg.VisualCrossing.Key, APIURL: a.cfg.VisualCrossing.URL},
 		&http.Client{},
+		a.metrics.provider,
 	)
 
 	breakerFreeWeathR := decorator.NewBreakerDecorator(freeWeathR,
@@ -57,7 +60,7 @@ func (a *App) setupWeatherRepo() *decorator.CacheDecorator {
 
 	redisBackend := cache.NewRedisCacheClient[domain.Weather](a.redisClient, cacheTTL)
 	cacheLogger := a.logFactory.ForPackage("repos/decorator")
-	cachedRepoChain := decorator.NewCacheDecorator(cacheLogger, weathChain, redisBackend, a.metrics.weather)
+	cachedRepoChain := decorator.NewCacheDecorator(cacheLogger, weathChain, redisBackend, a.metrics.cache)
 	return cachedRepoChain
 }
 

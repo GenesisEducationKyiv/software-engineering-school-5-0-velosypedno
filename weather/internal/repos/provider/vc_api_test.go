@@ -34,7 +34,7 @@ func TestVisualCrossingGetCurrentWeather_Success(t *testing.T) {
 		},
 	}
 	cfg := provider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
-	repo := provider.NewVisualCrossingAPI(zap.NewNop(), cfg, client)
+	repo := provider.NewVisualCrossingAPI(zap.NewNop(), cfg, client, &metrics{})
 
 	// Act
 	weather, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -58,7 +58,7 @@ func TestVisualCrossingGetCurrentWeather_CityNotFound(t *testing.T) {
 		},
 	}
 	cfg := provider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
-	repo := provider.NewVisualCrossingAPI(zap.NewNop(), cfg, client)
+	repo := provider.NewVisualCrossingAPI(zap.NewNop(), cfg, client, &metrics{})
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "InvalidCity")
@@ -78,7 +78,7 @@ func TestVisualCrossingGetCurrentWeather_APIKeyInvalid(t *testing.T) {
 		},
 	}
 	cfg := provider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
-	repo := provider.NewVisualCrossingAPI(zap.NewNop(), cfg, client)
+	repo := provider.NewVisualCrossingAPI(zap.NewNop(), cfg, client, &metrics{})
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -96,7 +96,7 @@ func TestVisualCrossingGetCurrentWeather_HTTPError(t *testing.T) {
 		},
 	}
 	cfg := provider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
-	repo := provider.NewVisualCrossingAPI(zap.NewNop(), cfg, client)
+	repo := provider.NewVisualCrossingAPI(zap.NewNop(), cfg, client, &metrics{})
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -117,7 +117,7 @@ func TestVisualCrossingGetCurrentWeather_BadJSON(t *testing.T) {
 		},
 	}
 	cfg := provider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
-	repo := provider.NewVisualCrossingAPI(zap.NewNop(), cfg, client)
+	repo := provider.NewVisualCrossingAPI(zap.NewNop(), cfg, client, &metrics{})
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")

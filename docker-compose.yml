@@ -130,6 +130,7 @@ services:
       context: .
       dockerfile: weather/Dockerfile
     ports:
+      - "8084:8084"
       - "50101:50101"
     environment:
       <<: [*weather-env, *redis-env]

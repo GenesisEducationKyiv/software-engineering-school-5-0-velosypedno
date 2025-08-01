@@ -26,7 +26,8 @@ var (
 )
 
 type appMetrics struct {
-	weather *metrics.WeatherMetrics
+	cache    *metrics.CacheMetrics
+	provider *metrics.ProviderMetrics
 }
 
 type App struct {
@@ -55,7 +56,8 @@ func (a *App) Run(ctx context.Context) error {
 
 	// metrics
 	a.logger.Info("Initializing metrics...")
-	a.metrics.weather = metrics.NewWeatherMetrics(appMetricsRegister)
+	a.metrics.cache = metrics.NewCacheMetrics(appMetricsRegister)
+	a.metrics.provider = metrics.NewProviderMetrics(appMetricsRegister)
 
 	// redis
 	a.logger.Info("Connecting to Redis...", zap.String("addr", a.cfg.Redis.Addr()))

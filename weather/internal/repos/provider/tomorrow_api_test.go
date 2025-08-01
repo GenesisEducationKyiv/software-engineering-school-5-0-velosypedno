@@ -37,7 +37,7 @@ func TestTomorrowGetCurrentWeather_Success(t *testing.T) {
 		},
 	}
 	cfg := provider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
-	repo := provider.NewTomorrowAPI(zap.NewNop(), cfg, client)
+	repo := provider.NewTomorrowAPI(zap.NewNop(), cfg, client, &metrics{})
 
 	// Act
 	weather, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -64,7 +64,7 @@ func TestTomorrowGetCurrentWeather_CityNotFound(t *testing.T) {
 		},
 	}
 	cfg := provider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
-	repo := provider.NewTomorrowAPI(zap.NewNop(), cfg, client)
+	repo := provider.NewTomorrowAPI(zap.NewNop(), cfg, client, &metrics{})
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "InvalidCity")
@@ -84,7 +84,7 @@ func TestTomorrowGetCurrentWeather_APIKeyInvalid(t *testing.T) {
 		},
 	}
 	cfg := provider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
-	repo := provider.NewTomorrowAPI(zap.NewNop(), cfg, client)
+	repo := provider.NewTomorrowAPI(zap.NewNop(), cfg, client, &metrics{})
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -102,7 +102,7 @@ func TestTomorrowGetCurrentWeather_HTTPError(t *testing.T) {
 		},
 	}
 	cfg := provider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
-	repo := provider.NewTomorrowAPI(zap.NewNop(), cfg, client)
+	repo := provider.NewTomorrowAPI(zap.NewNop(), cfg, client, &metrics{})
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -123,7 +123,7 @@ func TestTomorrowGetCurrentWeather_BadJSON(t *testing.T) {
 		},
 	}
 	cfg := provider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
-	repo := provider.NewTomorrowAPI(zap.NewNop(), cfg, client)
+	repo := provider.NewTomorrowAPI(zap.NewNop(), cfg, client, &metrics{})
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")

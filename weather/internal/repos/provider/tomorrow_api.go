@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -16,16 +17,18 @@ const tomorrowIOName = "tomorrow.io"
 const tomorrowCityNotFoundCode = 400001
 
 type TomorrowAPI struct {
-	cfg    APICfg
-	client httpClient
-	logger *zap.Logger
+	cfg     APICfg
+	client  httpClient
+	logger  *zap.Logger
+	metrics metrics
 }
 
-func NewTomorrowAPI(logger *zap.Logger, cfg APICfg, client httpClient) *TomorrowAPI {
+func NewTomorrowAPI(logger *zap.Logger, cfg APICfg, client httpClient, metrics metrics) *TomorrowAPI {
 	return &TomorrowAPI{
-		cfg:    cfg,
-		client: client,
-		logger: logger.With(zap.String("provider", tomorrowIOName)),
+		cfg:     cfg,
+		client:  client,
+		logger:  logger.With(zap.String("provider", tomorrowIOName)),
+		metrics: metrics,
 	}
 }
 
@@ -61,8 +64,14 @@ func (r *TomorrowAPI) GetCurrent(ctx context.Context, city string) (domain.Weath
 	}
 
 	// step 2: perform request
+	r.metrics.Request(tomorrowIOName)
+	start := time.Now()
+
 	resp, err := r.client.Do(req)
 	if err != nil {
+		r.metrics.Error(tomorrowIOName)
+		r.metrics.RequestDuration(tomorrowIOName, time.Since(start).Seconds())
+
 		r.logger.Error("failed to perform HTTP request",
 			zap.String("url", url),
 			zap.Error(err),
@@ -79,6 +88,9 @@ func (r *TomorrowAPI) GetCurrent(ctx context.Context, city string) (domain.Weath
 
 	// step 3: handle response
 	if resp.StatusCode == http.StatusUnauthorized {
+		r.metrics.Error(tomorrowIOName)
+		r.metrics.RequestDuration(tomorrowIOName, time.Since(start).Seconds())
+
 		r.logger.Error("API key is invalid",
 			zap.Int("status_code", resp.StatusCode),
 		)
@@ -86,6 +98,9 @@ func (r *TomorrowAPI) GetCurrent(ctx context.Context, city string) (domain.Weath
 	}
 
 	if resp.StatusCode != http.StatusOK {
+		r.metrics.Error(tomorrowIOName)
+		r.metrics.RequestDuration(tomorrowIOName, time.Since(start).Seconds())
+
 		var errResp tomorrowAPIErrorResponse
 		if err := json.NewDecoder(resp.Body).Decode(&errResp); err == nil {
 			if errResp.Code == tomorrowCityNotFoundCode {
@@ -108,11 +123,16 @@ func (r *TomorrowAPI) GetCurrent(ctx context.Context, city string) (domain.Weath
 
 	var responseData tomorrowAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
+		r.metrics.Error(tomorrowIOName)
+		r.metrics.RequestDuration(tomorrowIOName, time.Since(start).Seconds())
+
 		r.logger.Error("failed to decode weather API response",
 			zap.Error(err),
 		)
 		return domain.Weather{}, fmt.Errorf("tomorrow weather repo: %w", domain.ErrInternal)
 	}
+
+	r.metrics.RequestDuration(tomorrowIOName, time.Since(start).Seconds())
 
 	// step 4: return weather
 	description := fmt.Sprintf("Cloud cover: %.2f%%", responseData.Data.Values.CloudCover)

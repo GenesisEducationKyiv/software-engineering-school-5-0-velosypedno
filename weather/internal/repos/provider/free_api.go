@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"time"
 
 	"go.uber.org/zap"
 
@@ -15,26 +16,34 @@ import (
 const freeWeatherName = "weatherapi.com"
 const noMatchingLocationFoundCode = 1006
 
-type APICfg struct {
-	APIKey string
-	APIURL string
+type metrics interface {
+	Request(providerName string)
+	Error(providerName string)
+	RequestDuration(providerName string, seconds float64)
 }
 
 type httpClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
-type FreeWeatherAPI struct {
-	cfg    APICfg
-	client httpClient
-	logger *zap.Logger
+type APICfg struct {
+	APIKey string
+	APIURL string
 }
 
-func NewFreeWeatherAPI(logger *zap.Logger, cfg APICfg, client httpClient) *FreeWeatherAPI {
+type FreeWeatherAPI struct {
+	cfg     APICfg
+	client  httpClient
+	logger  *zap.Logger
+	metrics metrics
+}
+
+func NewFreeWeatherAPI(logger *zap.Logger, cfg APICfg, client httpClient, metrics metrics) *FreeWeatherAPI {
 	return &FreeWeatherAPI{
-		cfg:    cfg,
-		client: client,
-		logger: logger.With(zap.String("provider", freeWeatherName)),
+		cfg:     cfg,
+		client:  client,
+		logger:  logger.With(zap.String("provider", freeWeatherName)),
+		metrics: metrics,
 	}
 }
 
@@ -70,8 +79,14 @@ func (r *FreeWeatherAPI) GetCurrent(ctx context.Context, city string) (domain.We
 	}
 
 	// step 2: perform request
+	r.metrics.Request(freeWeatherName)
+	start := time.Now()
+
 	resp, err := r.client.Do(req)
 	if err != nil {
+		r.metrics.Error(freeWeatherName)
+		r.metrics.RequestDuration(freeWeatherName, time.Since(start).Seconds())
+
 		r.logger.Error("failed to perform HTTP request",
 			zap.String("url", url),
 			zap.Error(err),
@@ -88,6 +103,9 @@ func (r *FreeWeatherAPI) GetCurrent(ctx context.Context, city string) (domain.We
 
 	// step 3: handle response
 	if resp.StatusCode == http.StatusForbidden {
+		r.metrics.Error(freeWeatherName)
+		r.metrics.RequestDuration(freeWeatherName, time.Since(start).Seconds())
+
 		r.logger.Error("API key is invalid",
 			zap.Int("status_code", resp.StatusCode),
 		)
@@ -95,6 +113,9 @@ func (r *FreeWeatherAPI) GetCurrent(ctx context.Context, city string) (domain.We
 	}
 
 	if resp.StatusCode != http.StatusOK {
+		r.metrics.Error(freeWeatherName)
+		r.metrics.RequestDuration(freeWeatherName, time.Since(start).Seconds())
+
 		var errResp freeWeatherAPIErrorResponse
 		if err := json.NewDecoder(resp.Body).Decode(&errResp); err == nil {
 			if errResp.Error.Code == noMatchingLocationFoundCode {
@@ -117,11 +138,16 @@ func (r *FreeWeatherAPI) GetCurrent(ctx context.Context, city string) (domain.We
 
 	var responseData freeWeatherAPIResponse
 	if err := json.NewDecoder(resp.Body).Decode(&responseData); err != nil {
+		r.metrics.Error(freeWeatherName)
+		r.metrics.RequestDuration(freeWeatherName, time.Since(start).Seconds())
+
 		r.logger.Error("failed to decode weather API response",
 			zap.Error(err),
 		)
 		return domain.Weather{}, fmt.Errorf("free weather repo: %w", domain.ErrInternal)
 	}
+
+	r.metrics.RequestDuration(freeWeatherName, time.Since(start).Seconds())
 
 	// step 4: return weather
 	return domain.Weather{
