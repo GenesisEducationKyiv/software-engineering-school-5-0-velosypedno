@@ -9,6 +9,7 @@ import (
 	weathh "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/gateway/internal/weather/handlers"
 	weathsvc "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/gateway/internal/weather/services"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const readTimeout = 15 * time.Second
@@ -26,6 +27,7 @@ func (a *App) setupHTTPServer() *http.Server {
 	subService := subsvc.NewGRPCAdapter(subGRPCClientLogger, a.subGRPCClient)
 	subHandlersLogger := a.logFactory.ForPackage("subscription/handlers")
 
+	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	api := router.Group("/api")
 	{
 		api.POST("/subscribe", subh.NewSubscribePOSTHandler(subHandlersLogger, subService))

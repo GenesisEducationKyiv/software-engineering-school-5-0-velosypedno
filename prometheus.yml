@@ -1,6 +1,10 @@
 global:
   scrape_interval: 30s
 scrape_configs:
-  - job_name: 'app'
+  - job_name: 'weather'
     static_configs:
       - targets: ['weather:8084']
+
+  - job_name: 'gateway'
+    static_configs:
+      - targets: ['gateway:8080']
