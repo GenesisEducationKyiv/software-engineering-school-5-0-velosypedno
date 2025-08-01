@@ -14,7 +14,6 @@ import (
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/logging"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/messaging"
 	amqp "github.com/rabbitmq/amqp091-go"
-	"go.uber.org/zap"
 )
 
 var (
@@ -53,8 +52,7 @@ func TestMain(m *testing.M) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	// run app
-	logger := zap.NewNop()
-	logFactory := logging.NewFactory(logger, "notifier")
+	logFactory := logging.NewFakeFactory()
 	app := app.New(cfg, logFactory)
 	go func() {
 		runErr := app.Run(ctx)

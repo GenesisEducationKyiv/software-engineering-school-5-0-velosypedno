@@ -19,7 +19,6 @@ import (
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/config"
 	_ "github.com/lib/pq"
 	amqp "github.com/rabbitmq/amqp091-go"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
@@ -83,8 +82,7 @@ func TestMain(m *testing.M) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	// run app
-	logger := zap.NewNop()
-	logFactory := logging.NewFactory(logger, "sub")
+	logFactory := logging.NewFakeFactory()
 	app := app.New(cfg, logFactory)
 	go func() {
 		runErr := app.Run(ctx)

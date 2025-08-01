@@ -14,7 +14,6 @@ import (
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/config"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/test/mock"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
@@ -41,8 +40,7 @@ func TestGetCurrentWeatherGRPCHandler(main *testing.T) {
 	fmt.Println(cfg)
 
 	// start App
-	logger := zap.NewNop()
-	logFactory := logging.NewFactory(logger, "weather")
+	logFactory := logging.NewFakeFactory()
 	a := app.New(cfg, logFactory)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

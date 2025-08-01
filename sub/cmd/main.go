@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"os"
 	"os/signal"
 	"syscall"
 
@@ -14,22 +15,17 @@ import (
 const service = "sub"
 
 func main() {
-	logger, err := zap.NewProduction()
+	logDir := os.Getenv("LOG_DIR")
+	logFactory, err := logging.NewFactory(logDir, service)
 	if err != nil {
 		panic(err)
 	}
-	defer func() {
-		if err := logger.Sync(); err != nil && err.Error() != "invalid argument" {
-			logger.Warn("logger sync failed", zap.Error(err))
-		}
-	}()
-
-	logFactory := logging.NewFactory(logger, service)
-	mainLogger := logFactory.ForPackage("main")
+	defer logFactory.Sync() //nolint:errcheck
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGTERM, syscall.SIGINT)
 	defer cancel()
 
+	mainLogger := logFactory.ForPackage("main")
 	mainLogger.Info("Loading config...")
 	cfg, err := config.Load()
 	if err != nil {
