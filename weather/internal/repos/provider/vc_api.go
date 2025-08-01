@@ -17,7 +17,7 @@ const visualCrossingName = "visualcrossing.com"
 
 type VisualCrossingAPI struct {
 	cfg    APICfg
-	client HTTPClient
+	client httpClient
 	logger *zap.Logger
 }
 
@@ -29,7 +29,7 @@ type visualCrossingAPIResponse struct {
 	} `json:"currentConditions"`
 }
 
-func NewVisualCrossingAPI(logger *zap.Logger, cfg APICfg, client HTTPClient) *VisualCrossingAPI {
+func NewVisualCrossingAPI(logger *zap.Logger, cfg APICfg, client httpClient) *VisualCrossingAPI {
 	return &VisualCrossingAPI{
 		cfg:    cfg,
 		client: client,

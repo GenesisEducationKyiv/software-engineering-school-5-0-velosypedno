@@ -20,17 +20,17 @@ type APICfg struct {
 	APIURL string
 }
 
-type HTTPClient interface {
+type httpClient interface {
 	Do(req *http.Request) (*http.Response, error)
 }
 
 type FreeWeatherAPI struct {
 	cfg    APICfg
-	client HTTPClient
+	client httpClient
 	logger *zap.Logger
 }
 
-func NewFreeWeatherAPI(logger *zap.Logger, cfg APICfg, client HTTPClient) *FreeWeatherAPI {
+func NewFreeWeatherAPI(logger *zap.Logger, cfg APICfg, client httpClient) *FreeWeatherAPI {
 	return &FreeWeatherAPI{
 		cfg:    cfg,
 		client: client,

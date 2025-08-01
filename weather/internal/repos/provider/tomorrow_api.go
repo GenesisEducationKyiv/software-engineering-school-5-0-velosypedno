@@ -17,11 +17,11 @@ const tomorrowCityNotFoundCode = 400001
 
 type TomorrowAPI struct {
 	cfg    APICfg
-	client HTTPClient
+	client httpClient
 	logger *zap.Logger
 }
 
-func NewTomorrowAPI(logger *zap.Logger, cfg APICfg, client HTTPClient) *TomorrowAPI {
+func NewTomorrowAPI(logger *zap.Logger, cfg APICfg, client httpClient) *TomorrowAPI {
 	return &TomorrowAPI{
 		cfg:    cfg,
 		client: client,
