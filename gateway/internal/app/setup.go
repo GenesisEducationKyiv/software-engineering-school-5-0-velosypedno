@@ -16,6 +16,7 @@ const weatherRequestTimeout = 5 * time.Second
 
 func (a *App) setupHTTPServer() *http.Server {
 	router := gin.Default()
+	router.Use(a.metrics.handler.Middleware())
 
 	weathGRPCClientLogger := a.logFactory.ForPackage("weather/services/grpc_adapter")
 	weathService := weathsvc.NewGRPCAdapter(weathGRPCClientLogger, a.weathGRPCClient)

@@ -7,15 +7,25 @@ import (
 	"time"
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/gateway/internal/config"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/gateway/internal/metrics"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/logging"
 	pbsub "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/sub/v1alpha2"
 	pbweath "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/weath/v1alpha1"
+	"github.com/prometheus/client_golang/prometheus"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 )
 
 const shutdownTimeout = 20 * time.Second
+
+var (
+	appMetricsRegister = prometheus.DefaultRegisterer
+)
+
+type appMetrics struct {
+	handler *metrics.HandlerMetrics
+}
 
 type App struct {
 	cfg        *config.Config
@@ -27,6 +37,7 @@ type App struct {
 	weathGRPCCon    *grpc.ClientConn
 	weathGRPCClient pbweath.WeatherServiceClient
 	httpSrv         *http.Server
+	metrics         *appMetrics
 }
 
 func New(cfg *config.Config, logFactory *logging.LoggerFactory) *App {
@@ -39,6 +50,10 @@ func New(cfg *config.Config, logFactory *logging.LoggerFactory) *App {
 
 func (a *App) Run(ctx context.Context) error {
 	var err error
+
+	// metrics
+	a.logger.Info("Initializing metrics...")
+	a.metrics.handler = metrics.NewHandlerMetrics(appMetricsRegister)
 
 	// setup subscription grpc connection
 	a.logger.Info("Setting up grpc connection to subscription service...", zap.String("addr", a.cfg.SubSvc.Addr()))
