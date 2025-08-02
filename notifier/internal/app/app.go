@@ -7,13 +7,23 @@ import (
 	"time"
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/notifier/internal/config"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/notifier/internal/metrics"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/logging"
+	"github.com/prometheus/client_golang/prometheus"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
 )
 
 const readTimeout = 10 * time.Second
 const shutdownTimeout = 20 * time.Second
+
+var (
+	appMetricsRegister = prometheus.DefaultRegisterer
+)
+
+type appMetrics struct {
+	consumers *metrics.ConsumerMetrics
+}
 
 type App struct {
 	cfg        *config.Config
@@ -23,6 +33,7 @@ type App struct {
 	rmqConn *amqp.Connection
 	rmqCh   *amqp.Channel
 	httpSrv *http.Server
+	metrics appMetrics
 }
 
 func New(cfg *config.Config, logFactory *logging.LoggerFactory) *App {
@@ -35,6 +46,10 @@ func New(cfg *config.Config, logFactory *logging.LoggerFactory) *App {
 
 func (a *App) Run(ctx context.Context) error {
 	var err error
+
+	// metrics
+	a.logger.Info("Initializing metrics...")
+	a.metrics.consumers = metrics.NewConsumerMetrics(appMetricsRegister)
 
 	// rabbitmq
 	a.logger.Info("Connecting to RabbitMQ...", zap.String("addr", a.cfg.RabbitMQ.Addr()))

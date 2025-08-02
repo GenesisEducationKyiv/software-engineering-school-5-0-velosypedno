@@ -11,6 +11,7 @@ import (
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/email"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/messaging"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"go.uber.org/zap"
 )
 
@@ -91,7 +92,10 @@ func (a *App) setupSubscribeEventConsumer() (*consumers.GenericConsumer[messagin
 	subscribeMailer := mailers.NewSubscriptionEmailNotifier(mailerLogger, smtpBackend, confirmTmplPath)
 	subscribeEventHandler := eventhandlers.NewSubscribeEventHandler(subscribeMailer)
 	consumerLogger := a.logFactory.ForPackage("consumers")
-	subscribeEventConsumer := consumers.NewGenericConsumer(consumerLogger, subscribeEventHandler, msgs, subscribeConsumerName)
+	subscribeEventConsumer := consumers.NewGenericConsumer(
+		consumerLogger, subscribeEventHandler, msgs,
+		subscribeConsumerName, a.metrics.consumers,
+	)
 
 	a.logger.Debug("SubscribeEvent consumer successfully created")
 	return subscribeEventConsumer, nil
@@ -143,7 +147,10 @@ func (a *App) setupWeatherCommandConsumer() (*consumers.GenericConsumer[messagin
 	weatherMailer := mailers.NewWeatherEmailNotifier(mailerLogger, smtpBackend, weatherTmplPath)
 	weatherCommandHandler := eventhandlers.NewWeatherNotifyCommandHandler(weatherMailer)
 	consumerLogger := a.logFactory.ForPackage("consumers")
-	weatherCommandConsumer := consumers.NewGenericConsumer(consumerLogger, weatherCommandHandler, msgs, weathNotifyConsumerName)
+	weatherCommandConsumer := consumers.NewGenericConsumer(
+		consumerLogger, weatherCommandHandler, msgs,
+		weathNotifyConsumerName, a.metrics.consumers,
+	)
 
 	a.logger.Debug("WeatherNotifyCommand consumer successfully created")
 	return weatherCommandConsumer, nil
@@ -166,6 +173,7 @@ func (a *App) setupRouter() *gin.Engine {
 			queues,
 		),
 	)
+	router.GET("/metrics", gin.WrapH(promhttp.Handler()))
 	a.logger.Debug("HTTP router created")
 	return router
 }
