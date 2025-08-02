@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"net/http"
 	"time"
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/logging"
@@ -26,6 +27,7 @@ type App struct {
 
 	cron    *cron.Cron
 	grpcAPI *grpc.Server
+	httpSrv *http.Server
 
 	infra    *InfrastructureContainer
 	business *BusinessContainer
@@ -57,7 +59,7 @@ func (a *App) Run(ctx context.Context) error {
 	}
 
 	a.logger.Info("Initializing presentation container")
-	presentation, err := NewPresentationContainer(a.business, a.logFactory)
+	presentation, err := NewPresentationContainer(a.cfg, a.business, a.logFactory)
 	if err != nil {
 		a.logger.Error("Failed to initialize presentation container", zap.Error(err))
 		return err
@@ -81,6 +83,15 @@ func (a *App) Run(ctx context.Context) error {
 		a.logger.Info("GRPC server is now serving")
 		if err := a.grpcAPI.Serve(lis); err != nil {
 			a.logger.Error("GRPC server exited with error", zap.Error(err))
+		}
+	}()
+
+	// http server
+	a.httpSrv = presentation.HTTPSrv
+	go func() {
+		a.logger.Info("Starting http server...", zap.String("addr", a.httpSrv.Addr))
+		if err := a.httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			a.logger.Error("Failed to start http server", zap.Error(err))
 		}
 	}()
 

@@ -12,3 +12,7 @@ scrape_configs:
   - job_name: 'notifier'
     static_configs:
       - targets: ['notifier:8088']
+
+  - job_name: 'sub'
+    static_configs:
+      - targets: ['sub:8092']

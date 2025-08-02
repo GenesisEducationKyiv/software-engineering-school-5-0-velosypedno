@@ -40,6 +40,7 @@ x-sub-env: &sub-env
   WEATHER_SERVICE_HOST: ${WEATHER_SERVICE_HOST}
   GIN_MODE: ${GIN_MODE}
   LOG_DIR: ${LOG_DIR}
+  HTTP_PORT: ${SUB_SERVICE_HTTP_PORT}
 
 x-notifier-env: &notifier-env
   TEMPLATES_DIR: ${TEMPLATES_DIR}

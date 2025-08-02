@@ -58,7 +58,8 @@ type Config struct {
 	GRPCSrv  GRPCConfig
 	WeathSvc WeatherServiceConfig
 
-	LogDir string `envconfig:"LOG_DIR" required:"true"`
+	LogDir   string `envconfig:"LOG_DIR" required:"true"`
+	HTTPPort string `envconfig:"HTTP_PORT" required:"true"`
 }
 
 func Load() (*Config, error) {
