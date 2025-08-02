@@ -51,6 +51,8 @@ All routes are prefixed with `/api`.
 | GET    | `/confirm/:token`     | Confirm a subscription via token received by email.                        |
 | GET    | `/unsubscribe/:token` | Unsubscribe from weather notifications using the token.                    |
 
+Check [`swagger scheme`](./swagger.yaml) for more details
+
 ## Weather
 
 ![img.png](../../weather/docs/application-architecture.png)

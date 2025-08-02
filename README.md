@@ -7,8 +7,7 @@ Weather API application that allows users to subscribe to weather updates for th
 - [Installation](#install)
 - [Testing](#testing)
 - [Setup Git hook](#setup-git-hook)
-- [API](#api)
-- [Architecture](#architecture)
+- [Documentation](#documentation)
 - [License](#license)
 
 ## Install
@@ -23,6 +22,14 @@ Ensure you have the following installed:
 
 ### Steps
 
+0. **Check available tasks**:
+
+    ```bash
+    go-task
+    ```
+
+    *P.S. All tasks have description, so it is worth to check*
+
 1. **Clone the repository**:
 
    ```bash
@@ -32,7 +39,7 @@ Ensure you have the following installed:
 2. **Change work directory**:
 
     ```bash
-    cd genesis-weather-api
+    cd software-engineering-school-5-0-velosypedno
     ```
 
 3. **Configure environmental variables**:
@@ -48,14 +55,21 @@ Ensure you have the following installed:
 4. **Build and up services by Docker Compose**:
 
     ```bash
-    go-task up
+    go-task docker:up
     ```
 
     This will start the following services:
-    - `postgres-wether` - container with postgres database
-    - `migrator` - waits for the database to start and then runs the migrations
-    - `api-weather` - starts after the `migrator` finishes working, contains API
-    - `cron-wether` - starts after the `migrator` finishes working, contains cron tasks to send email
+    - `postgres` – database
+    - `redis` – cache
+    - `rabbitmq` – message broker
+    - `gateway` – unified HTTP entrypoint that routes requests to internal services
+    - `weather` – gRPC service that fetches and provides current weather data
+    - `sub` – core service (acts as a monolith): manages subscriptions, processes confirmation/unsubscription, and runs scheduled jobs
+    - `notifier` – consumes events from RabbitMQ and delivers email notifications
+    - `migrator` – one-time task that runs database schema migrations
+    - `prometheus` & `grafana` – observability stack for metrics collection and visualization
+
+    Check [`docker-compose.yml`](./docker-compose.yml) for more details
 
 ## Testing
 
@@ -93,42 +107,11 @@ Ensure you have the following installed:
     go-task rm:hooks:pre-commit
     ```
 
-## API
+## Documentation
 
-[Swagger scheme](./swagger.yaml)
-
-All routes are prefixed with `/api`.
-
-| Method | Endpoint              | Description                                                                |
-|--------|-----------------------|----------------------------------------------------------------------------|
-| GET    | `/weather`            | Get current weather for a given city. Requires `?city=CityName` query.     |
-| POST   | `/subscribe`          | Subscribe a user to weather updates. Expects JSON body with email, city, and frequency (`hourly` or `daily`). |
-| GET    | `/confirm/:token`     | Confirm a subscription via token received by email.                        |
-| GET    | `/unsubscribe/:token` | Unsubscribe from weather notifications using the token.                    |
-
-## Architecture
-
-This project follows layered architecture with a clear division of responsibilities. The structure is organized into the following layers:
-
-- **Handlers** – handle HTTP requests, validate input, and return responses.
-- **Services** – contain business logic (e.g., subscriptions, confirmation, weather processing).
-- **Repositories** – provide access to PostgreSQL and external APIs.
-
-```plaintext
-.
-├── cmd/               
-│   ├── api/            # Main HTTP server startup
-│   └── cron/           # Scheduled tasks for sending weather emails
-└── internal/
-    ├── config/          
-    ├── handlers/       # HTTP requests handlers
-    ├── ioc/            # Dependency injection 
-    ├── models/         
-    ├── repos/          # Repositories
-    ├── scheduler/      # Cron tasks setup
-    ├── server/         # HTTP server setup
-    └── services/       # Business logic layer
-```
+- Detailed system design documents, ADRs, and diagrams are available in the [`./docs`](./docs/) folder.
+- System Design Document - [here](./docs/sdd/document.md)
+- Swagger Scheme - [here](./docs/sdd/swagger.yaml)
 
 ## License
 
