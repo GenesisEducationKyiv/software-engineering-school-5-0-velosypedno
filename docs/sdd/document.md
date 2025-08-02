@@ -30,31 +30,17 @@
 
 ## 3. High-level Architecture
 
-![img.png](./high-level-architecture-diagram.png)
+![img.png](../adr/0010-microservices.png)
 
-**The system is composed of three internal services and two external dependencies:**
+Check [`Microservices ADR`](../adr/0010-monolit-to-microservices.md)
 
-- `User` interacts with the system via the public API to manage subscriptions and receives weather updates by email.
+## 4. Microservices' Architecture Diagrams
 
-- `API service` handles subscription creation, confirmation, and unsubscription. It stores data in the database, validates city names via the Weather API, and sends confirmation links through the SMTP server.
+## Gateway
 
-- `Cron service` runs continuously and periodically executes scheduled tasks. It loads active subscriptions from the database, fetches weather data from the Weather API, and sends weather updates to users via the SMTP server.
+![img.png](../../gateway/docs/application-architecture.png)
 
-- `DB` stores subscription data: email, city, delivery frequency (daily/hourly), activation status, and token.
-
-- `External Weather API` provides current weather data used for city validation and notifications.
-
-- `External SMTP server` delivers confirmation and weather update emails to users.
-
-## 4. Application Architecture Diagram
-
-![img.png](./application-architecture.png)
-
-## 5. DB schema
-
-![img.png](./db-relations.png)
-
-## 6. API endpoints
+## API endpoints
 
 All routes are prefixed with `/api`.
 
@@ -64,3 +50,19 @@ All routes are prefixed with `/api`.
 | POST   | `/subscribe`          | Subscribe a user to weather updates. Expects JSON body with email, city, and frequency (`hourly` or `daily`). |
 | GET    | `/confirm/:token`     | Confirm a subscription via token received by email.                        |
 | GET    | `/unsubscribe/:token` | Unsubscribe from weather notifications using the token.                    |
+
+## Weather
+
+![img.png](../../weather/docs/application-architecture.png)
+
+## Subscription
+
+![img.png](../../sub/docs/application-architecture.png)
+
+### DB schema
+
+![img.png](./db-relations.png)
+
+## Notifier
+
+![img.png](../../notifier/docs/application-architecture.png)
