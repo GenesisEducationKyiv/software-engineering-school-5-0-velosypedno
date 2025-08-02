@@ -3,25 +3,22 @@ package app
 import (
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"net/http"
-	"os"
 	"time"
 
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/logging"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/config"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/redis/go-redis/v9"
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 )
 
 const (
 	readTimeout     = 15 * time.Second
 	shutdownTimeout = 20 * time.Second
-	logFilepath     = "log.log"
-
-	logPerm os.FileMode = 0644
 )
 
 var (
@@ -29,46 +26,49 @@ var (
 )
 
 type appMetrics struct {
-	weather *metrics.WeatherMetrics
+	cache    *metrics.CacheMetrics
+	provider *metrics.ProviderMetrics
 }
 
 type App struct {
-	cfg *config.Config
+	cfg        *config.Config
+	logger     *zap.Logger
+	logFactory *logging.LoggerFactory
 
 	redisClient *redis.Client
 	httpSrv     *http.Server
 	grpcSrv     *grpc.Server
-	reposLogger *log.Logger
 	metrics     appMetrics
 }
 
-func New(cfg *config.Config) *App {
+func New(cfg *config.Config, logFactory *logging.LoggerFactory) *App {
 	return &App{
-		cfg: cfg,
+		cfg:        cfg,
+		logFactory: logFactory,
+		logger:     logFactory.ForPackage("app"),
 	}
 }
 
 func (a *App) Run(ctx context.Context) error {
 	var err error
 
-	// logger
-	f, err := os.OpenFile(logFilepath, os.O_APPEND|os.O_CREATE|os.O_WRONLY, logPerm)
-	if err != nil {
-		return err
-	}
-	a.reposLogger = log.New(f, "", log.LstdFlags)
+	a.logger.Info("Initializing weather service...")
 
 	// metrics
-	a.metrics.weather = metrics.NewWeatherMetrics(appMetricsRegister)
+	a.logger.Info("Initializing metrics...")
+	a.metrics.cache = metrics.NewCacheMetrics(appMetricsRegister)
+	a.metrics.provider = metrics.NewProviderMetrics(appMetricsRegister)
 
 	// redis
+	a.logger.Info("Connecting to Redis...", zap.String("addr", a.cfg.Redis.Addr()))
 	a.redisClient = redis.NewClient(&redis.Options{
 		Addr:     a.cfg.Redis.Addr(),
 		Password: a.cfg.Redis.Pass,
 	})
-	log.Println("Redis connected")
+	a.logger.Info("Redis connected")
 
-	// http api
+	// http API
+	a.logger.Info("Setting up HTTP server...")
 	router := a.setupRouter()
 	a.httpSrv = &http.Server{
 		Addr:        a.cfg.GRPCSrv.Host + ":" + a.cfg.HTTPSrv.Port,
@@ -76,40 +76,49 @@ func (a *App) Run(ctx context.Context) error {
 		ReadTimeout: readTimeout,
 	}
 	go func() {
-		if err := a.httpSrv.ListenAndServe(); err != nil {
-			log.Printf("http api: %v", err)
+		a.logger.Info("Starting HTTP server...", zap.String("addr", a.httpSrv.Addr))
+		if err := a.httpSrv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			a.logger.Error("HTTP server failed", zap.Error(err))
 		}
 	}()
-	log.Printf("HTTP api started on port %s", a.cfg.HTTPSrv.Port)
 
-	// grpc api
+	// gRPC API
+	a.logger.Info("Starting gRPC server...",
+		zap.String("host", a.cfg.GRPCSrv.Host),
+		zap.String("port", a.cfg.GRPCSrv.Port),
+	)
 	lis, err := net.Listen("tcp", fmt.Sprintf("%s:%s", a.cfg.GRPCSrv.Host, a.cfg.GRPCSrv.Port))
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to listen on grpc: %w", err)
 	}
 	a.grpcSrv = a.setupGRPCSrv()
 	go func() {
-		err = a.grpcSrv.Serve(lis)
-		if err != nil {
-			log.Printf("grpc api: %v", err)
+		if err := a.grpcSrv.Serve(lis); err != nil {
+			a.logger.Error("gRPC server failed", zap.Error(err))
 		}
 	}()
 
-	// wait on shutdown signal
+	// wait for shutdown signal
 	<-ctx.Done()
+	a.logger.Info("Shutdown signal received")
 
-	// shutdown
+	// graceful shutdown
 	timeoutCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 	defer cancel()
+	a.logger.Info("Shutting down...")
 	err = a.shutdown(timeoutCtx)
+	if err != nil {
+		a.logger.Error("Shutdown error", zap.Error(err))
+	}
 	return err
 }
 
 func (a *App) shutdown(timeoutCtx context.Context) error {
 	var shutdownErr error
 
-	// grpc api
+	// gRPC shutdown
 	if a.grpcSrv != nil {
+		a.logger.Info("Shutting down gRPC server...")
 		done := make(chan struct{})
 		go func() {
 			a.grpcSrv.GracefulStop()
@@ -117,33 +126,35 @@ func (a *App) shutdown(timeoutCtx context.Context) error {
 		}()
 		select {
 		case <-timeoutCtx.Done():
-			log.Printf("shutdown grpc timeout: %v", timeoutCtx.Err())
+			a.logger.Error("Timeout during gRPC shutdown", zap.Error(timeoutCtx.Err()))
 		case <-done:
-			log.Println("gRPC server stopped")
+			a.logger.Info("gRPC server stopped")
 		}
 	}
 
-	// http api
+	// HTTP shutdown
 	if a.httpSrv != nil {
+		a.logger.Info("Shutting down HTTP server...")
 		if err := a.httpSrv.Shutdown(timeoutCtx); err != nil {
-			wrapped := fmt.Errorf("shutdown api server: %w", err)
-			log.Println(wrapped)
+			wrapped := fmt.Errorf("shutdown HTTP server: %w", err)
+			a.logger.Error("HTTP shutdown failed", zap.Error(wrapped))
 			shutdownErr = wrapped
 		} else {
-			log.Println("APIServer Shutdown successfully")
+			a.logger.Info("HTTP server stopped")
 		}
 	}
 
-	// redis
+	// Redis shutdown
 	if a.redisClient != nil {
+		a.logger.Info("Closing Redis client...")
 		if err := a.redisClient.Close(); err != nil {
-			wrapped := fmt.Errorf("shutdown redis: %w", err)
-			log.Println(wrapped)
+			wrapped := fmt.Errorf("shutdown Redis: %w", err)
+			a.logger.Error("Redis shutdown failed", zap.Error(wrapped))
 			if shutdownErr == nil {
 				shutdownErr = wrapped
 			}
 		} else {
-			log.Println("Redis closed")
+			a.logger.Info("Redis client closed")
 		}
 	}
 

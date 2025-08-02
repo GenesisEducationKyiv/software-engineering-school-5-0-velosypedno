@@ -13,6 +13,7 @@ import (
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/repos/provider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 func TestTomorrowGetCurrentWeather_Success(t *testing.T) {
@@ -36,7 +37,7 @@ func TestTomorrowGetCurrentWeather_Success(t *testing.T) {
 		},
 	}
 	cfg := provider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
-	repo := provider.NewTomorrowAPI(cfg, client)
+	repo := provider.NewTomorrowAPI(zap.NewNop(), cfg, client, &metrics{})
 
 	// Act
 	weather, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -63,7 +64,7 @@ func TestTomorrowGetCurrentWeather_CityNotFound(t *testing.T) {
 		},
 	}
 	cfg := provider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
-	repo := provider.NewTomorrowAPI(cfg, client)
+	repo := provider.NewTomorrowAPI(zap.NewNop(), cfg, client, &metrics{})
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "InvalidCity")
@@ -83,7 +84,7 @@ func TestTomorrowGetCurrentWeather_APIKeyInvalid(t *testing.T) {
 		},
 	}
 	cfg := provider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
-	repo := provider.NewTomorrowAPI(cfg, client)
+	repo := provider.NewTomorrowAPI(zap.NewNop(), cfg, client, &metrics{})
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -101,7 +102,7 @@ func TestTomorrowGetCurrentWeather_HTTPError(t *testing.T) {
 		},
 	}
 	cfg := provider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
-	repo := provider.NewTomorrowAPI(cfg, client)
+	repo := provider.NewTomorrowAPI(zap.NewNop(), cfg, client, &metrics{})
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -122,7 +123,7 @@ func TestTomorrowGetCurrentWeather_BadJSON(t *testing.T) {
 		},
 	}
 	cfg := provider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
-	repo := provider.NewTomorrowAPI(cfg, client)
+	repo := provider.NewTomorrowAPI(zap.NewNop(), cfg, client, &metrics{})
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")

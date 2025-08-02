@@ -12,6 +12,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type fakeMetrics struct{}
+
+func (fakeMetrics) IncSubscribe()        {}
+func (fakeMetrics) IncSubscribeError()   {}
+func (fakeMetrics) IncActivate()         {}
+func (fakeMetrics) IncActivateError()    {}
+func (fakeMetrics) IncUnsubscribe()      {}
+func (fakeMetrics) IncUnsubscribeError() {}
+
 type mockSubscriptionRepo struct {
 	createErr error
 }
@@ -53,7 +62,7 @@ func TestSubscriptionService_Subscribe(t *testing.T) {
 			// Arrange
 			repo := &mockSubscriptionRepo{createErr: tt.repoErr}
 			mailer := &mockMailer{sendErr: tt.mailerErr}
-			service := subsvc.NewSubscriptionService(repo, mailer)
+			service := subsvc.NewSubscriptionService(repo, mailer, fakeMetrics{})
 
 			// Act
 			err := service.Subscribe(subsvc.SubscriptionInput{

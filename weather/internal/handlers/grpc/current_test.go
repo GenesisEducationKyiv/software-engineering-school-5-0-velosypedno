@@ -13,6 +13,7 @@ import (
 	handlers "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/handlers/grpc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -52,7 +53,7 @@ func TestWeatherGRPCServer_GetCurrent(t *testing.T) {
 				require.Equal(t, city, c)
 				return expectedWeather, nil
 			},
-		}, 2*time.Millisecond)
+		}, 2*time.Millisecond, zap.NewNop())
 
 		// Act
 		resp, err := srv.GetCurrent(context.Background(), validReq)
@@ -70,7 +71,7 @@ func TestWeatherGRPCServer_GetCurrent(t *testing.T) {
 			GetCurrentFn: func(ctx context.Context, c string) (domain.Weather, error) {
 				return domain.Weather{}, domain.ErrCityNotFound
 			},
-		}, 2*time.Millisecond)
+		}, 2*time.Millisecond, zap.NewNop())
 
 		// Act
 		_, err := srv.GetCurrent(context.Background(), validReq)
@@ -86,7 +87,7 @@ func TestWeatherGRPCServer_GetCurrent(t *testing.T) {
 			GetCurrentFn: func(ctx context.Context, c string) (domain.Weather, error) {
 				return domain.Weather{}, domain.ErrWeatherUnavailable
 			},
-		}, 2*time.Millisecond)
+		}, 2*time.Millisecond, zap.NewNop())
 
 		// Act
 		_, err := srv.GetCurrent(context.Background(), validReq)
@@ -102,7 +103,7 @@ func TestWeatherGRPCServer_GetCurrent(t *testing.T) {
 			GetCurrentFn: func(ctx context.Context, c string) (domain.Weather, error) {
 				return domain.Weather{}, domain.ErrProviderUnreliable
 			},
-		}, 2*time.Millisecond)
+		}, 2*time.Millisecond, zap.NewNop())
 
 		// Act
 		_, err := srv.GetCurrent(context.Background(), validReq)
@@ -118,7 +119,7 @@ func TestWeatherGRPCServer_GetCurrent(t *testing.T) {
 			GetCurrentFn: func(ctx context.Context, c string) (domain.Weather, error) {
 				return domain.Weather{}, domain.ErrInternal
 			},
-		}, 2*time.Millisecond)
+		}, 2*time.Millisecond, zap.NewNop())
 
 		// Act
 		_, err := srv.GetCurrent(context.Background(), validReq)
@@ -133,7 +134,7 @@ func TestWeatherGRPCServer_GetCurrent(t *testing.T) {
 			GetCurrentFn: func(ctx context.Context, c string) (domain.Weather, error) {
 				return domain.Weather{}, errors.New("unknown failure")
 			},
-		}, 2*time.Millisecond)
+		}, 2*time.Millisecond, zap.NewNop())
 
 		_, err := srv.GetCurrent(context.Background(), validReq)
 		require.Error(t, err)

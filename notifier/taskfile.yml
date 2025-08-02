@@ -34,6 +34,8 @@ tasks:
     cmds:
       - task: copy:env:optional
       - go run cmd/main.go
+    env:
+      LOG_DIR: ./logs
 
   install:
     desc: Install dependencies
@@ -62,6 +64,7 @@ tasks:
       TEMPLATES_DIR: ../../internal/templates
       HTTP_HOST: localhost
       HTTP_PORT: 8089
+      LOG_DIR: ./logs
     cmds:
       - task: copy:env:optional
       - docker compose -f docker-compose.test.yml up -d

@@ -19,11 +19,6 @@ import (
 )
 
 const (
-	freeWeatherName    = "weatherapi.com"
-	tomorrowIOName     = "tomorrow.io"
-	visualCrossingName = "visualcrossing.com"
-
-	confirmSubTmplName    = "confirm_sub.html"
 	weatherRequestTimeout = 10 * time.Second
 	cacheTTL              = 5 * time.Minute
 
@@ -34,34 +29,38 @@ const (
 )
 
 func (a *App) setupWeatherRepo() *decorator.CacheDecorator {
+	weatherProviderLogger := a.logFactory.ForPackage("repos/provider")
 	freeWeathR := provider.NewFreeWeatherAPI(
+		weatherProviderLogger,
 		provider.APICfg{APIKey: a.cfg.FreeWeather.Key, APIURL: a.cfg.FreeWeather.URL},
 		&http.Client{},
+		a.metrics.provider,
 	)
 	tomorrowWeathR := provider.NewTomorrowAPI(
+		weatherProviderLogger,
 		provider.APICfg{APIKey: a.cfg.TomorrowWeather.Key, APIURL: a.cfg.TomorrowWeather.URL},
 		&http.Client{},
+		a.metrics.provider,
 	)
 	vcWeathR := provider.NewVisualCrossingAPI(
+		weatherProviderLogger,
 		provider.APICfg{APIKey: a.cfg.VisualCrossing.Key, APIURL: a.cfg.VisualCrossing.URL},
 		&http.Client{},
+		a.metrics.provider,
 	)
 
-	logFreeWeathR := decorator.NewLogDecorator(freeWeathR, freeWeatherName, a.reposLogger)
-	logTomorrowR := decorator.NewLogDecorator(tomorrowWeathR, tomorrowIOName, a.reposLogger)
-	logVcWeathR := decorator.NewLogDecorator(vcWeathR, visualCrossingName, a.reposLogger)
-
-	breakerFreeWeathR := decorator.NewBreakerDecorator(logFreeWeathR,
+	breakerFreeWeathR := decorator.NewBreakerDecorator(freeWeathR,
 		cb.NewCircuitBreaker(weatherCBTimeout, weatherCBLimit, weatherCBRecover))
-	breakerTomorrowR := decorator.NewBreakerDecorator(logTomorrowR,
+	breakerTomorrowR := decorator.NewBreakerDecorator(tomorrowWeathR,
 		cb.NewCircuitBreaker(weatherCBTimeout, weatherCBLimit, weatherCBRecover))
-	breakerVcWeathR := decorator.NewBreakerDecorator(logVcWeathR,
+	breakerVcWeathR := decorator.NewBreakerDecorator(vcWeathR,
 		cb.NewCircuitBreaker(weatherCBTimeout, weatherCBLimit, weatherCBRecover))
 
 	weathChain := chain.NewProvidersFallbackChain(breakerFreeWeathR, breakerTomorrowR, breakerVcWeathR)
 
 	redisBackend := cache.NewRedisCacheClient[domain.Weather](a.redisClient, cacheTTL)
-	cachedRepoChain := decorator.NewCacheDecorator(weathChain, redisBackend, a.metrics.weather)
+	cacheLogger := a.logFactory.ForPackage("repos/decorator")
+	cachedRepoChain := decorator.NewCacheDecorator(cacheLogger, weathChain, redisBackend, a.metrics.cache)
 	return cachedRepoChain
 }
 
@@ -73,10 +72,9 @@ func (a *App) setupRouter() *gin.Engine {
 
 func (a *App) setupGRPCSrv() *grpc.Server {
 	grpcServer := grpc.NewServer()
-
+	logger := a.logFactory.ForPackage("handlers/grpc")
 	weatherRepo := a.setupWeatherRepo()
 	weatherService := services.NewWeatherService(weatherRepo)
-
-	pb.RegisterWeatherServiceServer(grpcServer, grpch.NewWeatherGRPCServer(weatherService, weatherRequestTimeout))
+	pb.RegisterWeatherServiceServer(grpcServer, grpch.NewWeatherGRPCServer(weatherService, weatherRequestTimeout, logger))
 	return grpcServer
 }

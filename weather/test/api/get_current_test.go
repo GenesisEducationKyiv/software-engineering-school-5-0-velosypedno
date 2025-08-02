@@ -8,6 +8,7 @@ import (
 	"log"
 	"testing"
 
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/logging"
 	pb "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/weath/v1alpha1"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/app"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/config"
@@ -39,7 +40,8 @@ func TestGetCurrentWeatherGRPCHandler(main *testing.T) {
 	fmt.Println(cfg)
 
 	// start App
-	a := app.New(cfg)
+	logFactory := logging.NewFakeFactory()
+	a := app.New(cfg, logFactory)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	go a.Run(ctx)

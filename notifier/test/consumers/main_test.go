@@ -11,6 +11,7 @@ import (
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/notifier/internal/app"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/notifier/internal/config"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/logging"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/messaging"
 	amqp "github.com/rabbitmq/amqp091-go"
 )
@@ -51,7 +52,8 @@ func TestMain(m *testing.M) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	// run app
-	app := app.New(cfg)
+	logFactory := logging.NewFakeFactory()
+	app := app.New(cfg, logFactory)
 	go func() {
 		runErr := app.Run(ctx)
 		if runErr != nil {
@@ -65,13 +67,6 @@ func TestMain(m *testing.M) {
 	cancel()
 	closeConnections()
 	os.Exit(code)
-}
-
-func clearRMQ() {
-	_, err := RMQChannel.QueuePurge(messaging.SubscribeQueueName, false)
-	if err != nil {
-		log.Panic(err)
-	}
 }
 
 func setupRMQ(cfg config.RabbitMQConfig) (*amqp.Connection, *amqp.Channel, error) {
