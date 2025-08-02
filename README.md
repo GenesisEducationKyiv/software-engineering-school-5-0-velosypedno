@@ -9,6 +9,7 @@ Weather API application that allows users to subscribe to weather updates for th
 - [Setup Git hook](#setup-git-hook)
 - [Documentation](#documentation)
 - [License](#license)
+- [Future Improvements](#improvements)
 
 ## Install
 
@@ -112,6 +113,26 @@ Ensure you have the following installed:
 - Detailed system design documents, ADRs, and diagrams are available in the [`./docs`](./docs/) folder.
 - System Design Document - [here](./docs/sdd/document.md)
 - Swagger Scheme - [here](./docs/sdd/swagger.yaml)
+
+## Improvements
+
+### Alerts and Monitoring
+
+To ensure system reliability and early detection of critical issues, we suggest configuring a minimal yet effective set of alerts based on logs and metrics.
+
+#### Log-based Alerts
+
+These alerts rely on structured logs and their severity levels:
+
+- **High error log rate**: Alert when the number of logs with `ERROR` level exceeds a threshold (e.g., 10 per minute). In this system, error logs indicate critical failures that require immediate attention.
+- **Subscription flow failures**: Alert when an internal error prevents subscription creation, activation, or deletion. This may signal persistent service or DB issues.
+
+#### Metrics-based Alerts
+
+These alerts use Prometheus metrics collected via instrumented middleware:
+
+- **High client/server error ratio**: Trigger an alert when the sum of HTTP 4xx and 5xx responses exceeds 50% of total requests over a given window. This may indicate bad API usage or internal malfunction.
+- **Low notification delivery rate**: Alert when the percentage of successfully sent notifications drops below 50% of total attempts. Undelivered messages are re-queued, indicating persistent delivery failures.
 
 ## License
 
