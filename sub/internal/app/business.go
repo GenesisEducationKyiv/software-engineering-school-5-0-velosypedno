@@ -27,6 +27,7 @@ func NewBusinessContainer(infraContainer *InfrastructureContainer, logFactory *l
 	subService := subservice.NewSubscriptionService(
 		infraContainer.SubRepo,
 		infraContainer.SubNotifier,
+		infraContainer.SubServiceMetrics,
 	)
 	serviceLogger := logFactory.ForPackage("services")
 	weathNotifyService := weathnotify.NewWeatherNotificationService(

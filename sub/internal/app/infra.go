@@ -10,11 +10,13 @@ import (
 	pbweath "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/weath/v1alpha1"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/config"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/domain"
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/metrics"
 	brokernotify "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/notifiers/broker"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/producers"
 	subrepo "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/repos/subscription"
 	weathrepo "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/repos/weather"
 	"github.com/google/uuid"
+	"github.com/prometheus/client_golang/prometheus"
 	amqp "github.com/rabbitmq/amqp091-go"
 	"go.uber.org/zap"
 	"google.golang.org/grpc"
@@ -25,6 +27,10 @@ const (
 	confirmSubTmplName = "confirm_sub.html"
 	WeatherQueue       = "weather_email_queue"
 	SubscribeQueue     = "subscribe_email_queue"
+)
+
+var (
+	appMetricsRegister = prometheus.DefaultRegisterer
 )
 
 type (
@@ -69,6 +75,8 @@ type InfrastructureContainer struct {
 	EmailBackend    emailBackend
 	WeatherNotifier weatherNotifier
 	SubNotifier     subNotifier
+
+	SubServiceMetrics *metrics.SubscriptionMetrics
 }
 
 func NewInfrastructureContainer(
@@ -76,6 +84,8 @@ func NewInfrastructureContainer(
 	logger *zap.Logger,
 	logFactory *logging.LoggerFactory,
 ) (*InfrastructureContainer, error) {
+	subMetrics := metrics.NewSubscriptionMetrics(appMetricsRegister)
+
 	// messaging
 	logger.Info("Connecting to RabbitMQ...")
 	conn, err := newRabbitMQConn(cfg.RabbitMQ)
@@ -142,14 +152,15 @@ func NewInfrastructureContainer(
 	subNotifier := brokernotify.NewSubscriptionEmailNotifier(subEventProducer)
 
 	return &InfrastructureContainer{
-		DB:              db,
-		GRPCConn:        grpcConn,
-		RabbitMQConn:    conn,
-		RabbitMQCh:      ch,
-		WeatherRepo:     weathRepo,
-		SubRepo:         subRepo,
-		WeatherNotifier: weatherNotifier,
-		SubNotifier:     subNotifier,
+		DB:                db,
+		GRPCConn:          grpcConn,
+		RabbitMQConn:      conn,
+		RabbitMQCh:        ch,
+		WeatherRepo:       weathRepo,
+		SubRepo:           subRepo,
+		WeatherNotifier:   weatherNotifier,
+		SubNotifier:       subNotifier,
+		SubServiceMetrics: subMetrics,
 	}, nil
 }
 
