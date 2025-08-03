@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/logging"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/messaging"
 	pb "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/sub/v1alpha2"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/app"
@@ -81,7 +82,8 @@ func TestMain(m *testing.M) {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	// run app
-	app := app.New(cfg)
+	logFactory := logging.NewFakeFactory()
+	app := app.New(cfg, logFactory)
 	go func() {
 		runErr := app.Run(ctx)
 		if runErr != nil {

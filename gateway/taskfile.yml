@@ -35,6 +35,7 @@ tasks:
       - go run cmd/main.go
     env:
       GRPC_HOST: localhost
+      LOG_DIR: ./logs
 
   test:
     desc: Run all tests

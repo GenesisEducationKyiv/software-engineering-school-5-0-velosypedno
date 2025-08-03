@@ -1,23 +1,22 @@
 package metrics
 
 import (
-	"log"
 	"sync"
 
 	"github.com/prometheus/client_golang/prometheus"
 )
 
 var (
-	registerWeatherMetricsOnce sync.Once
+	registerCacheMetricsOnce sync.Once
 )
 
-type WeatherMetrics struct {
+type CacheMetrics struct {
 	cacheHits     prometheus.Counter
 	cacheMisses   prometheus.Counter
 	accessLatency prometheus.Histogram
 }
 
-func NewWeatherMetrics(reg prometheus.Registerer) *WeatherMetrics {
+func NewCacheMetrics(reg prometheus.Registerer) *CacheMetrics {
 	cacheHits := prometheus.NewCounter(prometheus.CounterOpts{
 		Name: "weather_cache_hits",
 		Help: "Number of weather cache hits",
@@ -33,27 +32,25 @@ func NewWeatherMetrics(reg prometheus.Registerer) *WeatherMetrics {
 		Help:    "Duration of weather cache requests in seconds",
 		Buckets: prometheus.DefBuckets,
 	})
-	registerWeatherMetricsOnce.Do(func() {
-		log.Println("Registering weather cache metrics")
+	registerCacheMetricsOnce.Do(func() {
 		reg.MustRegister(cacheHits, cacheMisses, accessLatency)
 	})
 
-	return &WeatherMetrics{
+	return &CacheMetrics{
 		cacheHits:     cacheHits,
 		cacheMisses:   cacheMisses,
 		accessLatency: accessLatency,
 	}
 }
 
-func (m *WeatherMetrics) CacheHit() {
-	log.Println("Really inc")
+func (m *CacheMetrics) CacheHit() {
 	m.cacheHits.Inc()
 }
 
-func (m *WeatherMetrics) CacheMiss() {
+func (m *CacheMetrics) CacheMiss() {
 	m.cacheMisses.Inc()
 }
 
-func (m *WeatherMetrics) CacheAccessLatency(seconds float64) {
+func (m *CacheMetrics) CacheAccessLatency(seconds float64) {
 	m.accessLatency.Observe(seconds)
 }

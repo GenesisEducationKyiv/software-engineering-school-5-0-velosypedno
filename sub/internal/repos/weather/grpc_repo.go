@@ -3,23 +3,31 @@ package services
 import (
 	"context"
 	"fmt"
-	"log"
 
 	pb "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/proto/weath/v1alpha1"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/domain"
+	"go.uber.org/zap"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
 type GRPCRepo struct {
+	logger *zap.Logger
 	client pb.WeatherServiceClient
 }
 
-func NewGRPCRepo(client pb.WeatherServiceClient) *GRPCRepo {
-	return &GRPCRepo{client: client}
+func NewGRPCRepo(logger *zap.Logger, client pb.WeatherServiceClient) *GRPCRepo {
+	return &GRPCRepo{
+		logger: logger.With(zap.String("repo", "GRPCRepo")),
+		client: client,
+	}
 }
 
 func (s *GRPCRepo) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
+	logger := s.logger.With(
+		zap.String("method", "GetCurrent"),
+	)
+
 	req := pb.GetCurrentRequest{
 		City: city,
 	}
@@ -27,11 +35,16 @@ func (s *GRPCRepo) GetCurrent(ctx context.Context, city string) (domain.Weather,
 	if err != nil {
 		st, ok := status.FromError(err)
 		if !ok {
-			log.Println(fmt.Errorf("grpc adapter: %v", err))
+			logger.Error("unexpected gRPC error", zap.Error(err), zap.String("city", city))
 			return domain.Weather{}, fmt.Errorf("grpc adapter: %w", domain.ErrInternal)
 		}
-
-		log.Println(fmt.Errorf("grpc adapter: %s", st.Message()))
+		logger.Warn(
+			"handled gRPC error",
+			zap.Error(err),
+			zap.String("city", city),
+			zap.String("grpc_message", st.Message()),
+			zap.String("grpc_code", st.Code().String()),
+		)
 		return domain.Weather{}, fmt.Errorf("grpc adapter: %w", gRPCToDomainError(st.Code()))
 	}
 	return domain.Weather{

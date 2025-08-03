@@ -13,7 +13,14 @@ import (
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/repos/provider"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
+
+type metrics struct{}
+
+func (m *metrics) Request(providerName string)                          {}
+func (m *metrics) Error(providerName string)                            {}
+func (m *metrics) RequestDuration(providerName string, seconds float64) {}
 
 type mockHTTPClient struct {
 	doFunc func(req *http.Request) (*http.Response, error)
@@ -43,7 +50,7 @@ func TestFreeApiGetCurrentWeather_Success(t *testing.T) {
 		},
 	}
 	cfg := provider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
-	repo := provider.NewFreeWeatherAPI(cfg, client)
+	repo := provider.NewFreeWeatherAPI(zap.NewNop(), cfg, client, &metrics{})
 
 	// Act
 	weather, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -72,7 +79,7 @@ func TestFreeApiGetCurrentWeather_CityNotFound(t *testing.T) {
 		},
 	}
 	cfg := provider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
-	repo := provider.NewFreeWeatherAPI(cfg, client)
+	repo := provider.NewFreeWeatherAPI(zap.NewNop(), cfg, client, &metrics{})
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "InvalidCity")
@@ -92,7 +99,7 @@ func TestFreeApiGetCurrentWeather_APIKeyInvalid(t *testing.T) {
 		},
 	}
 	cfg := provider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
-	repo := provider.NewFreeWeatherAPI(cfg, client)
+	repo := provider.NewFreeWeatherAPI(zap.NewNop(), cfg, client, &metrics{})
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -110,7 +117,7 @@ func TestFreeApiGetCurrentWeather_HTTPError(t *testing.T) {
 		},
 	}
 	cfg := provider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
-	repo := provider.NewFreeWeatherAPI(cfg, client)
+	repo := provider.NewFreeWeatherAPI(zap.NewNop(), cfg, client, &metrics{})
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")
@@ -131,7 +138,7 @@ func TestFreeApiGetCurrentWeather_BadJSON(t *testing.T) {
 		},
 	}
 	cfg := provider.APICfg{APIKey: "dummy-api-key", APIURL: "http://dummy-url.com"}
-	repo := provider.NewFreeWeatherAPI(cfg, client)
+	repo := provider.NewFreeWeatherAPI(zap.NewNop(), cfg, client, &metrics{})
 
 	// Act
 	_, err := repo.GetCurrent(context.Background(), "Kyiv")

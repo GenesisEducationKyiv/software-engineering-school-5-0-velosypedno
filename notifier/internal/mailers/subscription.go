@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"log"
 	"text/template"
+
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/logging"
+	"go.uber.org/zap"
 )
 
 var ErrInternal = errors.New("internal error")
@@ -20,12 +22,14 @@ type emailBackend interface {
 }
 
 type SubscriptionEmailNotifier struct {
+	logger          *zap.Logger
 	sender          emailBackend
 	confirmTmplPath string
 }
 
-func NewSubscriptionEmailNotifier(sender emailBackend, tmplPath string) *SubscriptionEmailNotifier {
+func NewSubscriptionEmailNotifier(logger *zap.Logger, sender emailBackend, tmplPath string) *SubscriptionEmailNotifier {
 	return &SubscriptionEmailNotifier{
+		logger:          logger,
 		sender:          sender,
 		confirmTmplPath: tmplPath,
 	}
@@ -35,20 +39,33 @@ func (m *SubscriptionEmailNotifier) SendConfirmation(subscription Subscription) 
 	to := subscription.Email
 	subject := "Subscription Confirmation"
 	confirmSubURL := fmt.Sprintf("http://localhost:8080/api/confirm/%s", subscription.Token)
+
 	tmpl, err := template.ParseFiles(m.confirmTmplPath)
 	if err != nil {
-		log.Printf("sub mailer: %v\n", err)
+		m.logger.Error("failed to parse confirmation email template",
+			zap.String("templatePath", m.confirmTmplPath),
+			zap.Error(err),
+		)
 		return fmt.Errorf("sub mailer: %w", ErrInternal)
 	}
+
 	var body bytes.Buffer
 	if err := tmpl.Execute(&body, map[string]string{"Link": confirmSubURL}); err != nil {
-		log.Printf("sub mailer: %v\n", err)
+		m.logger.Error("failed to execute confirmation email template",
+			zap.Error(err),
+		)
 		return fmt.Errorf("sub mailer: %w", ErrInternal)
 	}
-	err = m.sender.Send(to, subject, body.String())
-	if err != nil {
-		log.Printf("sub mailer: %v\n", err)
+
+	if err := m.sender.Send(to, subject, body.String()); err != nil {
+		m.logger.Error("failed to send confirmation email",
+			zap.Error(err),
+		)
 		return fmt.Errorf("sub mailer: %w", ErrInternal)
 	}
+
+	m.logger.Info("confirmation email sent",
+		zap.String("email_hash", logging.HashEmail(to)),
+	)
 	return nil
 }

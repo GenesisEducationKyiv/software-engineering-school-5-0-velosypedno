@@ -25,6 +25,7 @@ type Config struct {
 	SubSvc     SubServiceConfig
 
 	APIGatewayPort string `envconfig:"API_GATEWAY_PORT" required:"true"`
+	LogDir         string `envconfig:"LOG_DIR" required:"true"`
 }
 
 func Load() (*Config, error) {

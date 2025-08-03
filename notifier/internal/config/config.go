@@ -39,6 +39,7 @@ type Config struct {
 	HTTPSrv  HTTPSrvConfig
 
 	TemplatesDir string `envconfig:"TEMPLATES_DIR" required:"true"`
+	LogDir       string `envconfig:"LOG_DIR" required:"true"`
 }
 
 func Load() (*Config, error) {

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/pkg/logging"
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/domain"
 	subservice "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/services/subscription"
 	weathnotify "github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/sub/internal/services/weather_notification"
@@ -22,12 +23,15 @@ type BusinessContainer struct {
 	WeathNotifyService weatherNotificationService
 }
 
-func NewBusinessContainer(infraContainer *InfrastructureContainer) (*BusinessContainer, error) {
+func NewBusinessContainer(infraContainer *InfrastructureContainer, logFactory *logging.LoggerFactory) (*BusinessContainer, error) {
 	subService := subservice.NewSubscriptionService(
 		infraContainer.SubRepo,
 		infraContainer.SubNotifier,
+		infraContainer.SubServiceMetrics,
 	)
+	serviceLogger := logFactory.ForPackage("services")
 	weathNotifyService := weathnotify.NewWeatherNotificationService(
+		serviceLogger,
 		infraContainer.SubRepo,
 		infraContainer.WeatherNotifier,
 		infraContainer.WeatherRepo,

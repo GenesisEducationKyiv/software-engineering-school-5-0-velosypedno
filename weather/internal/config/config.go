@@ -52,6 +52,8 @@ type Config struct {
 	TomorrowWeather TomorrowWeatherConfig
 	FreeWeather     FreeWeatherConfig
 	VisualCrossing  VisualCrossingConfig
+
+	LogDir string `envconfig:"LOG_DIR" required:"true"`
 }
 
 func Load() (*Config, error) {

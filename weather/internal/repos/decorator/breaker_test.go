@@ -15,6 +15,17 @@ import (
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/repos/decorator"
 )
 
+type mockWeatherRepo struct {
+	Response domain.Weather
+	Err      error
+	Called   bool
+}
+
+func (m *mockWeatherRepo) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
+	m.Called = true
+	return m.Response, m.Err
+}
+
 func newTestBreaker() *cb.CircuitBreaker {
 	breaker := cb.NewCircuitBreaker(time.Minute, 1, 1)
 	breaker.Now = func() time.Time {

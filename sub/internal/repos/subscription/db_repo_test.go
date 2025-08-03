@@ -16,6 +16,7 @@ import (
 	"github.com/lib/pq"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 const (
@@ -34,7 +35,7 @@ func TestCreateSubscription_Success(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 	defer closeDB(mock, db, t)
-	repo := subr.NewDBRepo(db)
+	repo := subr.NewDBRepo(zap.NewNop(), db)
 	sub := domain.Subscription{
 		ID:        uuid.New(),
 		Email:     "test@example.com",
@@ -64,7 +65,7 @@ func TestCreateSubscription_EmailExists(t *testing.T) {
 	db, mock, err := sqlmock.New()
 	require.NoError(t, err)
 	defer closeDB(mock, db, t)
-	repo := subr.NewDBRepo(db)
+	repo := subr.NewDBRepo(zap.NewNop(), db)
 	sub := domain.Subscription{
 		ID:        uuid.New(),
 		Email:     "exists@example.com",
@@ -98,7 +99,7 @@ func TestActivateSubscription_Success(t *testing.T) {
 	require.NoError(t, err)
 	defer closeDB(mock, db, t)
 
-	repo := subr.NewDBRepo(db)
+	repo := subr.NewDBRepo(zap.NewNop(), db)
 	token := uuid.New()
 
 	mock.ExpectExec(regexp.QuoteMeta(`UPDATE subscriptions SET activated = true WHERE token = $1`)).
@@ -121,7 +122,7 @@ func TestActivateSubscription_TokenNotFound(t *testing.T) {
 	}
 	defer closeDB(mock, db, t)
 
-	repo := subr.NewDBRepo(db)
+	repo := subr.NewDBRepo(zap.NewNop(), db)
 	token := uuid.New()
 
 	mock.ExpectExec(regexp.QuoteMeta(`UPDATE subscriptions SET activated = true WHERE token = $1`)).
@@ -142,7 +143,7 @@ func TestDeleteSubscriptionByToken_Success(t *testing.T) {
 	require.NoError(t, err)
 	defer closeDB(mock, db, t)
 
-	repo := subr.NewDBRepo(db)
+	repo := subr.NewDBRepo(zap.NewNop(), db)
 	token := uuid.New()
 
 	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM subscriptions WHERE token = $1`)).
@@ -163,7 +164,7 @@ func TestDeleteSubscriptionByToken_TokenNotFound(t *testing.T) {
 	require.NoError(t, err)
 	defer closeDB(mock, db, t)
 
-	repo := subr.NewDBRepo(db)
+	repo := subr.NewDBRepo(zap.NewNop(), db)
 	token := uuid.New()
 
 	mock.ExpectExec(regexp.QuoteMeta(`DELETE FROM subscriptions WHERE token = $1`)).
@@ -184,7 +185,7 @@ func TestGetActivatedSubscriptionsByFreq_Success(t *testing.T) {
 	require.NoError(t, err)
 	defer closeDB(mock, db, t)
 
-	repo := subr.NewDBRepo(db)
+	repo := subr.NewDBRepo(zap.NewNop(), db)
 
 	freq := domain.FreqDaily
 
@@ -212,7 +213,7 @@ func TestGetActivatedSubscriptionsByFreq_QueryError(t *testing.T) {
 	require.NoError(t, err)
 	defer closeDB(mock, db, t)
 
-	repo := subr.NewDBRepo(db)
+	repo := subr.NewDBRepo(zap.NewNop(), db)
 	freq := domain.FreqDaily
 	mock.ExpectQuery(
 		regexp.QuoteMeta(`SELECT * FROM subscriptions WHERE activated = true AND frequency = $1`),

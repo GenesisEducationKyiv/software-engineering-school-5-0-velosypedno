@@ -2,8 +2,8 @@ package chain
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"log"
 
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/domain"
 )
@@ -21,16 +21,21 @@ func NewProvidersFallbackChain(repos ...weatherProvider) *ProvidersFallbackChain
 }
 
 func (c *ProvidersFallbackChain) GetCurrent(ctx context.Context, city string) (domain.Weather, error) {
-	var lastError error
+	var errs []error
+
 	for _, repo := range c.Repos {
 		weather, err := repo.GetCurrent(ctx, city)
 		if err != nil {
 			err = fmt.Errorf("chain: %w", err)
-			log.Println(err)
-			lastError = err
+			errs = append(errs, err)
 			continue
 		}
 		return weather, nil
 	}
-	return domain.Weather{}, lastError
+
+	if len(errs) == 0 {
+		return domain.Weather{}, fmt.Errorf("chain: %w", domain.ErrWeatherUnavailable)
+	}
+
+	return domain.Weather{}, errors.Join(errs...)
 }

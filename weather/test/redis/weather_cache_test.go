@@ -14,6 +14,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"go.uber.org/zap"
 )
 
 type weathMetrics struct {
@@ -75,7 +76,7 @@ func TestCacheWeatherDecorator(main *testing.T) {
 		// Arrange
 		mocks := setup()
 		require.False(t, mocks.repo.called)
-		decoratedRepo := decorator.NewCacheDecorator(mocks.repo, mocks.cacheBack, mocks.metrics)
+		decoratedRepo := decorator.NewCacheDecorator(zap.NewNop(), mocks.repo, mocks.cacheBack, mocks.metrics)
 		city := "Kyiv"
 
 		// Acr
@@ -95,7 +96,7 @@ func TestCacheWeatherDecorator(main *testing.T) {
 		require.False(t, mocks.repo.called)
 		city := "Kyiv"
 		mocks.cacheBack.Set(context.Background(), city, mocks.weather)
-		decoratedRepo := decorator.NewCacheDecorator(mocks.repo, mocks.cacheBack, mocks.metrics)
+		decoratedRepo := decorator.NewCacheDecorator(zap.NewNop(), mocks.repo, mocks.cacheBack, mocks.metrics)
 
 		// Act
 		weather, err := decoratedRepo.GetCurrent(context.Background(), "Kyiv")
@@ -117,7 +118,7 @@ func TestCacheWeatherDecorator(main *testing.T) {
 		require.False(t, mocks.repo.called)
 		city := "Kyiv"
 		cacheBackend.Set(context.Background(), city, mocks.weather)
-		decoratedRepo := decorator.NewCacheDecorator(mocks.repo, cacheBackend, mocks.metrics)
+		decoratedRepo := decorator.NewCacheDecorator(zap.NewNop(), mocks.repo, cacheBackend, mocks.metrics)
 
 		// Act
 		<-time.After(ttl * 2)

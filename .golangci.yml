@@ -15,7 +15,6 @@ linters:
     paths:
       - docs
   enable:
-    - dupl
     - errcheck
     - govet
     - ireturn

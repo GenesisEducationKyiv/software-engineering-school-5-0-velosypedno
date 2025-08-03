@@ -9,6 +9,10 @@ import (
 	"github.com/GenesisEducationKyiv/software-engineering-school-5-0-velosypedno/weather/internal/domain"
 )
 
+type weatherRepo interface {
+	GetCurrent(ctx context.Context, city string) (domain.Weather, error)
+}
+
 type BreakerDecorator struct {
 	Inner   weatherRepo
 	Breaker *cb.CircuitBreaker
